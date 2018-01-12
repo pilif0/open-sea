@@ -1,0 +1,11 @@
+# Ignore the build target directory
+bin
+
+# Ignore the cmake log
+cmake-build-debug
+
+# Ignore Vim swap files
+*.swp
+
+# Ignore IntelliJ IDE files
+.idea

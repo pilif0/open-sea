@@ -9,3 +9,6 @@ cmake-build-debug
 
 # Ignore IntelliJ IDE files
 .idea
+
+# Generated files
+include/open-sea/config.h

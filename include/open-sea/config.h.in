@@ -1,0 +1,15 @@
+/*
+ * Header file configurated by CMake
+ *
+ * Author: Filip Smola (smola.filip@hotmail.com)
+ */
+// Version
+#define OPEN_SEA_VERSION_MAJOR @open_sea_VERSION_MAJOR@
+#define OPEN_SEA_VERSION_MINOR @open_sea_VERSION_MINOR@
+#define OPEN_SEA_VERSION_PATCH @open_sea_VERSION_PATCH@
+#define OPEN_SEA_VERSION_EXTRA "@open_sea_VERSION_EXTRA@"
+#define OPEN_SEA_VERSION "@open_sea_VERSION@"
+#define OPEN_SEA_VERSION_FULL "@open_sea_VERSION_FULL@"
+
+// Debug flag
+#cmakedefine OPEN_SEA_DEBUG

@@ -13,6 +13,7 @@ set(open_sea_VERSION_FULL "${open_sea_VERSION_MAJOR}.${open_sea_VERSION_MINOR}.$
 
 # Declare options
 option(open_sea_BUILD_EXAMPLES "Build example programs" ON)
+option(open_sea_DEBUG "Debug mode" OFF)
 
 # Set some global locations
 set(SRC_DIR "${open_sea_SOURCE_DIR}/src")
@@ -34,6 +35,12 @@ add_library(glad "${GLAD_DIR}/src/glad.c")
 target_include_directories("glad" PRIVATE "${GLAD_DIR}/include")
 set(GLAD "${open_sea_SOURCE_DIR}/deps/glad/include/glad/glad.h"
          "${open_sea_SOURCE_DIR}/deps/glad/src/glad.c")
+
+# Configure header
+configure_file(
+        "${INCL_DIR}/open-sea/config.h.in"
+        "${INCL_DIR}/open-sea/config.h"
+)
 
 # Include own public interface
 include_directories(include)        # This feels wrong but means not having to navigate to the directory when including

@@ -8,85 +8,25 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <open-sea/config.h>
 #include <open-sea/Test.h>
+#include <open-sea/Log.h>
 
-#include <fstream>
-#include <iomanip>
-#include <iostream>
+#include <sstream>
 
-// Boost shared pointer
-#include <boost/smart_ptr/shared_ptr.hpp>
-#include <boost/smart_ptr/make_shared_object.hpp>
-
-// Boost logging
-#include <boost/log/trivial.hpp>
-#include <boost/log/core.hpp>
-#include <boost/log/expressions.hpp>
-#include <boost/log/utility/setup/file.hpp>
-#include <boost/log/utility/setup/common_attributes.hpp>
-#include <boost/log/sinks/text_ostream_backend.hpp>
-#include <boost/log/sources/logger.hpp>
-namespace logging = boost::log;
-namespace keywords = boost::log::keywords;
-namespace src = boost::log::sources;
-namespace triv = boost::log::trivial;
-namespace sinks = boost::log::sinks;
-namespace expr = boost::log::expressions;
+namespace log = open_sea::log;
 
 // GLFW error callback that prints to console
 void error_callback(int error, const char* description) {
-    src::severity_logger<triv::severity_level> lg;
-    BOOST_LOG_SEV(lg, triv::error) << "GLFW error " << error << ": " << description;
-}
-
-// Initialize the file sink with path "log/main.log"
-void init_file_sink() {
-    // Prepare the sink
-    typedef sinks::synchronous_sink<sinks::text_ostream_backend> text_sink;
-    boost::shared_ptr<text_sink> sink = boost::make_shared<text_sink>();
-    boost::shared_ptr<std::ofstream> stream = boost::make_shared<std::ofstream>("log/main.log");
-    sink->locked_backend()->add_stream(stream);
-
-#if !defined(OPEN_SEA_DEBUG)
-    // Filter out log records that are not at least warnings
-    sink->set_filter(
-            logging::trivial::severity >= logging::trivial::warning
-    );
-#endif
-
-    // Enable auto flush
-    sink->locked_backend()->auto_flush(true);
-
-    // Set the formatter
-    sink->set_formatter(
-            expr::stream
-                    << std::hex << std::setw(8) << std::setfill('0') << expr::attr<unsigned int>("LineID")
-                    << ": <" << logging::trivial::severity
-                    << "> " << expr::smessage
-    );
-
-    // Add the sink
-    logging::core::get()->add_sink(sink);
-}
-
-// Initialize logging
-void init_logging() {
-    // Initialize the file sink
-    init_file_sink();
-
-    // Add common logging attributes
-    logging::add_common_attributes();
-
-    // Note start of logging
-    src::severity_logger<triv::severity_level> lg;
-    BOOST_LOG_SEV(lg, triv::info) << "Logging initialized";
+    static log::severity_logger lg;
+    std::ostringstream stringStream;
+    stringStream << "GLFW error " << error << ": " << description;
+    log::log(lg, log::error, stringStream.str());
 }
 
 int main() {
     // Initialize logging
-    init_logging();
-    src::severity_logger<triv::severity_level> lg;
+    log::init_logging();
+    log::severity_logger lg;
 
     GLFWwindow* window;
 
@@ -95,10 +35,10 @@ int main() {
 
     // Initialize GLFW
     if (!glfwInit()) {
-        BOOST_LOG_SEV(lg, triv::fatal) << "GLFW initialisation failed";
+        log::log(lg, log::fatal, "GLFW initialisation failed");
         return -1;
     }
-    BOOST_LOG_SEV(lg, triv::info) << "GLFW initialised";
+    log::log(lg, log::info, "GLFW initialised");
 
     // Ask for OpenGL 3.3 forward compatible context
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -108,7 +48,7 @@ int main() {
     // Create a windowed mode window and its OpenGL context
     window = glfwCreateWindow(640, 480, get_test_string().c_str(), NULL, NULL);
     if (!window) {
-        BOOST_LOG_SEV(lg, triv::fatal) << "Window creation failed";
+        log::log(lg, log::fatal, "Window creation failed");
 
         glfwTerminate();
         return -1;
@@ -119,10 +59,10 @@ int main() {
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
-        BOOST_LOG_SEV(lg, triv::fatal) << "Failed to initialize OpenGL context";
+        log::log(lg, log::fatal, "Failed to initialize OpenGL context");
         return -1;
     }
-    BOOST_LOG_SEV(lg, triv::info) << "Window and context created";
+    log::log(lg, log::info, "Window and context created");
 
     // Loop until the user closes the window
     while (!glfwWindowShouldClose(window)) {
@@ -135,7 +75,7 @@ int main() {
         // Poll for and process events
         glfwPollEvents();
     }
-    BOOST_LOG_SEV(lg, triv::info) << "Main loop ended";
+    log::log(lg, log::info, "Main loop ended");
 
     glfwTerminate();
     return 0;

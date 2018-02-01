@@ -11,6 +11,11 @@
 #include <iosfwd>
 
 namespace open_sea::log {
+    // Path to the log file
+    constexpr const char* file_path = "log/main.log";
+    // Format string for the datetime
+    constexpr const char* datetime_format = "%H:%M:%S.%f";
+
     // Initialize logging with a text sink to "log/main.log"
     void init_logging();
 

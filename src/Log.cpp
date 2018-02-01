@@ -10,6 +10,10 @@
 #include <iomanip>
 #include <iostream>
 
+// Boost date time formatting
+#include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/log/support/date_time.hpp>
+
 // Boost shared pointer
 #include <boost/smart_ptr/shared_ptr.hpp>
 #include <boost/smart_ptr/make_shared_object.hpp>
@@ -35,7 +39,7 @@ namespace open_sea::log {
         // Prepare the sink
         typedef sinks::synchronous_sink<sinks::text_ostream_backend> text_sink;
         boost::shared_ptr<text_sink> sink = boost::make_shared<text_sink>();
-        boost::shared_ptr<std::ofstream> stream = boost::make_shared<std::ofstream>("log/main.log");
+        boost::shared_ptr<std::ofstream> stream = boost::make_shared<std::ofstream>(file_path);
         sink->locked_backend()->add_stream(stream);
 
 #if !defined(OPEN_SEA_DEBUG)
@@ -52,7 +56,8 @@ namespace open_sea::log {
         sink->set_formatter(
                 expr::stream
                         << std::hex << std::setw(8) << std::setfill('0') << expr::attr<unsigned int>("LineID")
-                        << ": <" << expr::attr<severity_level>("Severity")
+                        << ": (" << expr::format_date_time<boost::posix_time::ptime>("TimeStamp", datetime_format)
+                        << ") <" << expr::attr<severity_level>("Severity")
                         << "> " << expr::smessage
         );
 
@@ -77,7 +82,7 @@ namespace open_sea::log {
                 "trace",
                 "debug",
                 "info",
-                "warning"
+                "warning",
                 "error",
                 "fatal"
         };

@@ -11,6 +11,13 @@
 #include <iosfwd>
 
 namespace open_sea::log {
+    /**
+     * \addtogroup Log
+     * Code concerning logging. Internally uses Boost.Log. To start logging, use \c init_logging().
+     * To log a message, use \c log().
+     * @{
+     */
+
     //! Path to the log file
     constexpr const char* file_path = "log/main.log";
     //! Format string for the datetime
@@ -38,6 +45,10 @@ namespace open_sea::log {
     void log(severity_logger logger, severity_level lvl, std::string message);
 
     std::ostream& operator<<(std::ostream &os, severity_level lvl);
+
+    /**
+     * @}
+     */
 }
 
 #endif //OPEN_SEA_LOG_H

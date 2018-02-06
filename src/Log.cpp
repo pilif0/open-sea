@@ -43,7 +43,8 @@ namespace open_sea::log {
      * Initialize and add a text sink to the file in \c open_sea::log::file_path with auto flush enabled and the following
      * format: <tt><em>0xLineID</em>: (<em>TimeStamp</em>) <<em>Severity</em>> <em>Message</em></tt> where \a TimeStamp
      * is formatted using the datetime format in \c open_sea::log::datetime_format. Fails when the parent directory of the
-     * file does not exist and cannot be created.
+     * file does not exist and cannot be created. Only logs messages with severity less than \warning if \c OPEN_SEA_DEBUG
+     * is defined.
      *
      * \return \c true when successful, \c false otherwise
      */

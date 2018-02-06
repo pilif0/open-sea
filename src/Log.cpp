@@ -1,7 +1,5 @@
 /*
  * Logging implementation
- *
- * Author: Filip Smola (smola.filip@hotmail.com)
  */
 #include <open-sea/Log.h>
 #include <open-sea/config.h>
@@ -35,6 +33,13 @@ namespace expr      = ::boost::log::expressions;
 
 namespace open_sea::log {
 
+    /**
+     * \brief Add a text sink to the file path in \c open_sea::log::file_path
+     *
+     * Initialize and add a text sink to the file in \c open_sea::log::file_path with auto flush enabled and the following
+     * format: <tt><em>0xLineID</em>: (<em>TimeStamp</em>) <<em>Severity</em>> <em>Message</em></tt> where \a TimeStamp
+     * is formatted using the datetime format in \c open_sea::log::datetime_format.
+     */
     void init_file_sink() {
         // Prepare the sink
         typedef sinks::synchronous_sink<sinks::text_ostream_backend> text_sink;
@@ -55,7 +60,7 @@ namespace open_sea::log {
         // Set the formatter
         sink->set_formatter(
                 expr::stream
-                        << std::hex << std::setw(8) << std::setfill('0') << expr::attr<unsigned int>("LineID")
+                        << "0x" << std::hex << std::setw(8) << std::setfill('0') << expr::attr<unsigned int>("LineID")
                         << ": (" << expr::format_date_time<boost::posix_time::ptime>("TimeStamp", datetime_format)
                         << ") <" << expr::attr<severity_level>("Severity")
                         << "> " << expr::smessage
@@ -65,6 +70,12 @@ namespace open_sea::log {
         logging::core::get()->add_sink(sink);
     }
 
+    /**
+     * \brief Initialize logging with a single file sink
+     *
+     * Initialize logging with a single file sink added by \c open_sea::log::init_file_sink() and with common attributes
+     * added. Also log a message that the logging has been initialized.
+     */
     void init_logging() {
         // Initialize the file sink
         init_file_sink();
@@ -77,6 +88,12 @@ namespace open_sea::log {
         log(lg, info, "Logging initialized");
     }
 
+    /**
+     * \brief Stream the severity level to an output stream
+     * @param os Reference to the output stream
+     * @param lvl Severity level to stream
+     * @return Reference to the output stream
+     */
     std::ostream &operator<<(std::ostream &os, severity_level lvl) {
         static const char* strings[] = {
                 "trace",
@@ -96,6 +113,13 @@ namespace open_sea::log {
         return os;
     }
 
+    /**
+     * \brief Log a message
+     *
+     * @param logger Logger to use when logging the message
+     * @param lvl Severity level of the message
+     * @param message Message itself
+     */
     void log(severity_logger logger, severity_level lvl, std::string message) {
         logging::record rec = logger.open_record(keywords::severity = lvl);
 

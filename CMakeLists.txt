@@ -26,7 +26,7 @@ set(BOOST_ROOT /opt/boost)
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
-find_package (Boost 1.66.0 REQUIRED COMPONENTS log)
+find_package (Boost 1.66.0 REQUIRED COMPONENTS log filesystem)
 
 # GLFW
 set(GLFW_DIR "${DEP_DIR}/glfw")

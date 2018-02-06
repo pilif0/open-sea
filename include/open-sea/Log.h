@@ -33,7 +33,8 @@ namespace open_sea::log {
     typedef boost::log::sources::severity_logger<severity_level> severity_logger;
 
     void init_logging();
-    void init_file_sink();
+    bool add_file_sink();
+    void add_console_sink();
     void log(severity_logger logger, severity_level lvl, std::string message);
 
     std::ostream& operator<<(std::ostream &os, severity_level lvl);

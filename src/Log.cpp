@@ -8,6 +8,9 @@
 #include <iomanip>
 #include <iostream>
 
+// Boost file system
+#include <boost/filesystem.hpp>
+
 // Boost date time formatting
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/log/support/date_time.hpp>
@@ -24,6 +27,7 @@
 #include <boost/log/utility/setup/common_attributes.hpp>
 #include <boost/log/sinks/text_ostream_backend.hpp>
 #include <boost/log/sources/logger.hpp>
+#include <boost/log/utility/setup/console.hpp>
 namespace logging   = ::boost::log;
 namespace keywords  = ::boost::log::keywords;
 namespace src       = ::boost::log::sources;
@@ -38,9 +42,22 @@ namespace open_sea::log {
      *
      * Initialize and add a text sink to the file in \c open_sea::log::file_path with auto flush enabled and the following
      * format: <tt><em>0xLineID</em>: (<em>TimeStamp</em>) <<em>Severity</em>> <em>Message</em></tt> where \a TimeStamp
-     * is formatted using the datetime format in \c open_sea::log::datetime_format.
+     * is formatted using the datetime format in \c open_sea::log::datetime_format. Fails when the parent directory of the
+     * file does not exist and cannot be created.
+     *
+     * \return \c true when successful, \c false otherwise
      */
-    void init_file_sink() {
+    bool add_file_sink() {
+        // Make sure the directory exits
+        boost::filesystem::path path(file_path);
+        if(!boost::filesystem::exists(path.parent_path())) {
+            // Directory doesn't exist -> create it
+            if(!boost::filesystem::create_directories(path.parent_path())){
+                // Directory couldn't be created -> abort
+                return false;
+            }
+        }
+
         // Prepare the sink
         typedef sinks::synchronous_sink<sinks::text_ostream_backend> text_sink;
         boost::shared_ptr<text_sink> sink = boost::make_shared<text_sink>();
@@ -68,6 +85,29 @@ namespace open_sea::log {
 
         // Add the sink
         logging::core::get()->add_sink(sink);
+        return true;
+    }
+
+    /**
+     * \brief Add a console sink
+     *
+     * Initialize and add a console sink with the following format:
+     * <tt><em>0xLineID</em>: (<em>TimeStamp</em>) <<em>Severity</em>> <em>Message</em></tt> where \a TimeStamp is
+     * formatted using the datetime format in \c open_sea::log::datetime_format.
+     */
+    void add_console_sink(){
+        // Add the sink
+        typedef sinks::synchronous_sink<sinks::text_ostream_backend> text_sink;
+        boost::shared_ptr<text_sink> sink = logging::add_console_log();
+
+        // Set the formatter
+        sink->set_formatter(
+                expr::stream
+                        << "0x" << std::hex << std::setw(8) << std::setfill('0') << expr::attr<unsigned int>("LineID")
+                        << ": (" << expr::format_date_time<boost::posix_time::ptime>("TimeStamp", datetime_format)
+                        << ") <" << expr::attr<severity_level>("Severity")
+                        << "> " << expr::smessage
+        );
     }
 
     /**
@@ -77,22 +117,26 @@ namespace open_sea::log {
      * added. Also log a message that the logging has been initialized.
      */
     void init_logging() {
-        // Initialize the file sink
-        init_file_sink();
-
         // Add common logging attributes
         logging::add_common_attributes();
 
-        // Note start of logging
+        // Initialize the file sink
         severity_logger lg;
+        if(!add_file_sink()) {
+            // Sink initialization failed
+            add_console_sink();
+            log(lg, warning, "File sink initialization failed, using console log.");
+        }
+
+        // Note start of logging
         log(lg, info, "Logging initialized");
     }
 
     /**
      * \brief Stream the severity level to an output stream
-     * @param os Reference to the output stream
-     * @param lvl Severity level to stream
-     * @return Reference to the output stream
+     * \param os Reference to the output stream
+     * \param lvl Severity level to stream
+     * \return Reference to the output stream
      */
     std::ostream &operator<<(std::ostream &os, severity_level lvl) {
         static const char* strings[] = {
@@ -116,9 +160,9 @@ namespace open_sea::log {
     /**
      * \brief Log a message
      *
-     * @param logger Logger to use when logging the message
-     * @param lvl Severity level of the message
-     * @param message Message itself
+     * \param logger Logger to use when logging the message
+     * \param lvl Severity level of the message
+     * \param message Message itself
      */
     void log(severity_logger logger, severity_level lvl, std::string message) {
         logging::record rec = logger.open_record(keywords::severity = lvl);

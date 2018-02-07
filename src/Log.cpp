@@ -159,7 +159,7 @@ namespace open_sea::log {
      * \param lvl Severity level to stream
      * \return Reference to the output stream
      */
-    std::ostream &operator<<(std::ostream &os, severity_level lvl) {
+    std::ostream &operator<<(std::ostream& os, severity_level lvl) {
         static const char* strings[] = {
                 "trace",
                 "debug",
@@ -185,7 +185,7 @@ namespace open_sea::log {
      * \param lvl Severity level of the message
      * \param message Message itself
      */
-    void log(severity_logger logger, severity_level lvl, std::string message) {
+    void log(severity_logger& logger, severity_level lvl, const std::string& message) {
         logging::record rec = logger.open_record(keywords::severity = lvl);
 
         if (rec) {
@@ -204,7 +204,7 @@ namespace open_sea::log {
      * @param module Module name
      * @return Logger instance
      */
-    severity_logger get_logger(const std::string &module) {
+    severity_logger get_logger(const std::string& module) {
         severity_logger lg;
         lg.add_attribute("Module", attr::constant<std::string>(module));
         return lg;

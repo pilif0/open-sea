@@ -14,7 +14,8 @@ namespace open_sea::log {
     /**
      * \addtogroup Log
      * Code concerning logging. Internally uses Boost.Log. To start logging, use \c init_logging().
-     * To log a message, use \c log().
+     * To log a message, use \c log(). If the application crashes on process termination, use \c clean_up() before
+     * returning from \c main().
      * @{
      */
 
@@ -43,6 +44,7 @@ namespace open_sea::log {
     bool add_file_sink();
     void add_console_sink();
     void log(severity_logger logger, severity_level lvl, std::string message);
+    void clean_up();
 
     std::ostream& operator<<(std::ostream &os, severity_level lvl);
 

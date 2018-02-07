@@ -78,5 +78,6 @@ int main() {
     log::log(lg, log::info, "Main loop ended");
 
     glfwTerminate();
+    log::clean_up();
     return 0;
 }

@@ -134,6 +134,21 @@ namespace open_sea::log {
     }
 
     /**
+     * \brief Clean up after logging
+     *
+     * Remove all sinks to prevent problems at process termination
+     * (see <a href="http://www.boost.org/doc/libs/1_58_0/libs/log/doc/html/log/rationale/why_crash_on_term.html">Boost.Log FAQ</a>)
+     */
+    void clean_up() {
+        // Note the clean up
+        severity_logger lg;
+        log(lg, info, "Cleaning up after logging");
+
+        // Remove all sinks
+        logging::core::get()->remove_all_sinks();
+    }
+
+    /**
      * \brief Stream the severity level to an output stream
      * \param os Reference to the output stream
      * \param lvl Severity level to stream

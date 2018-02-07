@@ -17,7 +17,7 @@ namespace log = open_sea::log;
 
 // GLFW error callback that prints to console
 void error_callback(int error, const char* description) {
-    static log::severity_logger lg;
+    static log::severity_logger lg = log::get_logger("GLFW");
     std::ostringstream stringStream;
     stringStream << "GLFW error " << error << ": " << description;
     log::log(lg, log::error, stringStream.str());
@@ -26,7 +26,7 @@ void error_callback(int error, const char* description) {
 int main() {
     // Initialize logging
     log::init_logging();
-    log::severity_logger lg;
+    log::severity_logger lg = log::get_logger("Sample Game");
 
     GLFWwindow* window;
 

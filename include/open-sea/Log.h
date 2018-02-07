@@ -45,6 +45,8 @@ namespace open_sea::log {
     void add_console_sink();
     void log(severity_logger logger, severity_level lvl, std::string message);
     void clean_up();
+    severity_logger get_logger(const std::string &module);
+    severity_logger get_logger();
 
     std::ostream& operator<<(std::ostream &os, severity_level lvl);
 

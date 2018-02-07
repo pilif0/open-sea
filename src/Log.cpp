@@ -25,6 +25,8 @@
 #include <boost/log/expressions.hpp>
 #include <boost/log/utility/setup/file.hpp>
 #include <boost/log/utility/setup/common_attributes.hpp>
+#include <boost/log/attributes/constant.hpp>
+#include <boost/log/attributes/attribute_set.hpp>
 #include <boost/log/sinks/text_ostream_backend.hpp>
 #include <boost/log/sources/logger.hpp>
 #include <boost/log/utility/setup/console.hpp>
@@ -34,6 +36,7 @@ namespace src       = ::boost::log::sources;
 namespace triv      = ::boost::log::trivial;
 namespace sinks     = ::boost::log::sinks;
 namespace expr      = ::boost::log::expressions;
+namespace attr      = ::boost::log::attributes;
 
 namespace open_sea::log {
 
@@ -41,10 +44,10 @@ namespace open_sea::log {
      * \brief Add a text sink to the file path in \c open_sea::log::file_path
      *
      * Initialize and add a text sink to the file in \c open_sea::log::file_path with auto flush enabled and the following
-     * format: <tt><em>0xLineID</em>: (<em>TimeStamp</em>) <<em>Severity</em>> <em>Message</em></tt> where \a TimeStamp
-     * is formatted using the datetime format in \c open_sea::log::datetime_format. Fails when the parent directory of the
-     * file does not exist and cannot be created. Only logs messages with severity less than \warning if \c OPEN_SEA_DEBUG
-     * is defined.
+     * format: <tt><em>0xLineID</em>: (<em>TimeStamp</em>) [<em>Module</em>] <<em>Severity</em>> <em>Message</em></tt>
+     * where \a TimeStamp is formatted using the datetime format in \c open_sea::log::datetime_format. Fails when the
+     * parent directory of the file does not exist and cannot be created. Only logs messages with severity less than
+     * \warning if \c OPEN_SEA_DEBUG is defined.
      *
      * \return \c true when successful, \c false otherwise
      */
@@ -80,7 +83,8 @@ namespace open_sea::log {
                 expr::stream
                         << "0x" << std::hex << std::setw(8) << std::setfill('0') << expr::attr<unsigned int>("LineID")
                         << ": (" << expr::format_date_time<boost::posix_time::ptime>("TimeStamp", datetime_format)
-                        << ") <" << expr::attr<severity_level>("Severity")
+                        << ") [" << expr::attr<std::string>("Module")
+                        << "] <" << expr::attr<severity_level>("Severity")
                         << "> " << expr::smessage
         );
 
@@ -106,7 +110,8 @@ namespace open_sea::log {
                 expr::stream
                         << "0x" << std::hex << std::setw(8) << std::setfill('0') << expr::attr<unsigned int>("LineID")
                         << ": (" << expr::format_date_time<boost::posix_time::ptime>("TimeStamp", datetime_format)
-                        << ") <" << expr::attr<severity_level>("Severity")
+                        << ") [" << expr::attr<std::string>("Module")
+                        << "] <" << expr::attr<severity_level>("Severity")
                         << "> " << expr::smessage
         );
     }
@@ -122,7 +127,7 @@ namespace open_sea::log {
         logging::add_common_attributes();
 
         // Initialize the file sink
-        severity_logger lg;
+        severity_logger lg = get_logger("Logging");
         if(!add_file_sink()) {
             // Sink initialization failed
             add_console_sink();
@@ -141,7 +146,7 @@ namespace open_sea::log {
      */
     void clean_up() {
         // Note the clean up
-        severity_logger lg;
+        severity_logger lg = get_logger("Logging");
         log(lg, info, "Cleaning up after logging");
 
         // Remove all sinks
@@ -189,5 +194,30 @@ namespace open_sea::log {
             stream.flush();
             logger.push_record(boost::move(rec));
         }
+    }
+
+    /**
+     * \brief Get a logger
+     *
+     * Get a logger for the provided module
+     *
+     * @param module Module name
+     * @return Logger instance
+     */
+    severity_logger get_logger(const std::string &module) {
+        severity_logger lg;
+        lg.add_attribute("Module", attr::constant<std::string>(module));
+        return lg;
+    }
+
+    /**
+     * \brief Get a logger
+     *
+     * Get a logger with no module provided
+     *
+     * @return Logger instance
+     */
+    severity_logger get_logger() {
+        return get_logger("No Module");
     }
 }

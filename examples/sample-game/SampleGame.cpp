@@ -1,22 +1,33 @@
 /*
  * Main point of the sample game example.
  *
- * Adapted from http://www.glfw.org/documentation.html
+ * Author: Filip Smola (smola.filip@hotmail.com)
+ *
+ * Based on GLFW example from http://www.glfw.org/documentation.html
  */
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <open-sea/Test.h>
-#include <open-sea/config.h>
+#include <open-sea/Log.h>
 
-#include <iostream>
+#include <sstream>
+
+namespace log = open_sea::log;
 
 // GLFW error callback that prints to console
 void error_callback(int error, const char* description) {
-    std::cout << "GLFW error " << error << ": " << description << std::endl;
+    static log::severity_logger lg = log::get_logger("GLFW");
+    std::ostringstream stringStream;
+    stringStream << "GLFW error " << error << ": " << description;
+    log::log(lg, log::error, stringStream.str());
 }
 
 int main() {
+    // Initialize logging
+    log::init_logging();
+    log::severity_logger lg = log::get_logger("Sample Game");
+
     GLFWwindow* window;
 
     // Set the callback
@@ -24,40 +35,34 @@ int main() {
 
     // Initialize GLFW
     if (!glfwInit()) {
-        std::cout << "Initialisation failed" << std::endl;
+        log::log(lg, log::fatal, "GLFW initialisation failed");
         return -1;
     }
+    log::log(lg, log::info, "GLFW initialised");
 
     // Ask for OpenGL 3.3 forward compatible context
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
-#if defined(OPEN_SEA_DEBUG)
-    std::cout << "Initialised\n";
-#endif
-
     // Create a windowed mode window and its OpenGL context
     window = glfwCreateWindow(640, 480, get_test_string().c_str(), NULL, NULL);
     if (!window) {
-        std::cout << "Window creation failed" << std::endl;
+        log::log(lg, log::fatal, "Window creation failed");
 
         glfwTerminate();
         return -1;
     }
-
-#if defined(OPEN_SEA_DEBUG)
-    std::cout << "Window created\n";
-#endif
 
     // Make the window's context current
     glfwMakeContextCurrent(window);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
-        std::cout << "Failed to initialize OpenGL context" << std::endl;
+        log::log(lg, log::fatal, "Failed to initialize OpenGL context");
         return -1;
     }
+    log::log(lg, log::info, "Window and context created");
 
     // Loop until the user closes the window
     while (!glfwWindowShouldClose(window)) {
@@ -70,11 +75,9 @@ int main() {
         // Poll for and process events
         glfwPollEvents();
     }
-
-#if defined(OPEN_SEA_DEBUG)
-    std::cout << "Main loop ended" << std::endl;
-#endif
+    log::log(lg, log::info, "Main loop ended");
 
     glfwTerminate();
+    log::clean_up();
     return 0;
 }

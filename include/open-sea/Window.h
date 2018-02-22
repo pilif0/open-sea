@@ -13,22 +13,22 @@
 #include <memory>
 
 namespace open_sea::window {
-    //! Game window
-    extern ::GLFWwindow* window;
+    // General Assumptions:
+    //  - Only one window at all times
 
     //! Possible window states
     enum window_state {
-        windowed,   //! Windowed
-        borderless, //! Borderless window
-        fullscreen  //! Fullscreen
+        windowed,   //!< Windowed
+        borderless, //!< Borderless window
+        fullscreen  //!< Fullscreen
     };
 
     //! Default property values
     namespace defaults {
         constexpr int16_t width = 1280;
         constexpr int16_t height = 720;
-        constexpr int16_t resolutionH = 1280;
-        constexpr int16_t resolutionV = 720;
+        constexpr int16_t fbWidth = 1280;
+        constexpr int16_t fbHeight = 720;
         constexpr const char* title = "Game";
         constexpr ::GLFWmonitor* monitor = nullptr;
         constexpr window_state state = windowed;
@@ -37,27 +37,37 @@ namespace open_sea::window {
 
     //! Set of window properties
     struct window_properties {
-        int16_t width = defaults::width;            //! Width
-        int16_t height = defaults::height;          //! Height
-        int16_t resolutionH = defaults::resolutionH;//! Horizontal resolution
-        int16_t resolutionV = defaults::resolutionV;//! Vertical resolution
-        std::string title = defaults::title;        //! Title
-        ::GLFWmonitor* monitor = defaults::monitor; //! Monitor or \c nullptr if windowed
-        window_state state = defaults::state;       //! State
-        bool vSync = defaults::vSync;               //! Whether vSync is on
+        int width = defaults::width;                //!< Width
+        int height = defaults::height;              //!< Height
+        int fbWidth = defaults::fbWidth;            //!< Frame buffer width (horizontal resolution)
+        int fbHeight = defaults::fbHeight;          //!< Frame buffer height (vertical resolution)
+        std::string title = defaults::title;        //!< Title
+        ::GLFWmonitor* monitor = defaults::monitor; //!< Monitor or \c nullptr if windowed
+        window_state state = defaults::state;       //!< State
+        bool vSync = defaults::vSync;               //!< Whether vSync is on
     };
 
-    //! Current window properties (empty until the window is created)
+    extern ::GLFWwindow* window;
     extern std::unique_ptr<window_properties> current;
 
     bool init_glfw();
-    void create_window(uint16_t width, uint16_t height, const std::string& title = nullptr, ::GLFWmonitor* monitor = nullptr);
-    bool should_close();
-    void set_state(window_state newState);
-    void set_size(uint16_t width, uint16_t height);
-    void set_resolution(uint16_t horizontal, uint16_t vertical);
+
+    bool make_windowed(int width, int height);
+    bool make_borderless(::GLFWmonitor* monitor);
+    bool make_fullscreen(int width, int height, ::GLFWmonitor* monitor);
+
+    void set_title(const std::string& title);
+    void set_size(int width, int height);
     void enableVSync();
+    void show();
+    void hide();
+    void close();
+
+    void update();
+
     void clean_up();
+    void terminate();
+    bool should_close();
 }
 
 #endif //OPEN_SEA_WINDOW_H

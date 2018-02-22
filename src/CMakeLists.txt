@@ -10,7 +10,8 @@ set(open_sea_HEADERS
         "${open_sea_SOURCE_DIR}/include/open-sea/Window.h")
 set(open_sea_SOURCES
         Test.cpp
-        Log.cpp)
+        Log.cpp
+        Window.cpp)
 
 # Add the library
 add_library(open_sea ${open_sea_SOURCES} ${open_sea_HEADERS})

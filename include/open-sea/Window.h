@@ -51,7 +51,7 @@ namespace open_sea::window {
     extern ::GLFWwindow* window;
     extern std::unique_ptr<window_properties> current;
 
-    bool init_glfw();
+    bool init();
 
     bool make_windowed(int width, int height);
     bool make_borderless(::GLFWmonitor* monitor);

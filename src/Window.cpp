@@ -37,7 +37,7 @@ namespace open_sea::window {
      *
      * \return \c false on failure, \c true otherwise
      */
-    bool init_glfw() {
+    bool init() {
         // Set the error callback
         ::glfwSetErrorCallback(error_callback);
 

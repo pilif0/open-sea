@@ -16,8 +16,8 @@ int main() {
     log::init_logging();
     log::severity_logger lg = log::get_logger("Sample Game");
 
-    // Initialize GLFW
-    if (!window::init_glfw())
+    // Initialize window module
+    if (!window::init())
         return -1;
 
     // Create window

@@ -19,12 +19,29 @@ namespace open_sea::window {
     ::GLFWwindow* window = nullptr;
 
     /**
+     * \brief Log GLFW error
+     *
+     * \param error Error number
+     * \param description Description
+     */
+    void error_callback(int error, const char* description) {
+        static log::severity_logger lg = log::get_logger("GLFW");
+        std::ostringstream stringStream;
+        stringStream << "GLFW error " << error << ": " << description;
+        log::log(lg, log::error, stringStream.str());
+    }
+
+    /**
      * \brief Initialize GLFW
      * Initialize GLFW and log the action
      *
      * \return \c false on failure, \c true otherwise
      */
     bool init_glfw() {
+        // Set the error callback
+        ::glfwSetErrorCallback(error_callback);
+
+        // Initialize GLFW
         if (!::glfwInit()) {
             log::log(lg, log::fatal, "GLFW initialisation failed");
             return false;

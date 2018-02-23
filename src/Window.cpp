@@ -141,6 +141,31 @@ namespace open_sea::window {
     }
 
     /**
+     * \brief Center the window
+     * Center the window on the primary monitor.
+     * Do nothing for non-windowed windows.
+     */
+    void center() {
+        // Skip if not windowed
+        if (current->state != windowed)
+            return;
+
+        // Retrieve primary monitor position and size
+        int mPosX, mPosY;
+        ::glfwGetMonitorPos(::glfwGetPrimaryMonitor(), &mPosX, &mPosY);
+        const ::GLFWvidmode* videomode = ::glfwGetVideoMode(::glfwGetPrimaryMonitor());
+        int mWidth = videomode->width;
+        int mHeight = videomode->height;
+
+        // Calculate new window position
+        int x = mPosX + (mWidth / 2) - (current->width / 2);
+        int y = mPosY + (mHeight / 2) - (current->height / 2);
+
+        // Set the window position
+        ::glfwSetWindowPos(window, x, y);
+    }
+
+    /**
      * \brief Show the window
      */
     void show() {

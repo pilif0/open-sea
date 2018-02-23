@@ -60,6 +60,7 @@ namespace open_sea::window {
     void set_title(const std::string& title);
     void set_size(int width, int height);
     void enableVSync();
+    void center();
     void show();
     void hide();
     void close();

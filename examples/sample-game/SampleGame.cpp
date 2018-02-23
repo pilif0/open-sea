@@ -34,6 +34,9 @@ int main() {
         f ? log::log(lg, log::info, "Window focused") : log::log(lg, log::info, "Window unfocused");
     });
 
+    // Test centering
+    window::center();
+
     // Loop until the user closes the window
     while (!window::should_close()) {
         // Render here

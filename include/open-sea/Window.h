@@ -15,6 +15,7 @@
 namespace open_sea::window {
     // General Assumptions:
     //  - Only one window at all times
+    //  - The window is not resizable
 
     //! Possible window states
     enum window_state {

@@ -200,10 +200,17 @@ namespace open_sea::window {
      * \brief Set the GLFW window creation hints
      */
     void set_hints() {
+        // Reset hints
+        glfwDefaultWindowHints();
+
         // Context
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+
+        // Window
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     }
 
     /**
@@ -254,6 +261,9 @@ namespace open_sea::window {
             ::glfwGetFramebufferSize(window, &current->fbWidth, &current->fbHeight);
             current->state = windowed;
             current->monitor = nullptr;
+
+            // Show the window
+            show();
 
             // Log the action
             log::log(lg, log::info, "Created new window in windowed state");
@@ -324,6 +334,9 @@ namespace open_sea::window {
             current->state = borderless;
             current->monitor = monitor;
 
+            // Show the window
+            show();
+
             // Log the action
             log::log(lg, log::info, "Created new window in borderless state");
 
@@ -390,6 +403,9 @@ namespace open_sea::window {
             ::glfwGetFramebufferSize(window, &current->fbWidth, &current->fbHeight);
             current->state = fullscreen;
             current->monitor = monitor;
+
+            // Show the window
+            show();
 
             // Log the action
             log::log(lg, log::info, "Created new window in fullscreen state");

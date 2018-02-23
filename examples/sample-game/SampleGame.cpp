@@ -25,18 +25,6 @@ int main() {
     if (!window::make_windowed(1280, 720))
         return -1;
 
-    // Test resizing
-    window::set_size(640, 480);
-
-    // Test callback
-    window::set_focus_callback([] (GLFWwindow* w, int f) {
-        static log::severity_logger lg = log::get_logger("Focus callback");
-        f ? log::log(lg, log::info, "Window focused") : log::log(lg, log::info, "Window unfocused");
-    });
-
-    // Test centering
-    window::center();
-
     // Loop until the user closes the window
     while (!window::should_close()) {
         // Render here

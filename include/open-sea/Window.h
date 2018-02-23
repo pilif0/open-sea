@@ -64,6 +64,10 @@ namespace open_sea::window {
     void hide();
     void close();
 
+    void set_size_callback(::GLFWwindowsizefun cbfun);
+    void set_focus_callback(::GLFWwindowfocusfun cbfun);
+    void set_close_callback(::GLFWwindowclosefun cbfun);
+
     void update();
 
     void clean_up();

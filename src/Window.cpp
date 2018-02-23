@@ -114,6 +114,9 @@ namespace open_sea::window {
         ::glfwGetWindowSize(window, &current->width, &current->height);
         ::glfwGetFramebufferSize(window, &current->fbWidth, &current->fbHeight);
 
+        // Update the viewport size
+        ::glViewport(0, 0, current->fbWidth, current->fbHeight);
+
         // Log the action
         std::ostringstream message;
         message << "Size set to [" << width << "," << height << "]";
@@ -194,6 +197,36 @@ namespace open_sea::window {
      */
     void terminate() {
         ::glfwTerminate();
+    }
+
+    /**
+     * \brief Set window size callback
+     * Set a GLFW callback function for changes in window size
+     *
+     * \param cbfun Callback function
+     */
+    void set_size_callback(::GLFWwindowsizefun cbfun) {
+        ::glfwSetWindowSizeCallback(window, cbfun);
+    }
+
+    /**
+     * \brief Set window focus callback
+     * Set a GLFW callback function for changes in window focus
+     *
+     * \param cbfun Callback function
+     */
+    void set_focus_callback(::GLFWwindowfocusfun cbfun) {
+        ::glfwSetWindowFocusCallback(window, cbfun);
+    }
+
+    /**
+     * \brief Set window close callback
+     * Set a GLFW callback function for changes in window close flag
+     *
+     * \param cbfun Callback function
+     */
+    void set_close_callback(::GLFWwindowclosefun cbfun) {
+        ::glfwSetWindowCloseCallback(window, cbfun);
     }
 
     /**

@@ -188,6 +188,16 @@ namespace open_sea::window {
     }
 
     /**
+     * \brief Get properties of the current window
+     * Get a copy of properties of the current window
+     *
+     * \return Current properties
+     */
+    window_properties current_properties() {
+        return window_properties(*current);
+    }
+
+    /**
      * \brief Update the window
      * Swap buffers and poll for events
      */

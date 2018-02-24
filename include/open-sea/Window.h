@@ -49,7 +49,6 @@ namespace open_sea::window {
     };
 
     extern ::GLFWwindow* window;
-    extern std::unique_ptr<window_properties> current;
 
     bool init();
 
@@ -64,6 +63,7 @@ namespace open_sea::window {
     void show();
     void hide();
     void close();
+    window_properties current_properties();
 
     void set_size_callback(::GLFWwindowsizefun cbfun);
     void set_focus_callback(::GLFWwindowfocusfun cbfun);

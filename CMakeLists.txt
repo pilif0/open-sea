@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.9)
 project(open_sea)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 # Set project version
 set(open_sea_VERSION_MAJOR "0")
@@ -56,7 +56,7 @@ configure_file(
 )
 
 # Include own public interface
-include_directories(include)        # This feels wrong but means not having to navigate to the directory when including
+include_directories(${INCL_DIR})        # This feels wrong but means not having to navigate to the directory when including
 
 # Add subdirectories
 add_subdirectory(src)

@@ -128,7 +128,7 @@ namespace open_sea::window {
      * Enable vertical synchronisation (swap interval of 1).
      * Once enabled, cannot be disabled.
      */
-    void enableVSync() {
+    void enable_vSync() {
         // Skip if already enabled
         if (current->vSync)
             return;
@@ -203,10 +203,10 @@ namespace open_sea::window {
      */
     void update() {
         // Swap front and back buffers
-        glfwSwapBuffers(window::window);
+        ::glfwSwapBuffers(window::window);
 
         // Poll for and process events
-        glfwPollEvents();
+        ::glfwPollEvents();
     }
 
     /**

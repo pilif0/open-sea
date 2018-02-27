@@ -38,10 +38,10 @@ namespace open_sea::input {
     void init();
     void reattach();
 
-    signals::connection connect_key(key_signal::slot_type slot);
-    signals::connection connect_enter(enter_signal::slot_type slot);
-    signals::connection connect_mouse(mouse_signal::slot_type slot);
-    signals::connection connect_scroll(scroll_signal::slot_type slot);
+    signals::connection connect_key(const key_signal::slot_type& slot);
+    signals::connection connect_enter(const enter_signal::slot_type& slot);
+    signals::connection connect_mouse(const mouse_signal::slot_type& slot);
+    signals::connection connect_scroll(const scroll_signal::slot_type& slot);
 
     ::glm::dvec2 cursor_position();
     state key_state(int key);

@@ -12,7 +12,8 @@ set(open_sea_HEADERS
 set(open_sea_SOURCES
         Test.cpp
         Log.cpp
-        Window.cpp)
+        Window.cpp
+        Input.cpp)
 
 # Add the library
 add_library(open_sea ${open_sea_SOURCES} ${open_sea_HEADERS})

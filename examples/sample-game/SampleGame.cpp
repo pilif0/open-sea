@@ -5,11 +5,14 @@
  */
 
 #include <glad/glad.h>
+#include <GLFW/glfw3.h>
 #include <open-sea/Test.h>
 #include <open-sea/Log.h>
 namespace log = open_sea::log;
 #include <open-sea/Window.h>
 namespace window = open_sea::window;
+#include <open-sea/Input.h>
+namespace input = open_sea::input;
 
 int main() {
     // Initialize logging
@@ -25,6 +28,15 @@ int main() {
     if (!window::make_windowed(1280, 720))
         return -1;
 
+    // Initialize input
+    input::init();
+
+    // Add close action to ESC
+    input::connection c = input::connect_key([](int k, int c, input::state s, int m){
+        if (s == input::press && k == GLFW_KEY_ESCAPE)
+            window::close();
+    });
+
     // Loop until the user closes the window
     while (!window::should_close()) {
         // Render here
@@ -35,6 +47,7 @@ int main() {
     }
     log::log(lg, log::info, "Main loop ended");
 
+    c.disconnect();
     window::clean_up();
     log::clean_up();
     window::terminate();

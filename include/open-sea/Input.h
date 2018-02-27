@@ -7,6 +7,7 @@
 #define OPEN_SEA_INPUT_H
 
 #include <glm/vec2.hpp>
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 #include <boost/signals2.hpp>
@@ -25,6 +26,9 @@ namespace open_sea::input {
         release //!< Released
     };
 
+    //! Alias for the Signals2 connection type
+    typedef signals::connection connection;
+
     // Signal types
     //! Key signal type
     typedef signals::signal<void (int, int, state, int)> key_signal;
@@ -34,14 +38,17 @@ namespace open_sea::input {
     typedef signals::signal<void (int, state, int)> mouse_signal;
     //! Scroll signal type
     typedef signals::signal<void (double, double)> scroll_signal;
+    //! Character signal type
+    typedef signals::signal<void (unsigned int)> character_signal;
 
     void init();
     void reattach();
 
-    signals::connection connect_key(const key_signal::slot_type& slot);
-    signals::connection connect_enter(const enter_signal::slot_type& slot);
-    signals::connection connect_mouse(const mouse_signal::slot_type& slot);
-    signals::connection connect_scroll(const scroll_signal::slot_type& slot);
+    connection connect_key(const key_signal::slot_type& slot);
+    connection connect_enter(const enter_signal::slot_type& slot);
+    connection connect_mouse(const mouse_signal::slot_type& slot);
+    connection connect_scroll(const scroll_signal::slot_type& slot);
+    connection connect_character(const character_signal::slot_type& slot);
 
     ::glm::dvec2 cursor_position();
     state key_state(int key);

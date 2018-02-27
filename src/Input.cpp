@@ -2,10 +2,17 @@
  * Input implementation
  */
 #include <open-sea/Input.h>
+#include <open-sea/Log.h>
+namespace log = open_sea::log;
 #include <open-sea/Window.h>
 namespace w = open_sea::window;
 
+#include <sstream>
+
 namespace open_sea::input {
+    // Logger for this module
+    log::severity_logger lg = log::get_logger("Input");
+
     // Signals
     //! Key signal
     std::unique_ptr<key_signal> keyboard;
@@ -15,6 +22,8 @@ namespace open_sea::input {
     std::unique_ptr<mouse_signal> mouse;
     //! Scroll signal
     std::unique_ptr<scroll_signal> scroll;
+    //! Character signal
+    std::unique_ptr<character_signal> character;
 
     // Callbacks
     /**
@@ -90,6 +99,21 @@ namespace open_sea::input {
     }
 
     /**
+     * \brief Send signal about a character event
+     *
+     * \param window Event window
+     * \param codepoint Unicode codepoint of the character
+     */
+    void character_callback(::GLFWwindow* window, unsigned int codepoint) {
+        // Skip if not the global window
+        if (window != w::window)
+            return;
+
+        // Fire a signal
+        (*character)(codepoint);
+    }
+
+    /**
      * \brief Reattach the signals to the current global window
      */
     void reattach() {
@@ -98,6 +122,7 @@ namespace open_sea::input {
             ::glfwSetCursorEnterCallback(w::window, cursor_enter_callback);
             ::glfwSetMouseButtonCallback(w::window, mouse_button_callback);
             ::glfwSetScrollCallback(w::window, scroll_callback);
+            ::glfwSetCharCallback(w::window, character_callback);
         }
     }
 
@@ -111,6 +136,7 @@ namespace open_sea::input {
         enter = std::make_unique<enter_signal>();
         mouse = std::make_unique<mouse_signal>();
         scroll = std::make_unique<scroll_signal>();
+        character = std::make_unique<character_signal>();
 
         // Attach the callbacks
         reattach();
@@ -154,13 +180,20 @@ namespace open_sea::input {
      * \brief Get key name
      * Get the name of the supplied key.
      * If \c key is \c unknown_key then \scancode is used, otherwise it is ignored.
+     * Returns "undefined" when no name is found.
+     *
+     * Note: unsupported by GLFW on Wayland, returns "undefined" for all keys
      *
      * \param key GLFW key name
      * \param scancode System-specific key code
      * \return Name of the key
      */
     std::string key_name(int key, int scancode) {
-        return std::string(::glfwGetKeyName(key, scancode));
+        const char* cs = ::glfwGetKeyName(key, scancode);
+        if (cs == nullptr)
+            return std::string("undefined");
+
+        return std::string(cs);
     }
 
     /**
@@ -169,7 +202,7 @@ namespace open_sea::input {
      * \param slot Slot to connect
      * \return Connection
      */
-    signals::connection connect_key(const key_signal::slot_type& slot) {
+    connection connect_key(const key_signal::slot_type& slot) {
         return keyboard->connect(slot);
     }
 
@@ -179,7 +212,7 @@ namespace open_sea::input {
      * \param slot Slot to connect
      * \return Connection
      */
-    signals::connection connect_enter(const enter_signal::slot_type& slot) {
+    connection connect_enter(const enter_signal::slot_type& slot) {
         return enter->connect(slot);
     }
 
@@ -189,7 +222,7 @@ namespace open_sea::input {
      * \param slot Slot to connect
      * \return Connection
      */
-    signals::connection connect_mouse(const mouse_signal::slot_type& slot) {
+    connection connect_mouse(const mouse_signal::slot_type& slot) {
         return mouse->connect(slot);
     }
 
@@ -199,7 +232,17 @@ namespace open_sea::input {
      * \param slot Slot to connect
      * \return Connection
      */
-    signals::connection connect_scroll(const scroll_signal::slot_type& slot) {
+    connection connect_scroll(const scroll_signal::slot_type& slot) {
         return scroll->connect(slot);
+    }
+
+    /**
+     * \brief Connect a slot to the character signal
+     *
+     * \param slot Slot to connect
+     * \return Connection
+     */
+    connection connect_character(const character_signal::slot_type &slot) {
+        return character->connect(slot);
     }
 }

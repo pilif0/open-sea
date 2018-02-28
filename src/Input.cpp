@@ -118,11 +118,15 @@ namespace open_sea::input {
      */
     void reattach() {
         if (w::window) {
+            log::log(lg, log::info, "Reattaching input...");
+
             ::glfwSetKeyCallback(w::window, key_callback);
             ::glfwSetCursorEnterCallback(w::window, cursor_enter_callback);
             ::glfwSetMouseButtonCallback(w::window, mouse_button_callback);
             ::glfwSetScrollCallback(w::window, scroll_callback);
             ::glfwSetCharCallback(w::window, character_callback);
+
+            log::log(lg, log::info, "Reattached input");
         }
     }
 
@@ -131,6 +135,8 @@ namespace open_sea::input {
      * Instantiate the various signals and attach them to the current global window.
      */
     void init() {
+        log::log(lg, log::info, "Input initializing...");
+
         // Instantiate the signals
         keyboard = std::make_unique<key_signal>();
         enter = std::make_unique<enter_signal>();
@@ -140,6 +146,8 @@ namespace open_sea::input {
 
         // Attach the callbacks
         reattach();
+
+        log::log(lg, log::info, "Input initialized");
     }
 
     /**
@@ -203,6 +211,7 @@ namespace open_sea::input {
      * \return Connection
      */
     connection connect_key(const key_signal::slot_type& slot) {
+        log::log(lg, log::info, "Connecting slot to key signal");
         return keyboard->connect(slot);
     }
 
@@ -213,6 +222,7 @@ namespace open_sea::input {
      * \return Connection
      */
     connection connect_enter(const enter_signal::slot_type& slot) {
+        log::log(lg, log::info, "Connecting slot to cursor entrance signal");
         return enter->connect(slot);
     }
 
@@ -223,6 +233,7 @@ namespace open_sea::input {
      * \return Connection
      */
     connection connect_mouse(const mouse_signal::slot_type& slot) {
+        log::log(lg, log::info, "Connecting slot to mouse button signal");
         return mouse->connect(slot);
     }
 
@@ -233,6 +244,7 @@ namespace open_sea::input {
      * \return Connection
      */
     connection connect_scroll(const scroll_signal::slot_type& slot) {
+        log::log(lg, log::info, "Connecting slot to scroll signal");
         return scroll->connect(slot);
     }
 
@@ -243,6 +255,7 @@ namespace open_sea::input {
      * \return Connection
      */
     connection connect_character(const character_signal::slot_type &slot) {
+        log::log(lg, log::info, "Connecting slot to character signal");
         return character->connect(slot);
     }
 }

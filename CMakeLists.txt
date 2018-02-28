@@ -43,6 +43,9 @@ target_include_directories("glad" PRIVATE "${GLAD_DIR}/include")
 set(GLAD "${open_sea_SOURCE_DIR}/deps/glad/include/glad/glad.h"
          "${open_sea_SOURCE_DIR}/deps/glad/src/glad.c")
 
+# GLM
+set(GLM_DIR "${DEP_DIR}/glm")
+
 # Doxygen
 if (open_sea_BUILD_DOC)
     find_package(Doxygen)

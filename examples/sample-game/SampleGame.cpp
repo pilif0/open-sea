@@ -28,6 +28,15 @@ int main() {
     if (!window::make_windowed(1280, 720))
         return -1;
 
+    // Add focus notifier to the window
+    window::connection focusConnection = window::connect_focus([](bool f){
+        static log::severity_logger lg = log::get_logger("Focus Notifier");
+        if (f)
+            log::log(lg, log::info, "Focused");
+        else
+            log::log(lg, log::info, "Unfocused");
+    });
+
     // Initialize input
     input::init();
 
@@ -48,6 +57,7 @@ int main() {
     log::log(lg, log::info, "Main loop ended");
 
     c.disconnect();
+    focusConnection.disconnect();
     window::clean_up();
     log::clean_up();
     window::terminate();

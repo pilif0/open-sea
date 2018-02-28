@@ -9,6 +9,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <boost/signals2.hpp>
+namespace signals = boost::signals2;
+
 #include <string>
 #include <memory>
 
@@ -48,6 +51,17 @@ namespace open_sea::window {
         bool vSync = defaults::vSync;               //!< Whether vSync is on
     };
 
+    //! Alias for the Signals2 connection type
+    typedef signals::connection connection;
+
+    // Signal types
+    //! Size signal type
+    typedef signals::signal<void (int, int)> size_signal;
+    //! Focus signal type
+    typedef signals::signal<void (bool)> focus_signal;
+    //! Close signal type
+    typedef signals::signal<void ()> close_signal;
+
     extern ::GLFWwindow* window;
 
     bool init();
@@ -65,9 +79,9 @@ namespace open_sea::window {
     void close();
     window_properties current_properties();
 
-    void set_size_callback(::GLFWwindowsizefun cbfun);
-    void set_focus_callback(::GLFWwindowfocusfun cbfun);
-    void set_close_callback(::GLFWwindowclosefun cbfun);
+    connection connect_size(const size_signal::slot_type& slot);
+    connection connect_focus(const focus_signal::slot_type& slot);
+    connection connect_close(const close_signal::slot_type& slot);
 
     void update();
 

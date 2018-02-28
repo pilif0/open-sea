@@ -12,6 +12,13 @@ namespace open_sea::window {
     // Logger for this module
     log::severity_logger lg = log::get_logger("Window");
 
+    //! Size signal
+    std::unique_ptr<size_signal> size;
+    //! Focus signal
+    std::unique_ptr<focus_signal> focus;
+    //! Close signal
+    std::unique_ptr<close_signal> closeSignal;
+
     //! Current window properties (default values until a window is created)
     std::unique_ptr<window_properties> current = std::make_unique<window_properties>();
 
@@ -33,20 +40,29 @@ namespace open_sea::window {
 
     /**
      * \brief Initialize GLFW
-     * Initialize GLFW and log the action
+     * Initialize GLFW and signals, and log the actions
      *
      * \return \c false on failure, \c true otherwise
      */
     bool init() {
+        log::log(lg, log::info, "Initializing Window module...");
+
         // Set the error callback
         ::glfwSetErrorCallback(error_callback);
 
         // Initialize GLFW
         if (!::glfwInit()) {
-            log::log(lg, log::fatal, "GLFW initialisation failed");
+            log::log(lg, log::fatal, "GLFW initialization failed");
             return false;
         }
-        log::log(lg, log::info, "GLFW initialised");
+        log::log(lg, log::info, "GLFW initialized");
+
+        // Instantiate signals
+        size = std::make_unique<size_signal>();
+        focus = std::make_unique<focus_signal>();
+        closeSignal = std::make_unique<close_signal>();
+
+        log::log(lg, log::info, "Window module initialized");
         return true;
     }
 
@@ -234,34 +250,100 @@ namespace open_sea::window {
         ::glfwTerminate();
     }
 
+    // Callbacks
     /**
-     * \brief Set window size callback
-     * Set a GLFW callback function for changes in window size
+     * \brief Send signal about a size event
      *
-     * \param cbfun Callback function
+     * \param w Event window
+     * \param width New width
+     * \param height New height
      */
-    void set_size_callback(::GLFWwindowsizefun cbfun) {
-        ::glfwSetWindowSizeCallback(window, cbfun);
+    void size_callback(::GLFWwindow* w, int width, int height) {
+        // Skip if not the global window
+        if (w != window)
+            return;
+
+        // Fire the signal
+        (*size)(width, height);
     }
 
     /**
-     * \brief Set window focus callback
-     * Set a GLFW callback function for changes in window focus
+     * \brief Send signal about focus event
      *
-     * \param cbfun Callback function
+     * \param w Event window
+     * \param focused \c 0 if not focused, otherwise focused
      */
-    void set_focus_callback(::GLFWwindowfocusfun cbfun) {
-        ::glfwSetWindowFocusCallback(window, cbfun);
+    void focus_callback(::GLFWwindow* w, int focused) {
+        // Skip if not the global window
+        if (w != window)
+            return;
+
+        // Fire the signal
+        (*focus)(focused != 0);
     }
 
     /**
-     * \brief Set window close callback
-     * Set a GLFW callback function for changes in window close flag
+     * \brief Send signal about close event
      *
-     * \param cbfun Callback function
+     * \param w Event window
      */
-    void set_close_callback(::GLFWwindowclosefun cbfun) {
-        ::glfwSetWindowCloseCallback(window, cbfun);
+    void close_callback(::GLFWwindow* w) {
+        // Skip if not the global window
+        if (w != window)
+            return;
+
+        // Fire the signal
+        (*closeSignal)();
+    }
+
+    /**
+     * \brief Attach callbacks to the window
+     * Attach callbacks that fire appropriate signals to the window
+     */
+    void attach_callbacks() {
+        if (window) {
+            log::log(lg, log::info, "Attaching callbacks...");
+
+            ::glfwSetWindowSizeCallback(window, size_callback);
+            ::glfwSetWindowFocusCallback(window, focus_callback);
+            ::glfwSetWindowCloseCallback(window, close_callback);
+
+            log::log(lg, log::info, "Attached callbacks");
+        }
+    }
+
+    // Connectors
+    /**
+     * \brief Connect a slot to the size signal
+     *
+     * \param slot Slot to connect
+     * \return Connection
+     */
+    connection connect_size(const size_signal::slot_type& slot) {
+        log::log(lg, log::info, "Connecting slot to size signal");
+        return size->connect(slot);
+    }
+
+    /**
+     * \brief Connect a slot to the focus signal
+     *
+     * \param slot Slot to connect
+     * \return Connection
+     */
+    connection connect_focus(const focus_signal::slot_type& slot) {
+        log::log(lg, log::info, "Connecting slot to focus signal");
+        return focus->connect(slot);
+    }
+
+    /**
+     * \brief Connect a slot to the close signal
+     *
+     * \param slot Slot to connect
+     * \return Connection
+     */
+    connection connect_close(const close_signal::slot_type& slot) {
+        log::log(lg, log::info, "Connecting slot to close signal");
+        return closeSignal->connect(slot);
     }
 
     /**
@@ -309,6 +391,8 @@ namespace open_sea::window {
      * \return \c false on failure, \c true otherwise
      */
     bool make_windowed(const int width, const int height) {
+        log::log(lg, log::info, "Making windowed window...");
+
         // Create the window if one doesn't exist
         if (!window) {
             // Create the window
@@ -323,6 +407,9 @@ namespace open_sea::window {
 
             // Initialize context
             init_context();
+
+            // Attach callbacks
+            attach_callbacks();
 
             // Write new properties
             ::glfwGetWindowSize(window, &current->width, &current->height);
@@ -374,6 +461,8 @@ namespace open_sea::window {
      * \return \c false on failure, \c true otherwise
      */
     bool make_borderless(::GLFWmonitor* monitor) {
+        log::log(lg, log::info, "Making borderless window...");
+
         // Create the window if one doesn't exist
         if (!window) {
             // Get the video mode
@@ -395,6 +484,9 @@ namespace open_sea::window {
 
             // Initialize context
             init_context();
+
+            // Attach callbacks
+            attach_callbacks();
 
             // Write new properties
             ::glfwGetWindowSize(window, &current->width, &current->height);
@@ -451,6 +543,8 @@ namespace open_sea::window {
      * \return \c false on failure, \c true otherwise
      */
     bool make_fullscreen(int width, int height, ::GLFWmonitor* monitor) {
+        log::log(lg, log::info, "Making fullscreen window...");
+
         // Create the window if one doesn't exist
         if (!window) {
             // Create the window
@@ -465,6 +559,9 @@ namespace open_sea::window {
 
             // Initialize context
             init_context();
+
+            // Attach callbacks
+            attach_callbacks();
 
             // Write new properties
             ::glfwGetWindowSize(window, &current->width, &current->height);
@@ -498,7 +595,7 @@ namespace open_sea::window {
             current->state = fullscreen;
             current->monitor = monitor;
 
-            // log the action
+            // Log the action
             log::log(lg, log::info, "Modified the window to fullscreen state");
 
             return true;

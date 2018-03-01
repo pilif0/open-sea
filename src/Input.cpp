@@ -205,6 +205,24 @@ namespace open_sea::input {
     }
 
     /**
+     * \brief Get clipboard content
+     *
+     * \return Clipboard content
+     */
+    const char* get_clipboard() {
+        return ::glfwGetClipboardString(window::window);
+    }
+
+    /**
+     * \brief Set clipboard content
+     *
+     * \param in New content
+     */
+    void set_clipboard(const char* in) {
+        ::glfwSetClipboardString(window::window, in);
+    }
+
+    /**
      * \brief Connect a slot to the key signal
      *
      * \param slot Slot to connect

@@ -9,10 +9,14 @@
 namespace window = open_sea::window;
 #include <open-sea/Input.h>
 namespace input = open_sea::input;
+#include <open-sea/Log.h>
+namespace log = open_sea::log;
 
 #include <imgui.h>
 
 namespace open_sea::imgui {
+    log::severity_logger lg = log::get_logger("ImGui");
+
     //! Different cursors used by ImGui
     GLFWcursor* cursors[ImGuiMouseCursor_Count_] = { 0 };
     //! Flags for mouse button presses
@@ -32,6 +36,8 @@ namespace open_sea::imgui {
      * Connect signal listeners (slots) for input
      */
     void connect_listeners() {
+        log::log(lg, log::info, "Connecting slots...");
+
         input::connect_mouse([](int b, input::state a, int m){
             if (a == input::press) {
                 // Set the corresponding flag
@@ -68,6 +74,8 @@ namespace open_sea::imgui {
             if (c > 0 && c < 0x10000)
                 io.AddInputCharacter((unsigned short) c);
         });
+
+        log::log(lg, log::info, "Slots connected");
     }
 
     /**
@@ -75,6 +83,8 @@ namespace open_sea::imgui {
      * Map keys, set callbacks, create cursors
      */
     void init() {
+        log::log(lg, log::info, "Initializing ImGui integration...");
+
         ImGui::CreateContext();
         ImGuiIO& io = ImGui::GetIO();
 
@@ -108,22 +118,26 @@ namespace open_sea::imgui {
 #endif
 
         // Load cursors
-        cursors[ImGuiMouseCursor_Arrow] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
-        cursors[ImGuiMouseCursor_TextInput] = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR);
+        cursors[ImGuiMouseCursor_Arrow] = ::glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
+        cursors[ImGuiMouseCursor_TextInput] = ::glfwCreateStandardCursor(GLFW_IBEAM_CURSOR);
         //g_MouseCursors[ImGuiMouseCursor_ResizeAll] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
-        cursors[ImGuiMouseCursor_ResizeNS] = glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR);
-        cursors[ImGuiMouseCursor_ResizeEW] = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR);
-        cursors[ImGuiMouseCursor_ResizeNESW] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
-        cursors[ImGuiMouseCursor_ResizeNWSE] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
+        cursors[ImGuiMouseCursor_ResizeNS] = ::glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR);
+        cursors[ImGuiMouseCursor_ResizeEW] = ::glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR);
+        cursors[ImGuiMouseCursor_ResizeNESW] = ::glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
+        cursors[ImGuiMouseCursor_ResizeNWSE] = ::glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
 
         // Connect input
         connect_listeners();
 
         // Set style
         ImGui::StyleColorsDark();
+
+        log::log(lg, log::info, "ImGui integration initialized");
     }
 
-    //TODO doc
+    /**
+     * \brief Create texture from the default font
+     */
     void create_font_texture() {
         // Build texture atlas
         ImGuiIO& io = ImGui::GetIO();
@@ -155,8 +169,13 @@ namespace open_sea::imgui {
         glBindTexture(GL_TEXTURE_2D, last_texture);
     }
 
-    //TODO doc
+    /**
+     * \brief Create OpenGL objects
+     * Create shader and font texture
+     */
     void create_device_objects() {
+        log::log(lg, log::info, "Creating OpenGL objects...");
+
         // Backup GL state
         GLint last_texture, last_array_buffer, last_vertex_array;
         glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
@@ -201,6 +220,7 @@ namespace open_sea::imgui {
         glCompileShader(fragmentShader);
         glAttachShader(shaderProgram, fragmentShader);
         glLinkProgram(shaderProgram);
+        log::log(lg, log::info, "Shader created");
 
         // Get the uniform locations
         attribLocationTex = glGetUniformLocation(shaderProgram, "Texture");
@@ -215,11 +235,14 @@ namespace open_sea::imgui {
 
         // Create font texture
         create_font_texture();
+        log::log(lg, log::info, "Font texture created");
 
         // Restore GL state
         glBindTexture(GL_TEXTURE_2D, last_texture);
         glBindBuffer(GL_ARRAY_BUFFER, last_array_buffer);
         glBindVertexArray(last_vertex_array);
+
+        log::log(lg, log::info, "OpenGL objects created");
     }
 
     /**
@@ -233,7 +256,6 @@ namespace open_sea::imgui {
         ImGuiIO& io = ImGui::GetIO();
 
         // Setup display size (every frame to accommodate for window resizing)
-        //TODO: set during init and replace this with signal listener?
         window::window_properties properties = window::current_properties();
         io.DisplaySize = ImVec2((float) properties.width, (float) properties.height);
         io.DisplayFramebufferScale = ImVec2(
@@ -401,8 +423,13 @@ namespace open_sea::imgui {
         glScissor(last_scissor_box[0], last_scissor_box[1], (GLsizei)last_scissor_box[2], (GLsizei)last_scissor_box[3]);
     }
 
-    //TODO doc
+    /**
+     * \brief Clean up after ImGui
+     * Destroy cursors and OpenGL objects used by ImGui
+     */
     void clean_up() {
+        log::log(lg, log::info, "Cleaning up...");
+
         // Destroy GLFW mouse cursors
         for (ImGuiMouseCursor cursor_n = 0; cursor_n < ImGuiMouseCursor_Count_; cursor_n++)
             ::glfwDestroyCursor(cursors[cursor_n]);
@@ -429,5 +456,7 @@ namespace open_sea::imgui {
             ImGui::GetIO().Fonts->TexID = 0;
             fontTexture = 0;
         }
+
+        log::log(lg, log::info, "Cleaned up");
     }
 }

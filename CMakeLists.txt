@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.9)
 project(open_sea)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 # Set project version
 set(open_sea_VERSION_MAJOR "0")

@@ -14,6 +14,8 @@ namespace log = open_sea::log;
 
 #include <imgui.h>
 
+#include <optional>
+
 namespace open_sea::imgui {
     log::severity_logger lg = log::get_logger("ImGui");
 
@@ -31,6 +33,12 @@ namespace open_sea::imgui {
     static int          attribLocationPosition = 0, attribLocationUV = 0, attribLocationColor = 0;
     static unsigned int vbo = 0, elements = 0;
 
+    // Input connections
+    std::optional<input::connection> mouseConn = std::nullopt;
+    std::optional<input::connection> scrollConn = std::nullopt;
+    std::optional<input::connection> keyConn = std::nullopt;
+    std::optional<input::connection> charConn = std::nullopt;
+
     /**
      * \brief Connect signal listeners for input
      * Connect signal listeners (slots) for input
@@ -38,44 +46,73 @@ namespace open_sea::imgui {
     void connect_listeners() {
         log::log(lg, log::info, "Connecting slots...");
 
-        input::connect_mouse([](int b, input::state a, int m){
-            if (a == input::press) {
-                // Set the corresponding flag
-                switch (b) {
-                    case GLFW_MOUSE_BUTTON_1: mouseJustPressed[0] = true; break;
-                    case GLFW_MOUSE_BUTTON_2: mouseJustPressed[1] = true; break;
-                    case GLFW_MOUSE_BUTTON_3: mouseJustPressed[2] = true; break;
-                    default: break;
+        if (!mouseConn)
+            *mouseConn = input::connect_mouse([](int b, input::state a, int m){
+                if (a == input::press) {
+                    // Set the corresponding flag
+                    switch (b) {
+                        case GLFW_MOUSE_BUTTON_1: mouseJustPressed[0] = true; break;
+                        case GLFW_MOUSE_BUTTON_2: mouseJustPressed[1] = true; break;
+                        case GLFW_MOUSE_BUTTON_3: mouseJustPressed[2] = true; break;
+                        default: break;
+                    }
                 }
-            }
-        });
-        input::connect_scroll([](double x, double y){
-            ImGuiIO& io = ImGui::GetIO();
-            io.MouseWheel -= (float) y;
-        });
-        input::connect_key([](int k, int s, input::state a, int m){
-            ImGuiIO& io = ImGui::GetIO();
+            });
 
-            // Set key state
-            if (a == input::press)
-                io.KeysDown[k] = true;
-            if (a == input::release)
-                io.KeysDown[k] = false;
+        if (!scrollConn)
+            *scrollConn = input::connect_scroll([](double x, double y){
+                ImGuiIO& io = ImGui::GetIO();
+                io.MouseWheel -= (float) y;
+            });
 
-            // Update modifier flags
-            io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
-            io.KeyShift = io.KeysDown[GLFW_KEY_LEFT_SHIFT] || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];
-            io.KeyAlt = io.KeysDown[GLFW_KEY_LEFT_ALT] || io.KeysDown[GLFW_KEY_RIGHT_ALT];
-            io.KeySuper = io.KeysDown[GLFW_KEY_LEFT_SUPER] || io.KeysDown[GLFW_KEY_RIGHT_SUPER];
-        });
-        input::connect_character([](unsigned int c){
-            ImGuiIO& io = ImGui::GetIO();
+        if (!keyConn)
+            *keyConn = input::connect_key([](int k, int s, input::state a, int m){
+                ImGuiIO& io = ImGui::GetIO();
 
-            if (c > 0 && c < 0x10000)
-                io.AddInputCharacter((unsigned short) c);
-        });
+                // Set key state
+                if (a == input::press)
+                    io.KeysDown[k] = true;
+                if (a == input::release)
+                    io.KeysDown[k] = false;
+
+                // Update modifier flags
+                io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
+                io.KeyShift = io.KeysDown[GLFW_KEY_LEFT_SHIFT] || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];
+                io.KeyAlt = io.KeysDown[GLFW_KEY_LEFT_ALT] || io.KeysDown[GLFW_KEY_RIGHT_ALT];
+                io.KeySuper = io.KeysDown[GLFW_KEY_LEFT_SUPER] || io.KeysDown[GLFW_KEY_RIGHT_SUPER];
+            });
+
+        if (!charConn)
+            *charConn = input::connect_character([](unsigned int c){
+                ImGuiIO& io = ImGui::GetIO();
+
+                if (c > 0 && c < 0x10000)
+                    io.AddInputCharacter((unsigned short) c);
+            });
 
         log::log(lg, log::info, "Slots connected");
+    }
+
+    /**
+     * \brief Disconnect signal listeners from input
+     */
+    void disconnect_listeners() {
+        if (mouseConn) {
+            mouseConn->disconnect();
+            mouseConn.reset();
+        }
+        if (scrollConn) {
+            scrollConn->disconnect();
+            scrollConn.reset();
+        }
+        if (keyConn) {
+            keyConn->disconnect();
+            keyConn.reset();
+        }
+        if (charConn) {
+            charConn->disconnect();
+            charConn.reset();
+        }
     }
 
     /**

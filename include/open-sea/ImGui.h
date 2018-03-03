@@ -11,6 +11,9 @@ namespace open_sea::imgui {
     void new_frame();
     void render();
     void clean_up();
+
+    void connect_listeners();
+    void disconnect_listeners();
 }
 
 #endif //OPEN_SEA_IMGUI_H

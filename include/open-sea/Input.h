@@ -54,6 +54,11 @@ namespace open_sea::input {
     state key_state(int key);
     state mouse_state(int button);
     std::string key_name(int key, int scancode);
+
+    const char* get_clipboard();
+    void set_clipboard(const char* in);
+
+    void show_debug();
 }
 
 #endif //OPEN_SEA_INPUT_H

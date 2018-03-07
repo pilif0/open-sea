@@ -88,6 +88,8 @@ namespace open_sea::window {
     void clean_up();
     void terminate();
     bool should_close();
+
+    void show_debug();
 }
 
 #endif //OPEN_SEA_WINDOW_H

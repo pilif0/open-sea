@@ -13,6 +13,10 @@ namespace log = open_sea::log;
 namespace window = open_sea::window;
 #include <open-sea/Input.h>
 namespace input = open_sea::input;
+#include <open-sea/ImGui.h>
+namespace imgui = open_sea::imgui;
+
+#include <imgui.h>
 
 int main() {
     // Initialize logging
@@ -46,10 +50,77 @@ int main() {
             window::close();
     });
 
+    // Initialize ImGui
+    imgui::init();
+
+    // Add ImGui display toggle to F3
+    bool show_imgui = false;
+    input::connection imguiToggle = input::connect_key([&show_imgui](int k, int c, input::state s, int m){
+        if (s == input::press && k == GLFW_KEY_F3) {
+            // Toggle the display flag
+            show_imgui = !show_imgui;
+
+            // Toggle input connection
+            if (show_imgui)
+                imgui::connect_listeners();
+            else
+                imgui::disconnect_listeners();
+        }
+    });
+
+    // ImGui test data
+    bool show_demo_window = true;
+
     // Loop until the user closes the window
     while (!window::should_close()) {
-        // Render here
+        // Clear
         glClear(GL_COLOR_BUFFER_BIT);
+
+        // ImGui debug GUI
+        if (show_imgui) {
+            // Prepare new frame
+            imgui::new_frame();
+
+            // Additional window open flags
+            static bool show_window_debug = false;
+            static bool show_input_debug = false;
+
+            // System stats
+            {
+                ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Once);
+                ImGui::Begin("System Statistics");
+
+                ImGui::Text("Average %.3f ms/frame (%.1f FPS)",
+                            1000.0f / ImGui::GetIO().Framerate,
+                            ImGui::GetIO().Framerate);
+
+                if (ImGui::CollapsingHeader("Additional windows:")) {
+                    ImGui::Checkbox("Window info", &show_window_debug);
+                    ImGui::Checkbox("Input info", &show_input_debug);
+                }
+
+
+                ImGui::End();
+            }
+
+            // Window info
+            if (show_window_debug)
+                window::show_debug();
+
+            // Input info
+            if (show_input_debug)
+                input::show_debug();
+
+            // Demo window
+            {
+                ImGui::SetNextWindowPos(ImVec2(650, 20),
+                                        ImGuiCond_FirstUseEver); // Normally user code doesn't need/want to call this because positions are saved in .ini file anyway. Here we just want to make the demo initial state a bit more friendly!
+                ImGui::ShowDemoWindow(&show_demo_window);
+            }
+
+            //Render
+            imgui::render();
+        }
 
         // Update the window
         window::update();
@@ -58,6 +129,7 @@ int main() {
 
     c.disconnect();
     focusConnection.disconnect();
+    imgui::clean_up();
     window::clean_up();
     log::clean_up();
     window::terminate();

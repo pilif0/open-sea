@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.9)
 project(open_sea)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 # Set project version
 set(open_sea_VERSION_MAJOR "0")
@@ -45,6 +45,16 @@ set(GLAD "${open_sea_SOURCE_DIR}/deps/glad/include/glad/glad.h"
 
 # GLM
 set(GLM_DIR "${DEP_DIR}/glm")
+
+# ImGUI
+set(ImGui_DIR "${DEP_DIR}/imgui")
+set(ImGui "${ImGui_DIR}/imgui.h"
+        "${ImGui_DIR}/stb_rect_pack.h"
+        "${ImGui_DIR}/stb_textedit.h"
+        "${ImGui_DIR}/stb_truetype.h"
+        "${ImGui_DIR}/imgui.cpp"
+        "${ImGui_DIR}/imgui_draw.cpp"
+        "${ImGui_DIR}/imgui_demo.cpp")
 
 # Doxygen
 if (open_sea_BUILD_DOC)

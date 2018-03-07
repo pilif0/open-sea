@@ -6,6 +6,8 @@
 namespace log = open_sea::log;
 #include <open-sea/config.h>
 
+#include <imgui.h>
+
 #include <sstream>
 
 namespace open_sea::window {
@@ -600,5 +602,36 @@ namespace open_sea::window {
 
             return true;
         }
+    }
+
+    /**
+     * \brief Show the ImGui debug window
+     */
+    void show_debug() {
+        ImGui::Begin("Window");
+
+        ImGui::Text("Window size: %d x %d", current->width, current->height);
+        ImGui::Text("Frame buffer size: %d x %d", current->fbWidth, current->fbHeight);
+        ImGui::Text("Window title: %s", current->title.c_str());
+        ImGui::Text("Processed title: %s", process_title().c_str());
+        const char* state;
+        switch (current->state) {
+            case windowed:
+                state = "windowed";
+                break;
+            case fullscreen:
+                state = "fullscreen";
+                break;
+            case borderless:
+                state = "borderless";
+                break;
+            default:
+                state = "invalid";
+        }
+        ImGui::Text("Window state: %s", state);
+        ImGui::Text("Window monitor: %s", (current->monitor == nullptr) ? "none" : ::glfwGetMonitorName(current->monitor));
+        ImGui::Text("Vsync: %s", current->vSync ? "enabled" : "disabled");
+
+        ImGui::End();
     }
 }

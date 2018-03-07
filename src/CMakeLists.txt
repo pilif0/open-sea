@@ -5,13 +5,11 @@ include_directories("${GLFW_DIR}/include" "${GLAD_DIR}/include" ${GLM_DIR} ${ImG
 # Set up source and header lists
 set(open_sea_HEADERS
         "${INCL_DIR}/open-sea/config.h"
-        "${INCL_DIR}/open-sea/Test.h"
         "${INCL_DIR}/open-sea/Log.h"
         "${INCL_DIR}/open-sea/Window.h"
         "${INCL_DIR}/open-sea/Input.h"
         "${INCL_DIR}/open-sea/ImGui.h")
 set(open_sea_SOURCES
-        Test.cpp
         Log.cpp
         Window.cpp
         Input.cpp

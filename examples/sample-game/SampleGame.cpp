@@ -8,7 +8,6 @@
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 
-#include <open-sea/Test.h>
 #include <open-sea/Log.h>
 #include <open-sea/Window.h>
 #include <open-sea/Input.h>

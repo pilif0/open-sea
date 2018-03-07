@@ -83,6 +83,7 @@ int main() {
 
             // Additional window open flags
             static bool show_window_debug = false;
+            static bool show_input_debug = false;
 
             // System stats
             {
@@ -95,6 +96,7 @@ int main() {
 
                 if (ImGui::CollapsingHeader("Additional windows:")) {
                     ImGui::Checkbox("Window info", &show_window_debug);
+                    ImGui::Checkbox("Input info", &show_input_debug);
                 }
 
 
@@ -104,6 +106,10 @@ int main() {
             // Window info
             if (show_window_debug)
                 window::show_debug();
+
+            // Input info
+            if (show_input_debug)
+                input::show_debug();
 
             // Demo window
             {

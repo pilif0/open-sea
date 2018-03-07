@@ -7,6 +7,8 @@ namespace log = open_sea::log;
 #include <open-sea/Window.h>
 namespace w = open_sea::window;
 
+#include <imgui.h>
+
 #include <sstream>
 
 namespace open_sea::input {
@@ -275,5 +277,22 @@ namespace open_sea::input {
     connection connect_character(const character_signal::slot_type &slot) {
         log::log(lg, log::info, "Connecting slot to character signal");
         return character->connect(slot);
+    }
+
+    /**
+     * \brief Show the ImGui debug window
+     */
+    void show_debug() {
+        ImGui::Begin("Input");
+
+        glm::dvec2 cur_pos = cursor_position();
+        ImGui::Text("Cursor position: (%.2f,%.2f)", cur_pos.x, cur_pos.y);
+        ImGui::Text("Number of key slots: %d", keyboard->num_slots());
+        ImGui::Text("Number of enter slots: %d", enter->num_slots());
+        ImGui::Text("Number of mouse slots: %d", mouse->num_slots());
+        ImGui::Text("Number of scroll slots: %d", scroll->num_slots());
+        ImGui::Text("Number of character slots: %d", character->num_slots());
+
+        ImGui::End();
     }
 }

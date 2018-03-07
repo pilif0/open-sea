@@ -1,12 +1,12 @@
 /*
  * Window implementation
  */
+#include <imgui.h>
+
 #include <open-sea/Window.h>
+#include <open-sea/config.h>
 #include <open-sea/Log.h>
 namespace log = open_sea::log;
-#include <open-sea/config.h>
-
-#include <imgui.h>
 
 #include <sstream>
 

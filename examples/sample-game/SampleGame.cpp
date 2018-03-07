@@ -6,17 +6,17 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <imgui.h>
+
 #include <open-sea/Test.h>
 #include <open-sea/Log.h>
-namespace log = open_sea::log;
 #include <open-sea/Window.h>
-namespace window = open_sea::window;
 #include <open-sea/Input.h>
-namespace input = open_sea::input;
 #include <open-sea/ImGui.h>
+namespace log = open_sea::log;
+namespace window = open_sea::window;
+namespace input = open_sea::input;
 namespace imgui = open_sea::imgui;
-
-#include <imgui.h>
 
 int main() {
     // Initialize logging
@@ -55,7 +55,7 @@ int main() {
 
     // Add ImGui display toggle to F3
     bool show_imgui = false;
-    input::connection imguiToggle = input::connect_key([&show_imgui](int k, int c, input::state s, int m){
+    input::connection imgui_toggle = input::connect_key([&show_imgui](int k, int c, input::state s, int m){
         if (s == input::press && k == GLFW_KEY_F3) {
             // Toggle the display flag
             show_imgui = !show_imgui;
@@ -129,6 +129,7 @@ int main() {
 
     c.disconnect();
     focusConnection.disconnect();
+    imgui_toggle.disconnect();
     imgui::clean_up();
     window::clean_up();
     log::clean_up();

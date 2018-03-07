@@ -4,15 +4,15 @@
  * Based on the ImGui example at https://github.com/ocornut/imgui/tree/master/examples/opengl3_example
  */
 
+#include <imgui.h>
+
 #include <open-sea/ImGui.h>
 #include <open-sea/Window.h>
-namespace window = open_sea::window;
 #include <open-sea/Input.h>
-namespace input = open_sea::input;
 #include <open-sea/Log.h>
+namespace window = open_sea::window;
+namespace input = open_sea::input;
 namespace log = open_sea::log;
-
-#include <imgui.h>
 
 #include <optional>
 

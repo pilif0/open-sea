@@ -1,13 +1,13 @@
 /*
  * Input implementation
  */
+#include <imgui.h>
+
 #include <open-sea/Input.h>
 #include <open-sea/Log.h>
-namespace log = open_sea::log;
 #include <open-sea/Window.h>
+namespace log = open_sea::log;
 namespace w = open_sea::window;
-
-#include <imgui.h>
 
 #include <sstream>
 

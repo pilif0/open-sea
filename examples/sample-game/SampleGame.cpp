@@ -12,6 +12,7 @@
 #include <open-sea/Window.h>
 #include <open-sea/Input.h>
 #include <open-sea/ImGui.h>
+#include <open-sea/Delta.h>
 namespace log = open_sea::log;
 namespace window = open_sea::window;
 namespace input = open_sea::input;
@@ -71,6 +72,7 @@ int main() {
     bool show_demo_window = true;
 
     // Loop until the user closes the window
+    open_sea::time::start_delta();
     while (!window::should_close()) {
         // Clear
         glClear(GL_COLOR_BUFFER_BIT);
@@ -89,9 +91,7 @@ int main() {
                 ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Once);
                 ImGui::Begin("System Statistics");
 
-                ImGui::Text("Average %.3f ms/frame (%.1f FPS)",
-                            1000.0f / ImGui::GetIO().Framerate,
-                            ImGui::GetIO().Framerate);
+                open_sea::time::debug_widget();
 
                 if (ImGui::CollapsingHeader("Additional windows:")) {
                     ImGui::Checkbox("Window info", &show_window_debug);
@@ -123,6 +123,9 @@ int main() {
 
         // Update the window
         window::update();
+
+        // Update delta time
+        open_sea::time::update_delta();
     }
     log::log(lg, log::info, "Main loop ended");
 

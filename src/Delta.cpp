@@ -24,7 +24,7 @@ namespace open_sea::time {
     double average_FPS;
 
     // Debug data
-    constexpr int history_length = 100;
+    constexpr int history_length = 1000;
     boost::circular_buffer<float> history(history_length);
 
     /**
@@ -122,6 +122,11 @@ namespace open_sea::time {
      */
     void debug_widget() {
         // Plot the delta time
-        ImGui::PlotLines("Delta time", debug_history_get, &history, history_length);
+        ImGui::PlotLines("##plot", debug_history_get, &history, history_length);
+        ImGui::SameLine();
+        ImGui::Text("Delta time\n(%.3f ms)", get_delta() * 1000);
+
+        // Plot the FPS
+        ImGui::Text("FPS: %.1f (%.1f avg)", get_FPS_immediate(), get_FPS_average());
     }
 }

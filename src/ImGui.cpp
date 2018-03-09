@@ -10,6 +10,7 @@
 #include <open-sea/Window.h>
 #include <open-sea/Input.h>
 #include <open-sea/Log.h>
+#include <open-sea/Delta.h>
 namespace window = open_sea::window;
 namespace input = open_sea::input;
 namespace log = open_sea::log;
@@ -23,8 +24,6 @@ namespace open_sea::imgui {
     GLFWcursor* cursors[ImGuiMouseCursor_Count_] = { 0 };
     //! Flags for mouse button presses
     bool mouseJustPressed[3] = {false, false, false};
-    //! Time used for delta calculation
-    float time = 0.0f;
 
     // OpenGL data
     static GLuint       fontTexture = 0;
@@ -301,10 +300,7 @@ namespace open_sea::imgui {
         );
 
         // Setup time step
-        //TODO: replace with custom delta time
-        double current_time =  glfwGetTime();
-        io.DeltaTime = time > 0.0 ? (float)(current_time - time) : (1.0f/60.0f);
-        time = (float) current_time;
+        io.DeltaTime = static_cast<float>(open_sea::time::get_delta());
 
         // Setup inputs
         if (glfwGetWindowAttrib(window::window, GLFW_FOCUSED)) {

@@ -378,6 +378,12 @@ namespace open_sea::window {
         }
         log::log(lg, log::info, "OpenGL context initialized");
 
+        // Initialize with vSync set as in current properties
+        if (current->vSync)
+            ::glfwSwapInterval(1);
+        else
+            ::glfwSwapInterval(0);
+
         return true;
     }
 

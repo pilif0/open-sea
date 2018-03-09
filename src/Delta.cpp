@@ -6,10 +6,14 @@
 #include <imgui.h>
 
 #include <open-sea/Delta.h>
+#include <open-sea/Log.h>
+namespace log = open_sea::log;
 
 #include <boost/circular_buffer.hpp>
 
 namespace open_sea::time {
+    log::severity_logger lg = log::get_logger("Time");
+
     //! Current delta time in seconds
     double delta_time;
     //! Time of last update
@@ -40,6 +44,8 @@ namespace open_sea::time {
         frames = 0;
         average_FPS = 0;
         history.clear();
+
+        log::log(lg, log::info, "Started delta time tracking");
     }
 
     /**

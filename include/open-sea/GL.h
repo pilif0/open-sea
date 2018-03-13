@@ -55,7 +55,7 @@ namespace open_sea::gl {
             ~ShaderProgram();
     };
 
-    //TODO: add OpenGL error logging (https://www.khronos.org/opengl/wiki/Debug_Output)
+    void log_errors();
 }
 
 #endif //OPEN_SEA_GL_H

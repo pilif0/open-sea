@@ -178,4 +178,41 @@ namespace open_sea::gl {
         glDeleteProgram(programID);
         programID = 0;
     }
+
+    /**
+     * \brief OpenGL error callback
+     *
+     * \param source Source that produced the message
+     * \param type Type of the message
+     * \param id ID
+     * \param severity Message severity
+     * \param length Message length
+     * \param message Message contents
+     * \param userParam User parameter
+     */
+    void error_callback(GLenum source, GLenum type, GLuint id, GLenum severity,
+                        GLsizei length, const GLchar* message, const void* userParam) {
+        static log::severity_logger lg = log::get_logger("OpenGL");
+        static log::severity_logger shaderLG = log::get_logger("OpenGL Shaders");
+
+        // Log only errors and performance issues
+        if (severity >= GL_DEBUG_SEVERITY_LOW) {
+            // Use special logger for shader errors
+            if (source == GL_DEBUG_SOURCE_SHADER_COMPILER) {
+                log::log(shaderLG, log::error, message);
+                return;
+            }
+
+            // Otherwise just log the message normally
+            log::log(lg, log::error, message);
+        }
+    }
+
+    /**
+     * \brief Start logging OpenGL errors into the log
+     */
+    void log_errors() {
+        glEnable(GL_DEBUG_OUTPUT);
+        glDebugMessageCallback((GLDEBUGPROC) error_callback, 0);
+    }
 }

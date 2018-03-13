@@ -13,15 +13,23 @@
 #include <open-sea/Input.h>
 #include <open-sea/ImGui.h>
 #include <open-sea/Delta.h>
+#include <open-sea/GL.h>
 namespace log = open_sea::log;
 namespace window = open_sea::window;
 namespace input = open_sea::input;
 namespace imgui = open_sea::imgui;
+namespace gl = open_sea::gl;
+
+#include <boost/filesystem.hpp>
 
 int main() {
     // Initialize logging
     log::init_logging();
     log::severity_logger lg = log::get_logger("Sample Game");
+
+    // Set the current path to outside the example directory
+    boost::filesystem::current_path("../");
+    log::log(lg, log::info, "Working directory set to outside the example directory");
 
     // Initialize window module
     if (!window::init())
@@ -40,6 +48,11 @@ int main() {
         if (s == input::press && k == GLFW_KEY_ESCAPE)
             window::close();
     });
+
+    // Start OpenGL error handling
+#if !defined(OPEN_SEA_DEBUG)
+    gl::log_errors();
+#endif
 
     // Initialize ImGui
     imgui::init();

@@ -8,6 +8,8 @@
 #include <sstream>
 
 namespace open_sea::gl {
+    log::severity_logger lg = log::get_logger("OpenGL");
+    log::severity_logger shaderLG = log::get_logger("OpenGL Shaders");
 
     /**
      * \brief Construct an empty shader program
@@ -150,6 +152,26 @@ namespace open_sea::gl {
     }
 
     /**
+     * \brief Get the location of a uniform in this shader program
+     *
+     * \param name Name of the uniform
+     * \return Location of the uniform or \c -1 if the parameter is not a valid name or the uniform is not present
+     */
+    GLint ShaderProgram::getUniformLocation(const std::string &name) {
+        return glGetUniformLocation(programID, name.c_str());
+    }
+
+    /**
+     * \brief Get the location of an attribute in this shader program
+     *
+     * \param name Name of the attribute
+     * \return Location of the attribute or \c -1 if the parameter is not a valid name or the attribute is not present
+     */
+    GLint ShaderProgram::getAttributeLocation(const std::string &name) {
+        return glGetAttribLocation(programID, name.c_str());
+    }
+
+    /**
      * \brief Destroy the shaders and the program
      */
     ShaderProgram::~ShaderProgram() {
@@ -192,9 +214,6 @@ namespace open_sea::gl {
      */
     void error_callback(GLenum source, GLenum type, GLuint id, GLenum severity,
                         GLsizei length, const GLchar* message, const void* userParam) {
-        static log::severity_logger lg = log::get_logger("OpenGL");
-        static log::severity_logger shaderLG = log::get_logger("OpenGL Shaders");
-
         // Log only errors and performance issues
         if (severity >= GL_DEBUG_SEVERITY_LOW) {
             // Use special logger for shader errors
@@ -214,5 +233,6 @@ namespace open_sea::gl {
     void log_errors() {
         glEnable(GL_DEBUG_OUTPUT);
         glDebugMessageCallback((GLDEBUGPROC) error_callback, 0);
+        log::log(lg, log::info, "OpenGL error logging started");
     }
 }

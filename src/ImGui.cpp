@@ -11,11 +11,14 @@
 #include <open-sea/Input.h>
 #include <open-sea/Log.h>
 #include <open-sea/Delta.h>
+#include <open-sea/GL.h>
 namespace window = open_sea::window;
 namespace input = open_sea::input;
 namespace log = open_sea::log;
+namespace gl = open_sea::gl;
 
 #include <optional>
+#include <memory>
 
 namespace open_sea::imgui {
     log::severity_logger lg = log::get_logger("ImGui");
@@ -27,7 +30,7 @@ namespace open_sea::imgui {
 
     // OpenGL data
     static GLuint       fontTexture = 0;
-    static int          shaderProgram = 0, vertexShader = 0, fragmentShader = 0;
+    static std::unique_ptr<gl::ShaderProgram> shader_program;
     static int          attribLocationTex = 0, attribLocationProjMtx = 0;
     static int          attribLocationPosition = 0, attribLocationUV = 0, attribLocationColor = 0;
     static unsigned int vbo = 0, elements = 0;
@@ -218,52 +221,18 @@ namespace open_sea::imgui {
         glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &last_array_buffer);
         glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &last_vertex_array);
 
-        // Define shader source
-        const GLchar* vertex_shader =
-            "#version 150\n"
-            "uniform mat4 ProjMtx;\n"
-            "in vec2 Position;\n"
-            "in vec2 UV;\n"
-            "in vec4 Color;\n"
-            "out vec2 Frag_UV;\n"
-            "out vec4 Frag_Color;\n"
-            "void main()\n"
-            "{\n"
-            "	Frag_UV = UV;\n"
-            "	Frag_Color = Color;\n"
-            "	gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
-            "}\n";
-
-        const GLchar* fragment_shader =
-            "#version 150\n"
-            "uniform sampler2D Texture;\n"
-            "in vec2 Frag_UV;\n"
-            "in vec4 Frag_Color;\n"
-            "out vec4 Out_Color;\n"
-            "void main()\n"
-            "{\n"
-            "	Out_Color = Frag_Color * texture( Texture, Frag_UV.st);\n"
-            "}\n";
-
-        // Compile and link the shader
-        shaderProgram = glCreateProgram();
-        vertexShader = glCreateShader(GL_VERTEX_SHADER);
-        fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(vertexShader, 1, &vertex_shader, 0);
-        glCompileShader(vertexShader);
-        glAttachShader(shaderProgram, vertexShader);
-        glShaderSource(fragmentShader, 1, &fragment_shader, 0);
-        glCompileShader(fragmentShader);
-        glAttachShader(shaderProgram, fragmentShader);
-        glLinkProgram(shaderProgram);
-        log::log(lg, log::info, "Shader created");
+        // Define shader
+        shader_program = std::make_unique<gl::ShaderProgram>();
+        shader_program->attachVertexFile("data/shaders/ImGui.vshader");
+        shader_program->attachFragmentFile("data/shaders/ImGui.fshader");
+        shader_program->link();
 
         // Get the uniform locations
-        attribLocationTex = glGetUniformLocation(shaderProgram, "Texture");
-        attribLocationProjMtx = glGetUniformLocation(shaderProgram, "ProjMtx");
-        attribLocationPosition = glGetAttribLocation(shaderProgram, "Position");
-        attribLocationUV = glGetAttribLocation(shaderProgram, "UV");
-        attribLocationColor = glGetAttribLocation(shaderProgram, "Color");
+        attribLocationTex = shader_program->getUniformLocation("Texture");
+        attribLocationProjMtx = shader_program->getUniformLocation("ProjMtx");
+        attribLocationPosition = shader_program->getAttributeLocation("Position");
+        attribLocationUV = shader_program->getAttributeLocation("UV");
+        attribLocationColor = shader_program->getAttributeLocation("Color");
 
         // Generate buffers
         glGenBuffers(1, &vbo);
@@ -393,7 +362,7 @@ namespace open_sea::imgui {
                         { 0.0f,                  0.0f,                  -1.0f, 0.0f },
                         {-1.0f,                  1.0f,                   0.0f, 1.0f },
                 };
-        glUseProgram(shaderProgram);
+        shader_program->use();
         glUniform1i(attribLocationTex, 0);
         glUniformMatrix4fv(attribLocationProjMtx, 1, GL_FALSE, &ortho_projection[0][0]);
         glBindSampler(0, 0); // Rely on combined texture/sampler state.
@@ -473,16 +442,7 @@ namespace open_sea::imgui {
         if (elements) glDeleteBuffers(1, &elements);
         vbo = elements = 0;
 
-        if (shaderProgram && vertexShader) glDetachShader(shaderProgram, vertexShader);
-        if (vertexShader) glDeleteShader(vertexShader);
-        vertexShader = 0;
-
-        if (shaderProgram && fragmentShader) glDetachShader(shaderProgram, fragmentShader);
-        if (fragmentShader) glDeleteShader(fragmentShader);
-        fragmentShader = 0;
-
-        if (shaderProgram) glDeleteProgram(shaderProgram);
-        shaderProgram = 0;
+        shader_program.release();
 
         if (fontTexture) {
             glDeleteTextures(1, &fontTexture);

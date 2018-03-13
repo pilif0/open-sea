@@ -24,9 +24,6 @@ namespace open_sea::gl {
     //TODO: possibly add support for tessellation and compute shaders
     class ShaderProgram {
         private:
-            //! Logger for this class
-            static log::severity_logger lg = log::get_logger("Shader Program");
-
             //! Vertex shader reference
             GLuint vertexShader   = 0;
             //! Geometry shader reference
@@ -51,6 +48,9 @@ namespace open_sea::gl {
             void link();
             void use();
             static void unset();    //TODO: the name doesn't feel right (doesn't show being inverse of use())
+
+            GLint getUniformLocation(const std::string& name);
+            GLint getAttributeLocation(const std::string& name);
 
             ~ShaderProgram();
     };

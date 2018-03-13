@@ -9,7 +9,8 @@ set(open_sea_HEADERS
         "${INCL_DIR}/open-sea/Window.h"
         "${INCL_DIR}/open-sea/Input.h"
         "${INCL_DIR}/open-sea/ImGui.h"
-        "${INCL_DIR}/open-sea/Delta.h")
+        "${INCL_DIR}/open-sea/Delta.h"
+        "${INCL_DIR}/open-sea/GL.h")
 set(open_sea_SOURCES
         Log.cpp
         Window.cpp

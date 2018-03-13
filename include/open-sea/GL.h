@@ -6,6 +6,9 @@
 #ifndef OPEN_SEA_GL_H
 #define OPEN_SEA_GL_H
 
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
 #include <open-sea/Log.h>
 namespace log = open_sea::log;
 
@@ -25,31 +28,34 @@ namespace open_sea::gl {
             static log::severity_logger lg = log::get_logger("Shader Program");
 
             //! Vertex shader reference
-            int vertexShader   = 0;
+            GLuint vertexShader   = 0;
             //! Geometry shader reference
-            int geometryShader = 0;
+            GLuint geometryShader = 0;
             //! Fragment shader reference
-            int fragmentShader = 0;
+            GLuint fragmentShader = 0;
 
         public:
             //! Shader program reference
-            int programID = 0;
+            GLuint programID = 0;
 
             ShaderProgram();
 
-            bool attachVertexFile(const std::string& path);
-            bool attachGeometryFile(const std::string& path);
-            bool attachFragmentFile(const std::string& path);
+            void attachVertexFile(const std::string& path);
+            void attachGeometryFile(const std::string& path);
+            void attachFragmentFile(const std::string& path);
 
-            bool attachVertexSource(const std::string& src);
-            bool attachGeometrySource(const std::string& src);
-            bool attachFragmentSource(const std::string& src);
+            void attachVertexSource(const std::string& src);
+            void attachGeometrySource(const std::string& src);
+            void attachFragmentSource(const std::string& src);
 
-            bool link();
-            bool use();
+            void link();
+            void use();
             static void unset();    //TODO: the name doesn't feel right (doesn't show being inverse of use())
-            void destroy();
+
+            ~ShaderProgram();
     };
+
+    //TODO: add OpenGL error logging (https://www.khronos.org/opengl/wiki/Debug_Output)
 }
 
 #endif //OPEN_SEA_GL_H

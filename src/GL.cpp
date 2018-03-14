@@ -2,14 +2,23 @@
  * GL implementation
  */
 
+#include <imgui.h>
+
 #include <open-sea/GL.h>
 
 #include <fstream>
 #include <sstream>
 
 namespace open_sea::gl {
+    // Loggers
     log::severity_logger lg = log::get_logger("OpenGL");
     log::severity_logger shaderLG = log::get_logger("OpenGL Shaders");
+
+    // Initailize counters
+    uint ShaderProgram::programCount = 0;
+    uint ShaderProgram::vertexCount = 0;
+    uint ShaderProgram::geometryCount = 0;
+    uint ShaderProgram::fragmentCount = 0;
 
     /**
      * \brief Construct an empty shader program
@@ -17,6 +26,7 @@ namespace open_sea::gl {
      */
     ShaderProgram::ShaderProgram() {
         programID = glCreateProgram();
+        programCount++;
     }
 
     /**
@@ -79,8 +89,10 @@ namespace open_sea::gl {
      */
     bool ShaderProgram::attachVertexSource(const std::string& src) {
         // Create the shader if needed
-        if (vertexShader == 0)
+        if (vertexShader == 0) {
             vertexShader = glCreateShader(GL_VERTEX_SHADER);
+            vertexCount++;
+        }
 
         // Set the source
         const char* source = src.c_str();
@@ -88,6 +100,8 @@ namespace open_sea::gl {
 
         // Compile
         glCompileShader(vertexShader);
+
+        // Check for compile errors
         GLint status;
         glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &status);
         if (status == GL_FALSE) {
@@ -101,6 +115,11 @@ namespace open_sea::gl {
                 info = {'u','n','k','n','o','w','n'};
 
             log::log(shaderLG, log::error, std::string("Shader compilation failed: ").append(&info[0]));
+
+            // Delete the shader
+            glDeleteShader(vertexShader);
+            vertexCount--;
+
             return false;
         }
 
@@ -119,8 +138,10 @@ namespace open_sea::gl {
      */
     bool ShaderProgram::attachGeometrySource(const std::string& src) {
         // Create the shader if needed
-        if (geometryShader == 0)
+        if (geometryShader == 0) {
             geometryShader = glCreateShader(GL_GEOMETRY_SHADER);
+            geometryCount++;
+        }
 
         // Set the source
         const char* source = src.c_str();
@@ -128,6 +149,8 @@ namespace open_sea::gl {
 
         // Compile
         glCompileShader(geometryShader);
+
+        // Check for compile errors
         GLint status;
         glGetShaderiv(geometryShader, GL_COMPILE_STATUS, &status);
         if (status == GL_FALSE) {
@@ -141,6 +164,11 @@ namespace open_sea::gl {
                 info = {'u','n','k','n','o','w','n'};
 
             log::log(shaderLG, log::error, std::string("Shader compilation failed: ").append(&info[0]));
+
+            // Delete the shader
+            glDeleteShader(geometryShader);
+            geometryCount--;
+
             return false;
         }
 
@@ -159,8 +187,10 @@ namespace open_sea::gl {
      */
     bool ShaderProgram::attachFragmentSource(const std::string& src) {
         // Create the shader if needed
-        if (fragmentShader == 0)
+        if (fragmentShader == 0) {
             fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+            fragmentCount++;
+        }
 
         // Set the source
         const char* source = src.c_str();
@@ -168,6 +198,8 @@ namespace open_sea::gl {
 
         // Compile
         glCompileShader(fragmentShader);
+
+        // Check for compile errors
         GLint status;
         glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &status);
         if (status == GL_FALSE) {
@@ -181,6 +213,11 @@ namespace open_sea::gl {
                 info = {'u','n','k','n','o','w','n'};
 
             log::log(shaderLG, log::error, std::string("Shader compilation failed: ").append(&info[0]));
+
+            // Delete the shader
+            glDeleteShader(fragmentShader);
+            fragmentCount--;
+
             return false;
         }
 
@@ -199,6 +236,7 @@ namespace open_sea::gl {
             glDetachShader(programID, vertexShader);
             glDeleteShader(vertexShader);
             vertexShader = 0;
+            vertexCount--;
         }
     }
 
@@ -211,6 +249,7 @@ namespace open_sea::gl {
             glDetachShader(programID, geometryShader);
             glDeleteShader(geometryShader);
             geometryShader = 0;
+            geometryCount--;
         }
     }
 
@@ -223,6 +262,7 @@ namespace open_sea::gl {
             glDetachShader(programID, fragmentShader);
             glDeleteShader(fragmentShader);
             fragmentShader = 0;
+            fragmentCount--;
         }
     }
 
@@ -316,30 +356,38 @@ namespace open_sea::gl {
      * \brief Destroy the shaders and the program
      */
     ShaderProgram::~ShaderProgram() {
-        // Destroy vertex shader
-        if (vertexShader) {
-            glDetachShader(programID, vertexShader);
-            glDeleteShader(vertexShader);
-            vertexShader = 0;
-        }
-
-        // Destroy geometry shader
-        if (geometryShader) {
-            glDetachShader(programID, geometryShader);
-            glDeleteShader(geometryShader);
-            geometryShader = 0;
-        }
-
-        // Destroy fragment shader
-        if (fragmentShader) {
-            glDetachShader(programID, fragmentShader);
-            glDeleteShader(fragmentShader);
-            fragmentShader = 0;
-        }
+        // Destroy all the shaders
+        detachVertex();
+        detachGeometry();
+        detachFragment();
 
         // Destroy the program
         glDeleteProgram(programID);
         programID = 0;
+        programCount--;
+    }
+
+    /**
+     * \brief Show the ImGui debug widget
+     */
+    void ShaderProgram::debugWidget() {
+        ImGui::Text("Shader programs: %d", programCount);
+        ImGui::Text("Vertex shaders: %d", vertexCount);
+        ImGui::Text("Geometry shaders: %d", geometryCount);
+        ImGui::Text("Fragment shaders: %d", fragmentCount);
+    }
+
+    /**
+     * \brief Show the ImGui debug window
+     */
+    void debug_window() {
+        ImGui::Begin("OpenGL");
+
+        if (ImGui::CollapsingHeader("Shaders")) {
+            ShaderProgram::debugWidget();
+        }
+
+        ImGui::End();
     }
 
     /**

@@ -31,6 +31,16 @@ namespace open_sea::gl {
             //! Fragment shader reference
             GLuint fragmentShader = 0;
 
+            // Debug info
+            //! Number of existing vertex shaders
+            static uint vertexCount;
+            //! Number of existing geometry shaders
+            static uint geometryCount;
+            //! Number of existing fragment shaders
+            static uint fragmentCount;
+            //! Number of existing shader programs
+            static uint programCount;
+
         public:
             //! Shader program reference
             GLuint programID = 0;
@@ -58,9 +68,12 @@ namespace open_sea::gl {
             GLint getAttributeLocation(const std::string& name);
 
             ~ShaderProgram();
+            static void debugWidget();
     };
 
     void log_errors();
+
+    void debug_window();
 }
 
 #endif //OPEN_SEA_GL_H

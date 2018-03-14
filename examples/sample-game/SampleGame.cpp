@@ -89,6 +89,8 @@ int main() {
             // Additional window open flags
             static bool show_window_debug = false;
             static bool show_input_debug = false;
+            static bool show_opengl_debug = false;
+            static bool show_demo = false;
 
             // System stats
             {
@@ -97,9 +99,11 @@ int main() {
 
                 open_sea::time::debug_widget();
 
-                if (ImGui::CollapsingHeader("Additional windows:")) {
+                if (ImGui::CollapsingHeader("Additional windows")) {
                     ImGui::Checkbox("Window info", &show_window_debug);
                     ImGui::Checkbox("Input info", &show_input_debug);
+                    ImGui::Checkbox("OpenGL info", &show_opengl_debug);
+                    ImGui::Checkbox("ImGui demo", &show_demo);
                 }
 
 
@@ -114,8 +118,12 @@ int main() {
             if (show_input_debug)
                 input::show_debug();
 
+            // OpenGL info
+            if (show_opengl_debug)
+                gl::debug_window();
+
             // Demo window
-            {
+            if (show_demo) {
                 ImGui::SetNextWindowPos(ImVec2(650, 20),
                                         ImGuiCond_FirstUseEver); // Normally user code doesn't need/want to call this because positions are saved in .ini file anyway. Here we just want to make the demo initial state a bit more friendly!
                 ImGui::ShowDemoWindow(&show_demo_window);

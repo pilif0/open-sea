@@ -191,6 +191,42 @@ namespace open_sea::gl {
     }
 
     /**
+     * \brief Detach the vertex shader
+     * Detach and delete the vertex shader
+     */
+    void ShaderProgram::detachVertex() {
+        if (vertexShader) {
+            glDetachShader(programID, vertexShader);
+            glDeleteShader(vertexShader);
+            vertexShader = 0;
+        }
+    }
+
+    /**
+     * \brief Detach the geometry shader
+     * Detach and delete the geometry shader
+     */
+    void ShaderProgram::detachGeometry() {
+        if (geometryShader) {
+            glDetachShader(programID, geometryShader);
+            glDeleteShader(geometryShader);
+            geometryShader = 0;
+        }
+    }
+
+    /**
+     * \biref Detach the fragment shader
+     * Detach and delete the fragment shader
+     */
+    void ShaderProgram::detachFragment() {
+        if (fragmentShader) {
+            glDetachShader(programID, fragmentShader);
+            glDeleteShader(fragmentShader);
+            fragmentShader = 0;
+        }
+    }
+
+    /**
      * \brief Link the shader program
      *
      * \return \c false on failure, \c true otherwise

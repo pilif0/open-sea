@@ -45,6 +45,10 @@ namespace open_sea::gl {
             bool attachGeometrySource(const std::string& src);
             bool attachFragmentSource(const std::string& src);
 
+            void detachVertex();
+            void detachGeometry();
+            void detachFragment();
+
             bool link();
             bool validate();
             void use();

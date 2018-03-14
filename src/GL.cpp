@@ -308,7 +308,7 @@ namespace open_sea::gl {
      *
      * \return Whether the program has been linked
      */
-    bool ShaderProgram::isLinked() {
+    bool ShaderProgram::isLinked() const {
         return linked;
     }
 
@@ -340,7 +340,7 @@ namespace open_sea::gl {
     /**
      * \brief Start using this shader program
      */
-    void ShaderProgram::use() {
+    void ShaderProgram::use() const {
         glUseProgram(programID);
     }
 
@@ -385,6 +385,27 @@ namespace open_sea::gl {
         glDeleteProgram(programID);
         programID = 0;
         programCount--;
+    }
+
+    /**
+     * \brief Whether the programs are equal
+     * Shader programs are equal if they have the same program ID.
+     *
+     * \param rhs Right hand side
+     * \return \c true when equal, \c false otherwise
+     */
+    bool ShaderProgram::operator==(const ShaderProgram &rhs) const {
+        return programID == rhs.programID;
+    }
+
+    /**
+     * \sa operator==
+     *
+     * \param rhs Right hand side
+     * \return \c false when equal, \c true otherwise
+     */
+    bool ShaderProgram::operator!=(const ShaderProgram &rhs) const {
+        return !(rhs == *this);
     }
 
     /**

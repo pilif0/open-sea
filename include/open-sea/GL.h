@@ -62,9 +62,9 @@ namespace open_sea::gl {
             void detachFragment();
 
             bool link();
-            bool isLinked();
+            bool isLinked() const;
             bool validate();
-            void use();
+            void use() const;
             static void unset();    //TODO: the name doesn't feel right (doesn't show being inverse of use())
 
             GLint getUniformLocation(const std::string& name);
@@ -72,6 +72,9 @@ namespace open_sea::gl {
 
             ~ShaderProgram();
             static void debugWidget();
+
+            bool operator==(const ShaderProgram &rhs) const;
+            bool operator!=(const ShaderProgram &rhs) const;
     };
 
     void log_errors();

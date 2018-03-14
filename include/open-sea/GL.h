@@ -19,9 +19,10 @@ namespace open_sea::gl {
     /** \class ShaderProgram
      * \brief OpenGL shader program representation
      * OpenGL shader program representation that ties together different shaders.
-     * The supported shaders are: vertex, geometry, fragment
+     * The supported shaders are: vertex, geometry, fragment, tessellation
+     * If the context version is less than 4.0, attempts to attach tessellation shaders are ignored.
      */
-    //TODO: possibly add support for tessellation and compute shaders
+    //TODO: possibly add support for compute shaders
     class ShaderProgram {
         private:
             //! Vertex shader reference
@@ -30,6 +31,10 @@ namespace open_sea::gl {
             GLuint geometryShader = 0;
             //! Fragment shader reference
             GLuint fragmentShader = 0;
+            //! Tessellation control shader reference
+            GLuint tessConShader = 0;
+            //! Tessellation evaluation shader reference
+            GLuint tessEvalShader = 0;
             //! Whether the program has been linked since the last shader change
             bool linked = false;
 
@@ -40,6 +45,10 @@ namespace open_sea::gl {
             static uint geometryCount;
             //! Number of existing fragment shaders
             static uint fragmentCount;
+            //! Number of tessellation control shaders
+            static uint tessConCount;
+            //! Number of tessellation evaluation shaders
+            static uint tessEvalCount;
             //! Number of existing shader programs
             static uint programCount;
 
@@ -52,14 +61,20 @@ namespace open_sea::gl {
             bool attachVertexFile(const std::string& path);
             bool attachGeometryFile(const std::string& path);
             bool attachFragmentFile(const std::string& path);
+            bool attachTessConFile(const std::string& path);
+            bool attachTessEvalFile(const std::string& path);
 
             bool attachVertexSource(const std::string& src);
             bool attachGeometrySource(const std::string& src);
             bool attachFragmentSource(const std::string& src);
+            bool attachTessConSource(const std::string& src);
+            bool attachTessEvalSource(const std::string& src);
 
             void detachVertex();
             void detachGeometry();
             void detachFragment();
+            void detachTessCon();
+            void detachTessEval();
 
             bool link();
             bool isLinked() const;

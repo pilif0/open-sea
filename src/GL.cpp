@@ -19,6 +19,8 @@ namespace open_sea::gl {
     uint ShaderProgram::vertexCount = 0;
     uint ShaderProgram::geometryCount = 0;
     uint ShaderProgram::fragmentCount = 0;
+    uint ShaderProgram::tessConCount = 0;
+    uint ShaderProgram::tessEvalCount = 0;
 
     /**
      * \brief Construct an empty shader program
@@ -78,6 +80,28 @@ namespace open_sea::gl {
      */
     bool ShaderProgram::attachFragmentFile(const std::string& path) {
         return attachFragmentSource(read_file(path));
+    }
+
+    /**
+     * \brief Attach a tessellation control shader from a file
+     * Read, compile and attach a tessellation control shader from the source file at the specified path.
+     *
+     * \param path Path to the source file
+     * \return \c false on failure, \c true otherwise
+     */
+    bool ShaderProgram::attachTessConFile(const std::string& path) {
+        return attachTessConSource(read_file(path));
+    }
+
+    /**
+     * \brief Attach a tessellation evaluation shader from a file
+     * Read, compile and attach a tessellation evaluation shader from the source file at the specified path.
+     *
+     * \param path Path to the source file
+     * \return \c false on failure, \c true otherwise
+     */
+    bool ShaderProgram::attachTessEvalFile(const std::string& path) {
+        return attachTessEvalSource(read_file(path));
     }
 
     /**
@@ -231,6 +255,122 @@ namespace open_sea::gl {
     }
 
     /**
+     * \brief Attach a tessellation control shader
+     * Compile and attach a tessellation control shader from the provided source.
+     * Attachment is skipped if context version is less than 4.0 (still returns \c true, just doesn't apply the shader).
+     *
+     * \param src Shader source
+     * \return \c false on failure, \c true otherwise
+     */
+    bool ShaderProgram::attachTessConSource(const std::string& src) {
+        // Skip if context version too low
+        int major;
+        glGetIntegerv(GL_MAJOR_VERSION, &major);
+        if (major < 4) {
+            log::log(shaderLG, log::warning, "Tessellation control shader skipped, because context version is too low");
+        }
+
+        // Create the shader if needed
+        if (tessConShader == 0) {
+            tessConShader = glCreateShader(GL_TESS_CONTROL_SHADER);
+            tessConCount++;
+        }
+
+        // Set the source
+        const char* source = src.c_str();
+        glShaderSource(tessConShader, 1, &source, nullptr);
+
+        // Compile
+        glCompileShader(tessConShader);
+
+        // Check for compile errors
+        GLint status;
+        glGetShaderiv(tessConShader, GL_COMPILE_STATUS, &status);
+        if (status == GL_FALSE) {
+            GLint maxLength = 0;
+            glGetShaderiv(tessConShader, GL_INFO_LOG_LENGTH, &maxLength);
+
+            std::vector<GLchar> info(maxLength);
+            glGetShaderInfoLog(tessConShader, maxLength, nullptr, &info[0]);
+
+            if (info.empty())
+                info = {'u','n','k','n','o','w','n'};
+
+            log::log(shaderLG, log::error, std::string("Shader compilation failed: ").append(&info[0]));
+
+            // Delete the shader
+            glDeleteShader(tessConShader);
+            tessConCount--;
+
+            return false;
+        }
+
+        // Attach
+        glAttachShader(programID, tessConShader);
+
+        linked = false;
+        return true;
+    }
+
+    /**
+     * \brief Attach a tessellation evaluation shader
+     * Compile and attach a tessellation evaluation shader from the provided source.
+     * Attachment is skipped if context version is less than 4.0 (still returns \c true, just doesn't apply the shader).
+     *
+     * \param src Shader source
+     * \return \c false on failure, \c true otherwise
+     */
+    bool ShaderProgram::attachTessEvalSource(const std::string& src) {
+        // Skip if context version too low
+        int major;
+        glGetIntegerv(GL_MAJOR_VERSION, &major);
+        if (major < 4) {
+            log::log(shaderLG, log::warning, "Tessellation evaluation shader skipped, because context version is too low");
+        }
+
+        // Create the shader if needed
+        if (tessEvalShader == 0) {
+            tessEvalShader = glCreateShader(GL_TESS_EVALUATION_SHADER);
+            tessEvalCount++;
+        }
+
+        // Set the source
+        const char* source = src.c_str();
+        glShaderSource(tessEvalShader, 1, &source, nullptr);
+
+        // Compile
+        glCompileShader(tessEvalShader);
+
+        // Check for compile errors
+        GLint status;
+        glGetShaderiv(tessEvalShader, GL_COMPILE_STATUS, &status);
+        if (status == GL_FALSE) {
+            GLint maxLength = 0;
+            glGetShaderiv(tessEvalShader, GL_INFO_LOG_LENGTH, &maxLength);
+
+            std::vector<GLchar> info(maxLength);
+            glGetShaderInfoLog(tessEvalShader, maxLength, nullptr, &info[0]);
+
+            if (info.empty())
+                info = {'u','n','k','n','o','w','n'};
+
+            log::log(shaderLG, log::error, std::string("Shader compilation failed: ").append(&info[0]));
+
+            // Delete the shader
+            glDeleteShader(tessEvalShader);
+            tessEvalCount--;
+
+            return false;
+        }
+
+        // Attach
+        glAttachShader(programID, tessEvalShader);
+
+        linked = false;
+        return true;
+    }
+
+    /**
      * \brief Detach the vertex shader
      * Detach and delete the vertex shader
      */
@@ -259,7 +399,7 @@ namespace open_sea::gl {
     }
 
     /**
-     * \biref Detach the fragment shader
+     * \brief Detach the fragment shader
      * Detach and delete the fragment shader
      */
     void ShaderProgram::detachFragment() {
@@ -267,6 +407,34 @@ namespace open_sea::gl {
             glDetachShader(programID, fragmentShader);
             glDeleteShader(fragmentShader);
             fragmentShader = 0;
+            fragmentCount--;
+            linked = false;
+        }
+    }
+
+    /**
+     * \brief Detach the tessellation control shader
+     * Detach and delete the tessellation control shader
+     */
+    void ShaderProgram::detachTessCon() {
+        if (tessConShader) {
+            glDetachShader(programID, tessConShader);
+            glDeleteShader(tessConShader);
+            tessConShader = 0;
+            fragmentCount--;
+            linked = false;
+        }
+    }
+
+    /**
+     * \brief Detach the tessellation evaluation shader
+     * Detach and delete the tessellation evaluation shader
+     */
+    void ShaderProgram::detachTessEval() {
+        if (tessEvalShader) {
+            glDetachShader(programID, tessEvalShader);
+            glDeleteShader(tessEvalShader);
+            tessEvalShader = 0;
             fragmentCount--;
             linked = false;
         }
@@ -380,6 +548,8 @@ namespace open_sea::gl {
         detachVertex();
         detachGeometry();
         detachFragment();
+        detachTessCon();
+        detachTessEval();
 
         // Destroy the program
         glDeleteProgram(programID);
@@ -416,6 +586,8 @@ namespace open_sea::gl {
         ImGui::Text("Vertex shaders: %d", vertexCount);
         ImGui::Text("Geometry shaders: %d", geometryCount);
         ImGui::Text("Fragment shaders: %d", fragmentCount);
+        ImGui::Text("Tessellation control shaders: %d", tessConCount);
+        ImGui::Text("Tessellation evaluation shaders: %d", tessEvalCount);
     }
 
     /**

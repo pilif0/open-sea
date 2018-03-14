@@ -71,11 +71,9 @@ configure_file(
 # Include own public interface
 include_directories(${INCL_DIR})        # This feels wrong but means not having to navigate to the directory when including
 
-# Copy data
-file(COPY data DESTINATION ./)
-
 # Add subdirectories
 add_subdirectory(src)
+add_subdirectory(data)
 
 if (open_sea_BUILD_EXAMPLES)
     add_subdirectory(examples)

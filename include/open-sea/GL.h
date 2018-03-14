@@ -37,15 +37,15 @@ namespace open_sea::gl {
 
             ShaderProgram();
 
-            void attachVertexFile(const std::string& path);
-            void attachGeometryFile(const std::string& path);
-            void attachFragmentFile(const std::string& path);
+            bool attachVertexFile(const std::string& path);
+            bool attachGeometryFile(const std::string& path);
+            bool attachFragmentFile(const std::string& path);
 
-            void attachVertexSource(const std::string& src);
-            void attachGeometrySource(const std::string& src);
-            void attachFragmentSource(const std::string& src);
+            bool attachVertexSource(const std::string& src);
+            bool attachGeometrySource(const std::string& src);
+            bool attachFragmentSource(const std::string& src);
 
-            void link();
+            bool link();
             void use();
             static void unset();    //TODO: the name doesn't feel right (doesn't show being inverse of use())
 

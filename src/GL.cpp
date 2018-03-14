@@ -28,6 +28,10 @@ namespace open_sea::gl {
     // Credit: https://stackoverflow.com/a/116220
     std::string read_file(const std::string& path) {
         std::ifstream stream(path);
+        if (stream.fail()) {
+            log::log(lg, log::info, std::string("Failed to read file ").append(path));
+            return std::string();
+        }
         std::stringstream result;
         result << stream.rdbuf();
         return result.str();
@@ -38,9 +42,10 @@ namespace open_sea::gl {
      * Read, compile and attach a vertex shader from the source file at the specified path.
      *
      * \param path Path to the source file
+     * \return \c false on failure, \c true otherwise
      */
-    void ShaderProgram::attachVertexFile(const std::string& path) {
-        attachVertexSource(read_file(path));
+    bool ShaderProgram::attachVertexFile(const std::string& path) {
+        return attachVertexSource(read_file(path));
     }
 
     /**
@@ -48,9 +53,10 @@ namespace open_sea::gl {
      * Read, compile and attach a geometry shader from the source file at the specified path.
      *
      * \param path Path to the source file
+     * \return \c false on failure, \c true otherwise
      */
-    void ShaderProgram::attachGeometryFile(const std::string& path) {
-        attachGeometrySource(read_file(path));
+    bool ShaderProgram::attachGeometryFile(const std::string& path) {
+        return attachGeometrySource(read_file(path));
     }
 
     /**
@@ -58,9 +64,10 @@ namespace open_sea::gl {
      * Read, compile and attach a fragment shader from the source file at the specified path.
      *
      * \param path Path to the source file
+     * \return \c false on failure, \c true otherwise
      */
-    void ShaderProgram::attachFragmentFile(const std::string& path) {
-        attachFragmentSource(read_file(path));
+    bool ShaderProgram::attachFragmentFile(const std::string& path) {
+        return attachFragmentSource(read_file(path));
     }
 
     /**
@@ -68,8 +75,9 @@ namespace open_sea::gl {
      * Compile and attach a vertex shader from the provided source.
      *
      * \param src Shader source
+     * \return \c false on failure, \c true otherwise
      */
-    void ShaderProgram::attachVertexSource(const std::string& src) {
+    bool ShaderProgram::attachVertexSource(const std::string& src) {
         // Create the shader if needed
         if (vertexShader == 0)
             vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -80,9 +88,23 @@ namespace open_sea::gl {
 
         // Compile
         glCompileShader(vertexShader);
+        GLint status;
+        glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &status);
+        if (status == GL_FALSE) {
+            GLint maxLength = 0;
+            glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &maxLength);
+
+            std::vector<GLchar> info(maxLength);
+            glGetShaderInfoLog(vertexShader, maxLength, nullptr, &info[0]);
+
+            log::log(shaderLG, log::error, std::string("Shader compilation failed: ").append(std::string(&info[0])));
+            return false;
+        }
 
         // Attach
         glAttachShader(programID, vertexShader);
+
+        return true;
     }
 
     /**
@@ -90,8 +112,9 @@ namespace open_sea::gl {
      * Compile and attach a geometry shader from the provided source.
      *
      * \param src Shader source
+     * \return \c false on failure, \c true otherwise
      */
-    void ShaderProgram::attachGeometrySource(const std::string& src) {
+    bool ShaderProgram::attachGeometrySource(const std::string& src) {
         // Create the shader if needed
         if (geometryShader == 0)
             geometryShader = glCreateShader(GL_GEOMETRY_SHADER);
@@ -102,9 +125,23 @@ namespace open_sea::gl {
 
         // Compile
         glCompileShader(geometryShader);
+        GLint status;
+        glGetShaderiv(geometryShader, GL_COMPILE_STATUS, &status);
+        if (status == GL_FALSE) {
+            GLint maxLength = 0;
+            glGetShaderiv(geometryShader, GL_INFO_LOG_LENGTH, &maxLength);
+
+            std::vector<GLchar> info(maxLength);
+            glGetShaderInfoLog(geometryShader, maxLength, nullptr, &info[0]);
+
+            log::log(shaderLG, log::error, std::string("Shader compilation failed: ").append(std::string(&info[0])));
+            return false;
+        }
 
         // Attach
         glAttachShader(programID, geometryShader);
+
+        return true;
     }
 
     /**
@@ -112,8 +149,9 @@ namespace open_sea::gl {
      * Compile and attach a fragment shader from the provided source.
      *
      * \param src Shader source
+     * \return \c false on failure, \c true otherwise
      */
-    void ShaderProgram::attachFragmentSource(const std::string& src) {
+    bool ShaderProgram::attachFragmentSource(const std::string& src) {
         // Create the shader if needed
         if (fragmentShader == 0)
             fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -124,16 +162,46 @@ namespace open_sea::gl {
 
         // Compile
         glCompileShader(fragmentShader);
+        GLint status;
+        glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &status);
+        if (status == GL_FALSE) {
+            GLint maxLength = 0;
+            glGetShaderiv(fragmentShader, GL_INFO_LOG_LENGTH, &maxLength);
+
+            std::vector<GLchar> info(maxLength);
+            glGetShaderInfoLog(fragmentShader, maxLength, nullptr, &info[0]);
+
+            log::log(shaderLG, log::error, std::string("Shader compilation failed: ").append(std::string(&info[0])));
+            return false;
+        }
 
         // Attach
         glAttachShader(programID, fragmentShader);
+
+        return true;
     }
 
     /**
      * \brief Link the shader program
+     *
+     * \return \c false on failure, \c true otherwise
      */
-    void ShaderProgram::link() {
+    bool ShaderProgram::link() {
         glLinkProgram(programID);
+        GLint status;
+        glGetProgramiv(programID, GL_LINK_STATUS, &status);
+        if (status == GL_FALSE) {
+            GLint maxLength = 0;
+            glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &maxLength);
+
+            std::vector<GLchar> info(maxLength);
+            glGetProgramInfoLog(programID, maxLength, nullptr, &info[0]);
+
+            log::log(shaderLG, log::error, std::string("Program linking failed: ").append(std::string(&info[0])));
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -215,7 +283,7 @@ namespace open_sea::gl {
     void error_callback(GLenum source, GLenum type, GLuint id, GLenum severity,
                         GLsizei length, const GLchar* message, const void* userParam) {
         // Log only errors and performance issues
-        if (severity >= GL_DEBUG_SEVERITY_LOW) {
+        //if (severity >= GL_DEBUG_SEVERITY_LOW) {
             // Use special logger for shader errors
             if (source == GL_DEBUG_SOURCE_SHADER_COMPILER) {
                 log::log(shaderLG, log::error, message);
@@ -224,7 +292,7 @@ namespace open_sea::gl {
 
             // Otherwise just log the message normally
             log::log(lg, log::error, message);
-        }
+        //}
     }
 
     /**
@@ -232,7 +300,7 @@ namespace open_sea::gl {
      */
     void log_errors() {
         glEnable(GL_DEBUG_OUTPUT);
-        glDebugMessageCallback((GLDEBUGPROC) error_callback, 0);
+        glDebugMessageCallback((GLDEBUGPROC) error_callback, nullptr);
         log::log(lg, log::info, "OpenGL error logging started");
     }
 }

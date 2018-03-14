@@ -46,6 +46,7 @@ namespace open_sea::gl {
             bool attachFragmentSource(const std::string& src);
 
             bool link();
+            bool validate();
             void use();
             static void unset();    //TODO: the name doesn't feel right (doesn't show being inverse of use())
 

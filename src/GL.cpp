@@ -205,6 +205,28 @@ namespace open_sea::gl {
     }
 
     /**
+     * \brief Validate the shader program
+     *
+     * \return \c false on failure, \c true otherwise
+     */
+    bool ShaderProgram::validate() {
+        glValidateProgram(programID);
+        GLint status;
+        glGetProgramiv(programID, GL_VALIDATE_STATUS, &status);
+        if (status == GL_FALSE) {
+            GLint maxLength = 0;
+            glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &maxLength);
+
+            std::vector<GLchar> info(maxLength);
+            glGetProgramInfoLog(programID, maxLength, nullptr, &info[0]);
+
+            log::log(shaderLG, log::error, std::string("Program validation failed: ").append(std::string(&info[0])));
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * \brief Start using this shader program
      */
     void ShaderProgram::use() {

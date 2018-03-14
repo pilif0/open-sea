@@ -30,6 +30,8 @@ namespace open_sea::gl {
             GLuint geometryShader = 0;
             //! Fragment shader reference
             GLuint fragmentShader = 0;
+            //! Whether the program has been linked since the last shader change
+            bool linked = false;
 
             // Debug info
             //! Number of existing vertex shaders
@@ -60,6 +62,7 @@ namespace open_sea::gl {
             void detachFragment();
 
             bool link();
+            bool isLinked();
             bool validate();
             void use();
             static void unset();    //TODO: the name doesn't feel right (doesn't show being inverse of use())

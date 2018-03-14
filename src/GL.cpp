@@ -126,6 +126,7 @@ namespace open_sea::gl {
         // Attach
         glAttachShader(programID, vertexShader);
 
+        linked = false;
         return true;
     }
 
@@ -175,6 +176,7 @@ namespace open_sea::gl {
         // Attach
         glAttachShader(programID, geometryShader);
 
+        linked = false;
         return true;
     }
 
@@ -224,6 +226,7 @@ namespace open_sea::gl {
         // Attach
         glAttachShader(programID, fragmentShader);
 
+        linked = false;
         return true;
     }
 
@@ -237,6 +240,7 @@ namespace open_sea::gl {
             glDeleteShader(vertexShader);
             vertexShader = 0;
             vertexCount--;
+            linked = false;
         }
     }
 
@@ -250,6 +254,7 @@ namespace open_sea::gl {
             glDeleteShader(geometryShader);
             geometryShader = 0;
             geometryCount--;
+            linked = false;
         }
     }
 
@@ -263,6 +268,7 @@ namespace open_sea::gl {
             glDeleteShader(fragmentShader);
             fragmentShader = 0;
             fragmentCount--;
+            linked = false;
         }
     }
 
@@ -272,6 +278,10 @@ namespace open_sea::gl {
      * \return \c false on failure, \c true otherwise
      */
     bool ShaderProgram::link() {
+        // Skip if already linked
+        if (linked)
+            return true;
+
         glLinkProgram(programID);
         GLint status;
         glGetProgramiv(programID, GL_LINK_STATUS, &status);
@@ -289,7 +299,17 @@ namespace open_sea::gl {
             return false;
         }
 
+        linked = true;
         return true;
+    }
+
+    /**
+     * \brief Whether the program has been linked since the last shader change
+     *
+     * \return Whether the program has been linked
+     */
+    bool ShaderProgram::isLinked() {
+        return linked;
     }
 
     /**

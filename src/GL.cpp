@@ -97,7 +97,10 @@ namespace open_sea::gl {
             std::vector<GLchar> info(maxLength);
             glGetShaderInfoLog(vertexShader, maxLength, nullptr, &info[0]);
 
-            log::log(shaderLG, log::error, std::string("Shader compilation failed: ").append(std::string(&info[0])));
+            if (info.empty())
+                info = {'u','n','k','n','o','w','n'};
+
+            log::log(shaderLG, log::error, std::string("Shader compilation failed: ").append(&info[0]));
             return false;
         }
 
@@ -134,7 +137,10 @@ namespace open_sea::gl {
             std::vector<GLchar> info(maxLength);
             glGetShaderInfoLog(geometryShader, maxLength, nullptr, &info[0]);
 
-            log::log(shaderLG, log::error, std::string("Shader compilation failed: ").append(std::string(&info[0])));
+            if (info.empty())
+                info = {'u','n','k','n','o','w','n'};
+
+            log::log(shaderLG, log::error, std::string("Shader compilation failed: ").append(&info[0]));
             return false;
         }
 
@@ -171,7 +177,10 @@ namespace open_sea::gl {
             std::vector<GLchar> info(maxLength);
             glGetShaderInfoLog(fragmentShader, maxLength, nullptr, &info[0]);
 
-            log::log(shaderLG, log::error, std::string("Shader compilation failed: ").append(std::string(&info[0])));
+            if (info.empty())
+                info = {'u','n','k','n','o','w','n'};
+
+            log::log(shaderLG, log::error, std::string("Shader compilation failed: ").append(&info[0]));
             return false;
         }
 
@@ -197,7 +206,10 @@ namespace open_sea::gl {
             std::vector<GLchar> info(maxLength);
             glGetProgramInfoLog(programID, maxLength, nullptr, &info[0]);
 
-            log::log(shaderLG, log::error, std::string("Program linking failed: ").append(std::string(&info[0])));
+            if (info.empty())
+                info = {'u','n','k','n','o','w','n'};
+
+            log::log(shaderLG, log::error, std::string("Program linking failed: ").append(&info[0]));
             return false;
         }
 
@@ -220,7 +232,10 @@ namespace open_sea::gl {
             std::vector<GLchar> info(maxLength);
             glGetProgramInfoLog(programID, maxLength, nullptr, &info[0]);
 
-            log::log(shaderLG, log::error, std::string("Program validation failed: ").append(std::string(&info[0])));
+            if (info.empty())
+                info = {'u','n','k','n','o','w','n'};
+
+            log::log(shaderLG, log::error, std::string("Program validation failed: ").append(&info[0]));
             return false;
         }
         return true;

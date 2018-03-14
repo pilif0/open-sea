@@ -226,6 +226,7 @@ namespace open_sea::imgui {
         shader_program->attachVertexFile("data/shaders/ImGui.vshader");
         shader_program->attachFragmentFile("data/shaders/ImGui.fshader");
         shader_program->link();
+        shader_program->validate();
 
         // Get the uniform locations
         attribLocationTex = shader_program->getUniformLocation("Texture");

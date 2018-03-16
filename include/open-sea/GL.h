@@ -22,7 +22,6 @@ namespace open_sea::gl {
      * The supported shaders are: vertex, geometry, fragment, tessellation
      * If the context version is less than 4.0, attempts to attach tessellation shaders are ignored.
      */
-    //TODO: possibly add support for compute shaders
     class ShaderProgram {
         private:
             //! Vertex shader reference
@@ -80,7 +79,7 @@ namespace open_sea::gl {
             bool isLinked() const;
             bool validate();
             void use() const;
-            static void unset();    //TODO: the name doesn't feel right (doesn't show being inverse of use())
+            static void unset();
 
             GLint getUniformLocation(const std::string& name);
             GLint getAttributeLocation(const std::string& name);

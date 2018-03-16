@@ -22,6 +22,9 @@ namespace open_sea::gl {
     uint ShaderProgram::tessConCount = 0;
     uint ShaderProgram::tessEvalCount = 0;
 
+    //! String to use when Info Log is empty
+    constexpr std::initializer_list<GLchar> unknown_info = {'u','n','k','n','o','w','n'};
+
     /**
      * \brief Construct an empty shader program
      * Create a shader program with no shaders attached.
@@ -136,7 +139,7 @@ namespace open_sea::gl {
             glGetShaderInfoLog(vertexShader, maxLength, nullptr, &info[0]);
 
             if (info.empty())
-                info = {'u','n','k','n','o','w','n'};
+                info = unknown_info;
 
             log::log(shaderLG, log::error, std::string("Shader compilation failed: ").append(&info[0]));
 
@@ -186,7 +189,7 @@ namespace open_sea::gl {
             glGetShaderInfoLog(geometryShader, maxLength, nullptr, &info[0]);
 
             if (info.empty())
-                info = {'u','n','k','n','o','w','n'};
+                info = unknown_info;
 
             log::log(shaderLG, log::error, std::string("Shader compilation failed: ").append(&info[0]));
 
@@ -236,7 +239,7 @@ namespace open_sea::gl {
             glGetShaderInfoLog(fragmentShader, maxLength, nullptr, &info[0]);
 
             if (info.empty())
-                info = {'u','n','k','n','o','w','n'};
+                info = unknown_info;
 
             log::log(shaderLG, log::error, std::string("Shader compilation failed: ").append(&info[0]));
 
@@ -294,7 +297,7 @@ namespace open_sea::gl {
             glGetShaderInfoLog(tessConShader, maxLength, nullptr, &info[0]);
 
             if (info.empty())
-                info = {'u','n','k','n','o','w','n'};
+                info = unknown_info;
 
             log::log(shaderLG, log::error, std::string("Shader compilation failed: ").append(&info[0]));
 
@@ -352,7 +355,7 @@ namespace open_sea::gl {
             glGetShaderInfoLog(tessEvalShader, maxLength, nullptr, &info[0]);
 
             if (info.empty())
-                info = {'u','n','k','n','o','w','n'};
+                info = unknown_info;
 
             log::log(shaderLG, log::error, std::string("Shader compilation failed: ").append(&info[0]));
 
@@ -461,7 +464,7 @@ namespace open_sea::gl {
             glGetProgramInfoLog(programID, maxLength, nullptr, &info[0]);
 
             if (info.empty())
-                info = {'u','n','k','n','o','w','n'};
+                info = unknown_info;
 
             log::log(shaderLG, log::error, std::string("Program linking failed: ").append(&info[0]));
             return false;
@@ -497,7 +500,7 @@ namespace open_sea::gl {
             glGetProgramInfoLog(programID, maxLength, nullptr, &info[0]);
 
             if (info.empty())
-                info = {'u','n','k','n','o','w','n'};
+                info = unknown_info;
 
             log::log(shaderLG, log::error, std::string("Program validation failed: ").append(&info[0]));
             return false;
@@ -617,7 +620,7 @@ namespace open_sea::gl {
     void error_callback(GLenum source, GLenum type, GLuint id, GLenum severity,
                         GLsizei length, const GLchar* message, const void* userParam) {
         // Log only errors and performance issues
-        //if (severity >= GL_DEBUG_SEVERITY_LOW) {
+        if (severity >= GL_DEBUG_SEVERITY_LOW) {
             // Use special logger for shader errors
             if (source == GL_DEBUG_SOURCE_SHADER_COMPILER) {
                 log::log(shaderLG, log::error, message);
@@ -626,7 +629,7 @@ namespace open_sea::gl {
 
             // Otherwise just log the message normally
             log::log(lg, log::error, message);
-        //}
+        }
     }
 
     /**

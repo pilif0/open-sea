@@ -9,13 +9,15 @@ set(open_sea_HEADERS
         "${INCL_DIR}/open-sea/Window.h"
         "${INCL_DIR}/open-sea/Input.h"
         "${INCL_DIR}/open-sea/ImGui.h"
-        "${INCL_DIR}/open-sea/Delta.h")
+        "${INCL_DIR}/open-sea/Delta.h"
+        "${INCL_DIR}/open-sea/GL.h")
 set(open_sea_SOURCES
         Log.cpp
         Window.cpp
         Input.cpp
         ImGui.cpp
-        Delta.cpp)
+        Delta.cpp
+        GL.cpp)
 
 # Add the library
 add_library(open_sea ${open_sea_SOURCES} ${open_sea_HEADERS} ${ImGui})

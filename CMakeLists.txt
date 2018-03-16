@@ -73,6 +73,7 @@ include_directories(${INCL_DIR})        # This feels wrong but means not having 
 
 # Add subdirectories
 add_subdirectory(src)
+add_subdirectory(data)
 
 if (open_sea_BUILD_EXAMPLES)
     add_subdirectory(examples)

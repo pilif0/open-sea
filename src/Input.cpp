@@ -231,7 +231,6 @@ namespace open_sea::input {
      * \return Connection
      */
     connection connect_key(const key_signal::slot_type& slot) {
-        log::log(lg, log::info, "Connecting slot to key signal");
         return keyboard->connect(slot);
     }
 
@@ -242,7 +241,6 @@ namespace open_sea::input {
      * \return Connection
      */
     connection connect_enter(const enter_signal::slot_type& slot) {
-        log::log(lg, log::info, "Connecting slot to cursor entrance signal");
         return enter->connect(slot);
     }
 
@@ -253,7 +251,6 @@ namespace open_sea::input {
      * \return Connection
      */
     connection connect_mouse(const mouse_signal::slot_type& slot) {
-        log::log(lg, log::info, "Connecting slot to mouse button signal");
         return mouse->connect(slot);
     }
 
@@ -264,7 +261,6 @@ namespace open_sea::input {
      * \return Connection
      */
     connection connect_scroll(const scroll_signal::slot_type& slot) {
-        log::log(lg, log::info, "Connecting slot to scroll signal");
         return scroll->connect(slot);
     }
 
@@ -275,7 +271,6 @@ namespace open_sea::input {
      * \return Connection
      */
     connection connect_character(const character_signal::slot_type &slot) {
-        log::log(lg, log::info, "Connecting slot to character signal");
         return character->connect(slot);
     }
 

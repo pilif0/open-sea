@@ -128,7 +128,7 @@ namespace open_sea::time {
      */
     void debug_widget() {
         // Plot the delta time
-        ImGui::PlotLines("##plot", debug_history_get, &history, history_length);
+        ImGui::PlotLines("##plot", debug_history_get, nullptr, history_length);
         ImGui::SameLine();
         ImGui::Text("Delta time\n(%.3f ms)", get_delta() * 1000);
 

@@ -605,6 +605,20 @@ namespace open_sea::gl {
 
 //--- start Camera implementation
 
+    Camera::Camera(const glm::vec3 &position, const glm::quat &orientation, const glm::vec2 &size, float near,
+                   float far) : near(near), far(far) {
+        this->position = glm::vec3(position);
+        this->orientation = glm::quat(orientation);
+        this->size = glm::vec2(size);
+
+        viewMatrix = glm::mat4();
+        projMatrix = glm::mat4();
+        projViewMatrix = glm::mat4();
+
+        recalculateView = true;
+        recalculateProj = true;
+    }
+
     void Camera::setPosition(const glm::vec3& newValue) {
         position = newValue;
         recalculateView = true;
@@ -683,18 +697,7 @@ namespace open_sea::gl {
      * \param far Far clipping plane
      */
     OrthographicCamera::OrthographicCamera(const glm::vec3& position, const glm::quat& orientation, const glm::vec2& size,
-                                           float near, float far) : near(near), far(far) {
-        this->position = glm::vec3(position);
-        this->orientation = glm::quat(orientation);
-        this->size = glm::vec2(size);
-
-        viewMatrix = glm::mat4();
-        projMatrix = glm::mat4();
-        projViewMatrix = glm::mat4();
-
-        recalculateView = true;
-        recalculateProj = true;
-    }
+                                           float near, float far) : Camera(position, orientation, size, near, far) {}
 
     glm::mat4 OrthographicCamera::getProjViewMatrix() {
         if (recalculateView) {

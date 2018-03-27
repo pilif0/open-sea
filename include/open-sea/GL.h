@@ -125,6 +125,8 @@ namespace open_sea::gl {
 
             //! Projection-view matrix (changes when either component matrix changes)
             glm::mat4 projViewMatrix;
+
+            Camera(const glm::vec3& position, const glm::quat& orientation, const glm::vec2& size, float near, float far);
         public:
             /**
              * \brief Get the current projection-view matrix

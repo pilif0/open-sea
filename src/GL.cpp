@@ -641,6 +641,33 @@ namespace open_sea::gl {
         orientation *= d;
     }
 
+    void Camera::setSize(const glm::vec2& newValue) {
+        size = newValue;
+        recalculateProj = true;
+    }
+
+    glm::vec2 Camera::getSize() const {
+        return glm::vec2(size);
+    }
+
+    void Camera::setNear(float newValue) {
+        near = newValue;
+        recalculateProj = true;
+    }
+
+    float Camera::getNear() const {
+        return near;
+    }
+
+    void Camera::setFar(float newValue) {
+        far = newValue;
+        recalculateProj = true;
+    }
+
+    float Camera::getFar() const {
+        return far;
+    }
+
 //--- end Camera implementation
 
 //--- start OrthographicCamera implementation
@@ -669,12 +696,6 @@ namespace open_sea::gl {
         recalculateProj = true;
     }
 
-    /**
-     * \brief Get the projection-view matrix
-     * Get a copy of the projection-view matrix, recalculating components if needed.
-     * 
-     * \return Copy of the projection-view matrix
-     */
     glm::mat4 OrthographicCamera::getProjViewMatrix() {
         if (recalculateView) {
             viewMatrix = glm::translate(position) * glm::toMat4(orientation);
@@ -694,33 +715,6 @@ namespace open_sea::gl {
         }
 
         return projViewMatrix;
-    }
-
-    void OrthographicCamera::setSize(const glm::vec2& newValue) {
-        size = newValue;
-        recalculateProj = true;
-    }
-
-    glm::vec2 OrthographicCamera::getSize() const {
-        return glm::vec2(size);
-    }
-
-    void OrthographicCamera::setNear(float newValue) {
-        near = newValue;
-        recalculateProj = true;
-    }
-
-    float OrthographicCamera::getNear() const {
-        return near;
-    }
-
-    void OrthographicCamera::setFar(float newValue) {
-        far = newValue;
-        recalculateProj = true;
-    }
-
-    float OrthographicCamera::getFar() const {
-        return far;
     }
 
 //--- end OrthographicCamera implementation

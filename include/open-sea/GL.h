@@ -112,6 +112,19 @@ namespace open_sea::gl {
             //! \c true when view matrix needs to be recalculated before use
             bool recalculateView;
 
+            //! Width and height of the camera view
+            glm::vec2 size;
+            //! Near clipping plane
+            float near;
+            //! Far clipping plane
+            float far;
+            //! Projection matrix (changes when camera size or clipping planes change)
+            glm::mat4 projMatrix;
+            //! \c true when projection matrix needs to be recalculated before use
+            bool recalculateProj;
+
+            //! Projection-view matrix (changes when either component matrix changes)
+            glm::mat4 projViewMatrix;
         public:
             /**
              * \brief Get the current projection-view matrix
@@ -126,6 +139,13 @@ namespace open_sea::gl {
             glm::quat getRotation() const;
             void translate(const glm::vec3& d);
             void rotate(const glm::quat& d);
+
+            void setSize(const glm::vec2& newValue);
+            glm::vec2 getSize() const;
+            void setNear(float newValue);
+            float getNear() const;
+            void setFar(float newValue);
+            float getFar() const;
     };
 
     /** \class OrthographicCamera
@@ -134,34 +154,10 @@ namespace open_sea::gl {
      * Camera position is the position of the centre of the view.
      */
     class OrthographicCamera : public Camera {
-        private:
-            //! Width and height of the camera view
-            glm::vec2 size;
-            //! Near clipping plane
-            float near;
-            //! Far clipping plane
-            float far;
-            //! Projection matrix (changes when camera size or clipping planes change)
-            glm::mat4 projMatrix;
-            //! \c true when projection matrix needs to be recalculated before use
-            bool recalculateProj;
-
-            //! Projection-view matrix (changes when either component matrix changes)
-            glm::mat4 projViewMatrix;
-
         public:
             OrthographicCamera(const glm::vec3& position, const glm::quat& orientation, const glm::vec2& size, float near,
                                float far);
-
             glm::mat4 getProjViewMatrix() override;
-
-            void setSize(const glm::vec2& newValue);
-            glm::vec2 getSize() const;
-            void setNear(float newValue);
-            float getNear() const;
-            void setFar(float newValue);
-            float getFar() const;
-
     };
 
     void log_errors();

@@ -2,9 +2,17 @@
  * GL implementation
  */
 
-#include <imgui.h>
-
 #include <open-sea/GL.h>
+#include <open-sea/Log.h>
+
+#include <imgui.h>
+#if not(defined(GLM_ENABLE_EXPERIMENTAL))
+#define GLM_ENABLE_EXPERIMENTAL
+#endif
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/transform.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include <fstream>
 #include <sstream>
@@ -14,6 +22,7 @@ namespace open_sea::gl {
     log::severity_logger lg = log::get_logger("OpenGL");
     log::severity_logger shaderLG = log::get_logger("OpenGL Shaders");
 
+//--- start ShaderProgram implementation
     // Initailize counters
     uint ShaderProgram::programCount = 0;
     uint ShaderProgram::vertexCount = 0;
@@ -592,6 +601,125 @@ namespace open_sea::gl {
         ImGui::Text("Tessellation control shaders: %d", tessConCount);
         ImGui::Text("Tessellation evaluation shaders: %d", tessEvalCount);
     }
+//--- end ShaderProgram implementation
+
+//--- start OrthographicCamera implementation
+
+    /**
+     * \brief Construct the camera from all relevant data
+     * Construct the orthographic camera from all data needed to calculate the matrices.
+     * 
+     * \param position Position of the camera
+     * \param orientation Orientation of the camera
+     * \param size Size of the viewport
+     * \param near Near clipping plane
+     * \param far Far clipping plane
+     */
+    OrthographicCamera::OrthographicCamera(const glm::vec3& position, const glm::quat& orientation, const glm::vec2& size,
+                                           float near, float far) : near(near), far(far) {
+        this->position = glm::vec3(position);
+        this->orientation = glm::quat(orientation);
+        this->size = glm::vec2(size);
+
+        viewMatrix = glm::mat4();
+        projMatrix = glm::mat4();
+        projViewMatrix = glm::mat4();
+
+        recalculateView = true;
+        recalculateProj = true;
+    }
+
+    /**
+     * \brief Get the projection-view matrix
+     * Get a copy of the projection-view matrix, recalculating components if needed.
+     * 
+     * \return Copy of the projection-view matrix
+     */
+    glm::mat4 OrthographicCamera::getProjViewMatrix() {
+        if (recalculateView) {
+            viewMatrix = glm::translate(position) * glm::toMat4(orientation);
+        }
+
+        if (recalculateProj) {
+            // Projection assumes origin in bottom left
+            projMatrix = glm::ortho(
+                    0.0f, size.x,
+                    0.0f, size.y,
+                    near, far);
+        }
+
+        if (recalculateView || recalculateProj) {
+            projViewMatrix = projMatrix;
+            projViewMatrix *= viewMatrix;
+        }
+
+        return projViewMatrix;
+    }
+
+    void OrthographicCamera::setPosition(const glm::vec3& newValue) {
+        position = newValue;
+        recalculateView = true;
+    }
+
+    glm::vec3 OrthographicCamera::getPosition() const {
+        return glm::vec3(position);
+    }
+
+    void OrthographicCamera::setRotation(const glm::quat& newValue) {
+        orientation = newValue;
+        recalculateView = true;
+    }
+
+    glm::quat OrthographicCamera::getRotation() const {
+        return glm::quat(orientation);
+    }
+
+    void OrthographicCamera::setSize(const glm::vec2& newValue) {
+        size = newValue;
+        recalculateProj = true;
+    }
+
+    glm::vec2 OrthographicCamera::getSize() const {
+        return glm::vec2(size);
+    }
+
+    void OrthographicCamera::setNear(float newValue) {
+        near = newValue;
+        recalculateProj = true;
+    }
+
+    float OrthographicCamera::getNear() const {
+        return near;
+    }
+
+    void OrthographicCamera::setFar(float newValue) {
+        far = newValue;
+        recalculateProj = true;
+    }
+
+    float OrthographicCamera::getFar() const {
+        return far;
+    }
+
+    /**
+     * \brief Translate the camera
+     *
+     * \param d Translation vector
+     */
+    void OrthographicCamera::translate(const glm::vec3& d) {
+        position += d;
+    }
+
+    /**
+     * \brief Rotate the camera
+     *
+     * \param d Rotation quaternion
+     */
+    void OrthographicCamera::rotate(const glm::quat& d) {
+        orientation *= d;
+    }
+
+//--- end OrthographicCamera implementation
 
     /**
      * \brief Show the ImGui debug window

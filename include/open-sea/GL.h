@@ -102,22 +102,7 @@ namespace open_sea::gl {
      * All cameras are objects that produce a projection-view matrix based on some properties (position, orientation, resolution, ...).
      */
     class Camera {
-        public:
-            /**
-             * \brief Get the current projection-view matrix
-             *
-             * \return Current projection-view matrix
-             */
-            virtual glm::mat4 getProjViewMatrix() = 0;
-    };
-
-    /** \class OrthographicCamera
-     * \brief Orthographic camera representation
-     * Orthographic camera that produces a orthographic projection-view matrix based on position, orientation and view size.
-     * Camera position is the position of the centre of the view.
-     */
-    class OrthographicCamera : public Camera {
-        private:
+        protected:
             //! Position in world space
             glm::vec3 position;
             //! Orientation in world space
@@ -127,6 +112,29 @@ namespace open_sea::gl {
             //! \c true when view matrix needs to be recalculated before use
             bool recalculateView;
 
+        public:
+            /**
+             * \brief Get the current projection-view matrix
+             *
+             * \return Current projection-view matrix
+             */
+            virtual glm::mat4 getProjViewMatrix() = 0;
+
+            void setPosition(const glm::vec3& newValue);
+            glm::vec3 getPosition() const;
+            void setRotation(const glm::quat& newValue);
+            glm::quat getRotation() const;
+            void translate(const glm::vec3& d);
+            void rotate(const glm::quat& d);
+    };
+
+    /** \class OrthographicCamera
+     * \brief Orthographic camera representation
+     * Orthographic camera that produces a orthographic projection-view matrix based on position, orientation and view size.
+     * Camera position is the position of the centre of the view.
+     */
+    class OrthographicCamera : public Camera {
+        private:
             //! Width and height of the camera view
             glm::vec2 size;
             //! Near clipping plane
@@ -147,10 +155,6 @@ namespace open_sea::gl {
 
             glm::mat4 getProjViewMatrix() override;
 
-            void setPosition(const glm::vec3& newValue);
-            glm::vec3 getPosition() const;
-            void setRotation(const glm::quat& newValue);
-            glm::quat getRotation() const;
             void setSize(const glm::vec2& newValue);
             glm::vec2 getSize() const;
             void setNear(float newValue);
@@ -158,8 +162,6 @@ namespace open_sea::gl {
             void setFar(float newValue);
             float getFar() const;
 
-            void translate(const glm::vec3& d);
-            void rotate(const glm::quat& d);
     };
 
     void log_errors();

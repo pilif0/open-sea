@@ -603,6 +603,46 @@ namespace open_sea::gl {
     }
 //--- end ShaderProgram implementation
 
+//--- start Camera implementation
+
+    void Camera::setPosition(const glm::vec3& newValue) {
+        position = newValue;
+        recalculateView = true;
+    }
+
+    glm::vec3 Camera::getPosition() const {
+        return glm::vec3(position);
+    }
+
+    void Camera::setRotation(const glm::quat& newValue) {
+        orientation = newValue;
+        recalculateView = true;
+    }
+
+    glm::quat Camera::getRotation() const {
+        return glm::quat(orientation);
+    }
+
+    /**
+     * \brief Translate the camera
+     *
+     * \param d Translation vector
+     */
+    void Camera::translate(const glm::vec3& d) {
+        position += d;
+    }
+
+    /**
+     * \brief Rotate the camera
+     *
+     * \param d Rotation quaternion
+     */
+    void Camera::rotate(const glm::quat& d) {
+        orientation *= d;
+    }
+
+//--- end Camera implementation
+
 //--- start OrthographicCamera implementation
 
     /**
@@ -656,24 +696,6 @@ namespace open_sea::gl {
         return projViewMatrix;
     }
 
-    void OrthographicCamera::setPosition(const glm::vec3& newValue) {
-        position = newValue;
-        recalculateView = true;
-    }
-
-    glm::vec3 OrthographicCamera::getPosition() const {
-        return glm::vec3(position);
-    }
-
-    void OrthographicCamera::setRotation(const glm::quat& newValue) {
-        orientation = newValue;
-        recalculateView = true;
-    }
-
-    glm::quat OrthographicCamera::getRotation() const {
-        return glm::quat(orientation);
-    }
-
     void OrthographicCamera::setSize(const glm::vec2& newValue) {
         size = newValue;
         recalculateProj = true;
@@ -699,24 +721,6 @@ namespace open_sea::gl {
 
     float OrthographicCamera::getFar() const {
         return far;
-    }
-
-    /**
-     * \brief Translate the camera
-     *
-     * \param d Translation vector
-     */
-    void OrthographicCamera::translate(const glm::vec3& d) {
-        position += d;
-    }
-
-    /**
-     * \brief Rotate the camera
-     *
-     * \param d Rotation quaternion
-     */
-    void OrthographicCamera::rotate(const glm::quat& d) {
-        orientation *= d;
     }
 
 //--- end OrthographicCamera implementation

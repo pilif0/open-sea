@@ -12,10 +12,6 @@
 #include <open-sea/Log.h>
 #include <open-sea/Delta.h>
 #include <open-sea/GL.h>
-namespace window = open_sea::window;
-namespace input = open_sea::input;
-namespace log = open_sea::log;
-namespace gl = open_sea::gl;
 
 #include <optional>
 #include <memory>
@@ -354,6 +350,9 @@ namespace open_sea::imgui {
         glDisable(GL_DEPTH_TEST);
         glEnable(GL_SCISSOR_TEST);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+        // Change viewport to have origin in top-left corner
+        glViewport(0, 0, (GLsizei)fb_width, (GLsizei)fb_height);
 
         // Set up orthographic projection matrix
         const float ortho_projection[4][4] =

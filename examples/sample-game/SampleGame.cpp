@@ -14,7 +14,7 @@
 #include <open-sea/ImGui.h>
 #include <open-sea/Delta.h>
 #include <open-sea/GL.h>
-namespace log = open_sea::log;
+namespace os_log = open_sea::log;
 namespace window = open_sea::window;
 namespace input = open_sea::input;
 namespace imgui = open_sea::imgui;
@@ -24,12 +24,12 @@ namespace gl = open_sea::gl;
 
 int main() {
     // Initialize logging
-    log::init_logging();
-    log::severity_logger lg = log::get_logger("Sample Game");
+    os_log::init_logging();
+    os_log::severity_logger lg = os_log::get_logger("Sample Game");
 
     // Set the current path to outside the example directory
     boost::filesystem::current_path("../");
-    log::log(lg, log::info, "Working directory set to outside the example directory");
+    os_log::log(lg, os_log::info, "Working directory set to outside the example directory");
 
     // Initialize window module
     if (!window::init())
@@ -139,13 +139,13 @@ int main() {
         // Update delta time
         open_sea::time::update_delta();
     }
-    log::log(lg, log::info, "Main loop ended");
+    os_log::log(lg, os_log::info, "Main loop ended");
 
     c.disconnect();
     imgui_toggle.disconnect();
     imgui::clean_up();
     window::clean_up();
-    log::clean_up();
+    os_log::clean_up();
     window::terminate();
 
     return 0;

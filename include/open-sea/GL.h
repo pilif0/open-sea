@@ -152,7 +152,7 @@ namespace open_sea::gl {
 
     /** \class OrthographicCamera
      * \brief Orthographic camera representation
-     * Orthographic camera that produces a orthographic projection-view matrix based on position, orientation and view size.
+     * Orthographic camera that produces an orthographic projection-view matrix based on position, orientation and view size.
      * Camera position is the position of the centre of the view.
      */
     class OrthographicCamera : public Camera {
@@ -160,6 +160,24 @@ namespace open_sea::gl {
             OrthographicCamera(const glm::vec3& position, const glm::quat& orientation, const glm::vec2& size, float near,
                                float far);
             glm::mat4 getProjViewMatrix() override;
+    };
+
+    /** \class PerspectiveCamera
+     * \brief Perspective camera representation
+     * Perspecitve camera that produces a perspective projection-view matrix based on position, orientation, view size and
+     * field of view.
+     */
+    class PerspectiveCamera : public Camera {
+        private:
+            //! Field of view in degrees
+            float fov;
+        public:
+            PerspectiveCamera(const glm::vec3& position, const glm::quat& orientation, const glm::vec2& size, float near,
+                              float far, float fov);
+            glm::mat4 getProjViewMatrix() override;
+
+            void setFOV(float newValue);
+            float getFOV() const;
     };
 
     void log_errors();

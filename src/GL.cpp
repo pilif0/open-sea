@@ -722,6 +722,53 @@ namespace open_sea::gl {
 
 //--- end OrthographicCamera implementation
 
+//--- start PerspectiveCamera implementation
+    /**
+     * \brief Construct a camera from all relevant data
+     * Construct the perspective camera from all data needed to calculate the matrices
+     *
+     * \param position Position of the camera
+     * \param orientation Orientation of the camera
+     * \param size Size of the viewport
+     * \param near Near clipping plane
+     * \param far Far clipping plane
+     * \param fov Field of view
+     */
+    PerspectiveCamera::PerspectiveCamera(const glm::vec3 &position, const glm::quat &orientation, const glm::vec2 &size,
+                                         float near, float far, float fov) : Camera(position, orientation, size, near, far),
+                                                                             fov(fov) {}
+
+    glm::mat4 PerspectiveCamera::getProjViewMatrix() {
+        if (recalculateView) {
+            viewMatrix = glm::translate(position) * glm::toMat4(orientation);
+        }
+
+        if (recalculateProj) {
+            projMatrix = glm::perspectiveFov(
+                    fov,
+                    size.x, size.y,
+                    near, far);
+        }
+
+        if (recalculateView || recalculateProj) {
+            projViewMatrix = projMatrix;
+            projViewMatrix *= viewMatrix;
+        }
+
+        return projViewMatrix;
+    }
+
+    void PerspectiveCamera::setFOV(float newValue) {
+        fov = newValue;
+        recalculateProj = true;
+    }
+
+    float PerspectiveCamera::getFOV() const {
+        return fov;
+    }
+
+//--- end PerspectiveCamera implementation
+
     /**
      * \brief Show the ImGui debug window
      */

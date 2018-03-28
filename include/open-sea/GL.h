@@ -148,6 +148,8 @@ namespace open_sea::gl {
             float getNear() const;
             void setFar(float newValue);
             float getFar() const;
+
+            virtual void showDebugControls();
     };
 
     /** \class OrthographicCamera
@@ -175,6 +177,7 @@ namespace open_sea::gl {
             PerspectiveCamera(const glm::vec3& position, const glm::quat& orientation, const glm::vec2& size, float near,
                               float far, float fov);
             glm::mat4 getProjViewMatrix() override;
+            void showDebugControls() override;
 
             void setFOV(float newValue);
             float getFOV() const;

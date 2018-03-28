@@ -682,6 +682,23 @@ namespace open_sea::gl {
         return far;
     }
 
+    /**
+     * \brief Show ImGui widget to control camera state
+     */
+    void Camera::showDebugControls() {
+        ImGui::InputFloat3("Position:", &position[0]);
+        ImGui::InputFloat4("Orientation (quat.):", &orientation[0]);
+        ImGui::InputFloat2("Size:", &size[0]);
+        ImGui::InputFloat("Near:", &near);
+        ImGui::InputFloat("Far:", &far);
+        ImGui::Spacing();
+        ImGui::Text("Projection-view matrix:");
+        ImGui::InputFloat4("0:", &projViewMatrix[0][0]);
+        ImGui::InputFloat4("1:", &projViewMatrix[1][0]);
+        ImGui::InputFloat4("2:", &projViewMatrix[2][0]);
+        ImGui::InputFloat4("3:", &projViewMatrix[3][0]);
+    }
+
 //--- end Camera implementation
 
 //--- start OrthographicCamera implementation
@@ -765,6 +782,12 @@ namespace open_sea::gl {
 
     float PerspectiveCamera::getFOV() const {
         return fov;
+    }
+
+    void PerspectiveCamera::showDebugControls() {
+        Camera::showDebugControls();
+        ImGui::NewLine();
+        ImGui::InputFloat("FOV:", &fov);
     }
 
 //--- end PerspectiveCamera implementation

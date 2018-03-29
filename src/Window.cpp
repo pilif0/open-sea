@@ -64,6 +64,9 @@ namespace open_sea::window {
         focus = std::make_unique<focus_signal>();
         closeSignal = std::make_unique<close_signal>();
 
+        // Add a slot to update viewport dimensions on each size change
+        size->connect([](float w, float h){ ::glViewport(0, current->fbHeight, current->fbWidth, 0); });
+
         log::log(lg, log::info, "Window module initialized");
         return true;
     }
@@ -131,9 +134,6 @@ namespace open_sea::window {
         // Write the new sizes
         ::glfwGetWindowSize(window, &current->width, &current->height);
         ::glfwGetFramebufferSize(window, &current->fbWidth, &current->fbHeight);
-
-        // Update the viewport size
-        ::glViewport(0, 0, current->fbWidth, current->fbHeight);
 
         // Log the action
         std::ostringstream message;

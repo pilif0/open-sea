@@ -2,9 +2,17 @@
  * GL implementation
  */
 
-#include <imgui.h>
-
 #include <open-sea/GL.h>
+#include <open-sea/Log.h>
+
+#include <imgui.h>
+#if not(defined(GLM_ENABLE_EXPERIMENTAL))
+#define GLM_ENABLE_EXPERIMENTAL
+#endif
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/transform.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include <fstream>
 #include <sstream>
@@ -14,6 +22,7 @@ namespace open_sea::gl {
     log::severity_logger lg = log::get_logger("OpenGL");
     log::severity_logger shaderLG = log::get_logger("OpenGL Shaders");
 
+//--- start ShaderProgram implementation
     // Initailize counters
     uint ShaderProgram::programCount = 0;
     uint ShaderProgram::vertexCount = 0;
@@ -592,6 +601,200 @@ namespace open_sea::gl {
         ImGui::Text("Tessellation control shaders: %d", tessConCount);
         ImGui::Text("Tessellation evaluation shaders: %d", tessEvalCount);
     }
+//--- end ShaderProgram implementation
+
+//--- start Camera implementation
+
+    Camera::Camera(const glm::vec3 &position, const glm::quat &orientation, const glm::vec2 &size, float near,
+                   float far) : near(near), far(far) {
+        this->position = glm::vec3(position);
+        this->orientation = glm::quat(orientation);
+        this->size = glm::vec2(size);
+
+        viewMatrix = glm::mat4();
+        projMatrix = glm::mat4();
+        projViewMatrix = glm::mat4();
+
+        recalculateView = true;
+        recalculateProj = true;
+    }
+
+    void Camera::setPosition(const glm::vec3& newValue) {
+        position = newValue;
+        recalculateView = true;
+    }
+
+    glm::vec3 Camera::getPosition() const {
+        return glm::vec3(position);
+    }
+
+    void Camera::setRotation(const glm::quat& newValue) {
+        orientation = newValue;
+        recalculateView = true;
+    }
+
+    glm::quat Camera::getRotation() const {
+        return glm::quat(orientation);
+    }
+
+    /**
+     * \brief Translate the camera
+     *
+     * \param d Translation vector
+     */
+    void Camera::translate(const glm::vec3& d) {
+        position += d;
+    }
+
+    /**
+     * \brief Rotate the camera
+     *
+     * \param d Rotation quaternion
+     */
+    void Camera::rotate(const glm::quat& d) {
+        orientation *= d;
+    }
+
+    void Camera::setSize(const glm::vec2& newValue) {
+        size = newValue;
+        recalculateProj = true;
+    }
+
+    glm::vec2 Camera::getSize() const {
+        return glm::vec2(size);
+    }
+
+    void Camera::setNear(float newValue) {
+        near = newValue;
+        recalculateProj = true;
+    }
+
+    float Camera::getNear() const {
+        return near;
+    }
+
+    void Camera::setFar(float newValue) {
+        far = newValue;
+        recalculateProj = true;
+    }
+
+    float Camera::getFar() const {
+        return far;
+    }
+
+    /**
+     * \brief Show ImGui widget to control camera state
+     */
+    void Camera::showDebugControls() {
+        ImGui::InputFloat3("Position:", &position[0]);
+        ImGui::InputFloat4("Orientation (quat.):", &orientation[0]);
+        ImGui::InputFloat2("Size:", &size[0]);
+        ImGui::InputFloat("Near:", &near);
+        ImGui::InputFloat("Far:", &far);
+        ImGui::Spacing();
+        ImGui::Text("Projection-view matrix:");
+        ImGui::InputFloat4("0:", &projViewMatrix[0][0]);
+        ImGui::InputFloat4("1:", &projViewMatrix[1][0]);
+        ImGui::InputFloat4("2:", &projViewMatrix[2][0]);
+        ImGui::InputFloat4("3:", &projViewMatrix[3][0]);
+    }
+
+//--- end Camera implementation
+
+//--- start OrthographicCamera implementation
+
+    /**
+     * \brief Construct the camera from all relevant data
+     * Construct the orthographic camera from all data needed to calculate the matrices.
+     * 
+     * \param position Position of the camera
+     * \param orientation Orientation of the camera
+     * \param size Size of the viewport
+     * \param near Near clipping plane
+     * \param far Far clipping plane
+     */
+    OrthographicCamera::OrthographicCamera(const glm::vec3& position, const glm::quat& orientation, const glm::vec2& size,
+                                           float near, float far) : Camera(position, orientation, size, near, far) {}
+
+    glm::mat4 OrthographicCamera::getProjViewMatrix() {
+        if (recalculateView) {
+            viewMatrix = glm::translate(position) * glm::toMat4(orientation);
+            recalculateView = false;
+        }
+
+        if (recalculateProj) {
+            // Projection assumes origin in bottom left
+            projMatrix = glm::ortho(
+                    0.0f, size.x,
+                    0.0f, size.y,
+                    near, far);
+            recalculateProj = false;
+        }
+
+        if (recalculateView || recalculateProj) {
+            projViewMatrix = projMatrix;
+            projViewMatrix *= viewMatrix;
+        }
+
+        return projViewMatrix;
+    }
+
+//--- end OrthographicCamera implementation
+
+//--- start PerspectiveCamera implementation
+    /**
+     * \brief Construct a camera from all relevant data
+     * Construct the perspective camera from all data needed to calculate the matrices
+     *
+     * \param position Position of the camera
+     * \param orientation Orientation of the camera
+     * \param size Size of the viewport
+     * \param near Near clipping plane
+     * \param far Far clipping plane
+     * \param fov Field of view
+     */
+    PerspectiveCamera::PerspectiveCamera(const glm::vec3 &position, const glm::quat &orientation, const glm::vec2 &size,
+                                         float near, float far, float fov) : Camera(position, orientation, size, near, far),
+                                                                             fov(fov) {}
+
+    glm::mat4 PerspectiveCamera::getProjViewMatrix() {
+        if (recalculateView) {
+            viewMatrix = glm::translate(position) * glm::toMat4(orientation);
+            recalculateView = false;
+        }
+
+        if (recalculateProj) {
+            projMatrix = glm::perspectiveFov(
+                    fov,
+                    size.x, size.y,
+                    near, far);
+            recalculateProj = false;
+        }
+
+        if (recalculateView || recalculateProj) {
+            projViewMatrix = projMatrix;
+            projViewMatrix *= viewMatrix;
+        }
+
+        return projViewMatrix;
+    }
+
+    void PerspectiveCamera::setFOV(float newValue) {
+        fov = newValue;
+        recalculateProj = true;
+    }
+
+    float PerspectiveCamera::getFOV() const {
+        return fov;
+    }
+
+    void PerspectiveCamera::showDebugControls() {
+        Camera::showDebugControls();
+        ImGui::NewLine();
+        ImGui::InputFloat("FOV:", &fov);
+    }
+
+//--- end PerspectiveCamera implementation
 
     /**
      * \brief Show the ImGui debug window

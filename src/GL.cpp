@@ -719,6 +719,7 @@ namespace open_sea::gl {
     glm::mat4 OrthographicCamera::getProjViewMatrix() {
         if (recalculateView) {
             viewMatrix = glm::translate(position) * glm::toMat4(orientation);
+            recalculateView = false;
         }
 
         if (recalculateProj) {
@@ -727,6 +728,7 @@ namespace open_sea::gl {
                     0.0f, size.x,
                     0.0f, size.y,
                     near, far);
+            recalculateProj = false;
         }
 
         if (recalculateView || recalculateProj) {
@@ -758,6 +760,7 @@ namespace open_sea::gl {
     glm::mat4 PerspectiveCamera::getProjViewMatrix() {
         if (recalculateView) {
             viewMatrix = glm::translate(position) * glm::toMat4(orientation);
+            recalculateView = false;
         }
 
         if (recalculateProj) {
@@ -765,6 +768,7 @@ namespace open_sea::gl {
                     fov,
                     size.x, size.y,
                     near, far);
+            recalculateProj = false;
         }
 
         if (recalculateView || recalculateProj) {

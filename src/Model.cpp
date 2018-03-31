@@ -151,6 +151,13 @@ namespace open_sea::model {
         // Unbind the vertex array
         glBindVertexArray(0);
     }
+
+    Model::~Model() {
+        // Delete buffers and vertex array
+        glDeleteBuffers(1, &vertexBuffer);
+        glDeleteBuffers(1, &idxBuffer);
+        glDeleteVertexArrays(1, &vertexArray);
+    }
     //--- end Model implementation
 
     //--- start UntexModel implementation

@@ -46,6 +46,8 @@ namespace open_sea::model {
             static std::unique_ptr<Model> fromFile(const std::string& path);
 
             void draw();
+
+            ~Model();
     };
 
     /** \class UntexModel

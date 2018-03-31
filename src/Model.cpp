@@ -61,14 +61,14 @@ namespace open_sea::model {
      * Read a model from an OBJ file, taking into account vertex positions, UV coordinates and face descriptions.
      *
      * \param path Path to the file
-     * \return \c nullptr on file read failure, \c Model object otherwise
+     * \return Unique pointer to \c nullptr on file read failure, or to \c Model object otherwise
      */
     std::unique_ptr<Model> Model::fromFile(const std::string &path) {
         // Verify the file exists and is readable
         std::ifstream stream(path);
         if (stream.fail()) {
             log::log(lg, log::info, std::string("Failed to read file ").append(path));
-            return nullptr;
+            return std::unique_ptr<Model>{};
         }
 
         // Read the vertex descriptions until the first face
@@ -198,14 +198,14 @@ namespace open_sea::model {
      * Read an untextured model from an OBJ file, taking into account vertex positions and face descriptions.
      *
      * \param path Path to the file
-     * \return \c nullptr on file read failure, \c UntexModel object otherwise
+     * \return Unique pointer to \c nullptr on file read failure, or to \c UntexModel object otherwise
      */
     std::unique_ptr<UntexModel> UntexModel::fromFile(const std::string &path) {
         // Verify the file exists and is readable
         std::ifstream stream(path);
         if (stream.fail()) {
             log::log(lg, log::info, std::string("Failed to read file ").append(path));
-            return nullptr;
+            return std::unique_ptr<UntexModel>{};
         }
 
         // Read the vertex descriptions until the first face

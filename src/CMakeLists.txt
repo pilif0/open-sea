@@ -18,7 +18,8 @@ set(open_sea_SOURCES
         Input.cpp
         ImGui.cpp
         Delta.cpp
-        GL.cpp)
+        GL.cpp
+        Model.cpp)
 
 # Add the library
 add_library(open_sea ${open_sea_SOURCES} ${open_sea_HEADERS} ${ImGui})

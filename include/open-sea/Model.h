@@ -7,10 +7,10 @@
 #define OPEN_SEA_MODEL_H
 
 #include <glad/glad.h>
-#include <glm/vec3.hpp>
 
 #include <vector>
 #include <string>
+#include <memory>
 
 namespace open_sea::model {
 
@@ -22,26 +22,29 @@ namespace open_sea::model {
      * Assumes data is already triangulated.
      */
     class Model {
-        public:
-            //! Position and UV coordinates of a vertex
-            struct Vertex {
-                glm::vec3 position;
-                glm::vec3 UV;
-            };
         protected:
-            //! Vertex data
-            std::vector<Vertex> vertices;
+            //! Default constructor for purposes of inheritance
+            Model() {};
             //! ID of the vertex buffer
             GLuint vertexBuffer;
-            //! Vertex indices
-            std::vector<int> indices;
             //! ID of the index buffer
             GLuint idxBuffer;
             //! ID of the vertex array
             GLuint vertexArray;
+            //! Number of vertices to draw
+            unsigned int vertexCount;
         public:
-            Model(const std::string& path);
-            Model(const Vertex& vertices, const int& indices, uint count);
+            //! Position and UV coordinates of a vertex
+            struct Vertex {
+                float position[3];
+                float UV[2];
+
+                bool operator==(const Vertex &rhs) const { return position == rhs.position && UV == rhs.UV; }
+                bool operator!=(const Vertex &rhs) const { return !(rhs == *this); }
+            };
+            Model(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices);
+            static std::unique_ptr<Model> fromFile(const std::string& path);
+
             void draw();
     };
 
@@ -54,10 +57,13 @@ namespace open_sea::model {
         public:
             //! Position of a vertex
             struct Vertex {
-                glm::vec3 position;
+                float position[3];
+
+                bool operator==(const Vertex &rhs) const { return position == rhs.position; }
+                bool operator!=(const Vertex &rhs) const { return !(rhs == *this); }
             };
-            UntexModel(const std::string& path);
-            UntexModel(const Vertex& vertices, const int& indices, uint count);
+            UntexModel(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices);
+            static std::unique_ptr<UntexModel> fromFile(const std::string& path);
     };
 }
 

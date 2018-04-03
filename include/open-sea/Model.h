@@ -50,7 +50,7 @@ namespace open_sea::model {
             static std::unique_ptr<Model> fromFile(const std::string& path);
 
             void draw();
-            void showDebug();
+            virtual void showDebug();
 
             ~Model();
     };
@@ -71,6 +71,7 @@ namespace open_sea::model {
             };
             UntexModel(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices);
             static std::unique_ptr<UntexModel> fromFile(const std::string& path);
+            void showDebug() override;
     };
 }
 

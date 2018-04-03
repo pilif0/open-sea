@@ -43,14 +43,14 @@ namespace open_sea::model {
         // Create and fill the vertex buffer
         glGenBuffers(1, &vertexBuffer);
         glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex::UV), nullptr);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex::position), (void*) sizeof(Vertex::position));
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), nullptr);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) sizeof(Vertex::position));
         glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex)*vertices.size(), &vertices[0], GL_STATIC_DRAW);
 
         // Create and fill the index buffer
         glGenBuffers(1, &idxBuffer);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, idxBuffer);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int)*indices.size(), &indices[0], GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*indices.size(), &indices[0], GL_STATIC_DRAW);
 
         glBindVertexArray(0);
     }
@@ -114,7 +114,7 @@ namespace open_sea::model {
 
                 // Parse the position index and get the position
                 int iP;
-                if (descs[0].empty()) {
+                if (descs.empty() || descs[0].empty()) {
                     std::ostringstream message;
                     message << "Face " << f << " missing vertex " << j << " position in " << path;
                     log::log(lg, log::error, message.str());
@@ -144,7 +144,7 @@ namespace open_sea::model {
 
                 // Parse the UV index and get the UV
                 int iUV;
-                if (descs[1].empty()) {
+                if (descs.size() < 2 || descs[1].empty()) {
                     // Leave index as 0 and use [0,0] as UV
                     iUV = 0;
                     //TODO - might want to report this fact if true for all faces as a warning and recommend UntexModel
@@ -219,7 +219,8 @@ namespace open_sea::model {
      * \brief Show ImGui debug information for this model
      */
     void Model::showDebug() {
-        ImGui::Text("Vertices (unique) : %i (%i)", vertexCount, uniqueVertexCount);
+        ImGui::Text("Vertices (unique): %i (%i)", vertexCount, uniqueVertexCount);
+        ImGui::Text("Memory size: %i B", sizeof(unsigned int) * vertexCount + sizeof(Vertex) * uniqueVertexCount);
     }
 
     Model::~Model() {
@@ -315,7 +316,7 @@ namespace open_sea::model {
 
                 // Parse the position index and get the position
                 int iP;
-                if (descs[0].empty()) {
+                if (descs.empty() || descs[0].empty()) {
                     std::ostringstream message;
                     message << "Face " << f << " missing vertex " << j << " position in " << path;
                     log::log(lg, log::error, message.str());
@@ -364,6 +365,14 @@ namespace open_sea::model {
         // Create and return the model form the data
         log::log(lg, log::info, std::string("Untextured model loaded from ").append(path));
         return std::make_unique<UntexModel>(vertices, indices);
+    }
+
+    /**
+     * \brief Show ImGui debug information for this model
+     */
+    void UntexModel::showDebug() {
+        ImGui::Text("Vertices (unique): %i (%i)", vertexCount, uniqueVertexCount);
+        ImGui::Text("Memory size: %i B", sizeof(unsigned int) * vertexCount + sizeof(Vertex) * uniqueVertexCount);
     }
     //--- end UntexModel implementation
 }

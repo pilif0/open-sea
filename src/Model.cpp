@@ -9,8 +9,7 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 
-#include <glm/vec3.hpp>
-#include <glm/vec2.hpp>
+#include <imgui.h>
 
 #include <fstream>
 #include <sstream>
@@ -33,6 +32,7 @@ namespace open_sea::model {
      */
     Model::Model(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices) {
         vertexCount = static_cast<unsigned int>(indices.size());
+        uniqueVertexCount = static_cast<unsigned int>(vertices.size());
 
         // Create vertex array and enable attributes
         glGenVertexArrays(1, &vertexArray);
@@ -46,13 +46,11 @@ namespace open_sea::model {
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex::UV), nullptr);
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex::position), (void*) sizeof(Vertex::position));
         glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex)*vertices.size(), &vertices[0], GL_STATIC_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
 
         // Create and fill the index buffer
         glGenBuffers(1, &idxBuffer);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, idxBuffer);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int)*indices.size(), &indices[0], GL_STATIC_DRAW);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
         glBindVertexArray(0);
     }
@@ -178,8 +176,8 @@ namespace open_sea::model {
 
                 // Build the vertex representation and try to find it in the vertex container
                 Vertex v{
-                        .position = {p.x, p.y, p.z},
-                        .UV = {t.x, t.y}
+                        .position = p,
+                        .UV = t
                 };
                 auto i = std::find(vertices.begin(), vertices.end(), v);
 
@@ -198,6 +196,7 @@ namespace open_sea::model {
         } while (std::getline(stream, line));
 
         // Create and return the model form the data
+        log::log(lg, log::info, std::string("Model loaded from ").append(path));
         return std::make_unique<Model>(vertices, indices);
     }
 
@@ -214,6 +213,13 @@ namespace open_sea::model {
 
         // Unbind the vertex array
         glBindVertexArray(0);
+    }
+
+    /**
+     * \brief Show ImGui debug information for this model
+     */
+    void Model::showDebug() {
+        ImGui::Text("Vertices (unique) : %i (%i)", vertexCount, uniqueVertexCount);
     }
 
     Model::~Model() {
@@ -235,6 +241,7 @@ namespace open_sea::model {
     UntexModel::UntexModel(const std::vector<UntexModel::Vertex> &vertices, const std::vector<unsigned int> &indices)
             : Model(){
         vertexCount = static_cast<unsigned int>(indices.size());
+        uniqueVertexCount = static_cast<unsigned int>(vertices.size());
 
         // Create vertex array and enable attributes
         glGenVertexArrays(1, &vertexArray);
@@ -246,13 +253,11 @@ namespace open_sea::model {
         glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
         glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex)*vertices.size(), &vertices[0], GL_STATIC_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
 
         // Create and fill the index buffer
         glGenBuffers(1, &idxBuffer);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, idxBuffer);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int)*indices.size(), &indices[0], GL_STATIC_DRAW);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
         glBindVertexArray(0);
     }
@@ -296,7 +301,7 @@ namespace open_sea::model {
         do {
             // Ignore non-face lines
             if (!boost::starts_with(line, "f "))
-                break;
+                continue;
 
             // Separate the three vertex descriptions
             std::vector<std::string> parts;
@@ -339,7 +344,7 @@ namespace open_sea::model {
                 }
 
                 // Build the vertex representation and try to find it in the vertex container
-                Vertex v{ .position = {p.x, p.y, p.z} };
+                Vertex v{ .position = p };
                 auto i = std::find(vertices.begin(), vertices.end(), v);
 
                 // Add if not present, use the index if present
@@ -357,6 +362,7 @@ namespace open_sea::model {
         } while (std::getline(stream, line));
 
         // Create and return the model form the data
+        log::log(lg, log::info, std::string("Untextured model loaded from ").append(path));
         return std::make_unique<UntexModel>(vertices, indices);
     }
     //--- end UntexModel implementation

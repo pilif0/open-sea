@@ -8,6 +8,8 @@
 
 #include <glad/glad.h>
 
+#include <glm/glm.hpp>
+
 #include <vector>
 #include <string>
 #include <memory>
@@ -33,11 +35,13 @@ namespace open_sea::model {
             GLuint vertexArray;
             //! Number of vertices to draw
             unsigned int vertexCount;
+            //! Number of unique vertices
+            unsigned int uniqueVertexCount;
         public:
             //! Position and UV coordinates of a vertex
             struct Vertex {
-                float position[3];
-                float UV[2];
+                glm::vec3 position;
+                glm::vec2 UV;
 
                 bool operator==(const Vertex &rhs) const { return position == rhs.position && UV == rhs.UV; }
                 bool operator!=(const Vertex &rhs) const { return !(rhs == *this); }
@@ -46,6 +50,7 @@ namespace open_sea::model {
             static std::unique_ptr<Model> fromFile(const std::string& path);
 
             void draw();
+            void showDebug();
 
             ~Model();
     };
@@ -55,11 +60,11 @@ namespace open_sea::model {
      * Specialisation of the general model class that assumes no texture is used.
      * Therefore UV coordinates are not used and memory is saved by not having to store and move them.
      */
-    class UntexModel : Model {
+    class UntexModel : public Model {
         public:
             //! Position of a vertex
             struct Vertex {
-                float position[3];
+                glm::vec3 position;
 
                 bool operator==(const Vertex &rhs) const { return position == rhs.position; }
                 bool operator!=(const Vertex &rhs) const { return !(rhs == *this); }

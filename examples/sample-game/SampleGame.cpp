@@ -34,7 +34,7 @@ int main() {
     os_log::severity_logger lg = os_log::get_logger("Sample Game");
 
     // Set the current path to outside the example directory
-    boost::filesystem::current_path("../");
+    boost::filesystem::current_path("../../");
     os_log::log(lg, os_log::info, "Working directory set to outside the example directory");
 
     // Initialize window module
@@ -105,10 +105,10 @@ int main() {
                     0.1f, 1000.0f, 90.0f);
 
     // Prepare test models
-    std::unique_ptr<model::Model> test_model_tex = model::Model::fromFile("data/models/teapot.obj");
+    std::unique_ptr<model::Model> test_model_tex = model::Model::fromFile("examples/sample-game/data/models/teapot.obj");
     if (!test_model_tex)
         return -1;
-    std::unique_ptr<model::UntexModel> test_model_unt = model::UntexModel::fromFile("data/models/teapot.obj");
+    std::unique_ptr<model::UntexModel> test_model_unt = model::UntexModel::fromFile("examples/sample-game/data/models/teapot.obj");
     if (!test_model_unt)
         return -1;
     glm::vec3 test_position(0.0f, 0.0f, 0.0f);

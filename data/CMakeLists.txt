@@ -6,11 +6,15 @@ set(SHADERS shaders/ImGui.vshader
 list(APPEND DATA_FILES ${SHADERS})
 
 # Declare models
-set(MODELS models/teapot.obj
-        models/triangle.obj)
+set(MODELS )
 list(APPEND DATA_FILES ${MODELS})
 
 # Copy all data files
 foreach(FILE ${DATA_FILES})
     configure_file(${FILE} ${FILE} COPYONLY)
 endforeach()
+
+# Unset local variables
+unset(SHADERS)
+unset(MODELS)
+unset(DATA_FILES)

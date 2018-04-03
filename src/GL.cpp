@@ -11,7 +11,6 @@
 #endif
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/quaternion.hpp>
-#include <glm/gtx/transform.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <fstream>
@@ -686,17 +685,22 @@ namespace open_sea::gl {
      * \brief Show ImGui widget to control camera state
      */
     void Camera::showDebugControls() {
-        ImGui::InputFloat3("Position:", &position[0]);
-        ImGui::InputFloat4("Orientation (quat.):", &orientation[0]);
-        ImGui::InputFloat2("Size:", &size[0]);
-        ImGui::InputFloat("Near:", &near);
-        ImGui::InputFloat("Far:", &far);
+        ImGui::InputFloat3("Position", &position[0]);
+        ImGui::InputFloat4("Orientation (quat.)", &orientation[0]);
+        ImGui::InputFloat2("Size", &size[0]);
+        ImGui::InputFloat("Near", &near);
+        ImGui::InputFloat("Far", &far);
+        if (ImGui::Button("Recalculate")) {
+            recalculateView = true;
+            recalculateProj = true;
+            getProjViewMatrix();
+        }
         ImGui::Spacing();
-        ImGui::Text("Projection-view matrix:");
-        ImGui::InputFloat4("0:", &projViewMatrix[0][0]);
-        ImGui::InputFloat4("1:", &projViewMatrix[1][0]);
-        ImGui::InputFloat4("2:", &projViewMatrix[2][0]);
-        ImGui::InputFloat4("3:", &projViewMatrix[3][0]);
+        ImGui::Text("Projection-view matrix");
+        ImGui::InputFloat4("", &projViewMatrix[0][0]);
+        ImGui::InputFloat4("", &projViewMatrix[1][0]);
+        ImGui::InputFloat4("", &projViewMatrix[2][0]);
+        ImGui::InputFloat4("", &projViewMatrix[3][0]);
     }
 
 //--- end Camera implementation
@@ -718,8 +722,7 @@ namespace open_sea::gl {
 
     glm::mat4 OrthographicCamera::getProjViewMatrix() {
         if (recalculateView) {
-            viewMatrix = glm::translate(position) * glm::toMat4(orientation);
-            recalculateView = false;
+            viewMatrix = glm::inverse(glm::translate(glm::toMat4(orientation), position));
         }
 
         if (recalculateProj) {
@@ -728,13 +731,16 @@ namespace open_sea::gl {
                     0.0f, size.x,
                     0.0f, size.y,
                     near, far);
-            recalculateProj = false;
         }
 
         if (recalculateView || recalculateProj) {
             projViewMatrix = projMatrix;
             projViewMatrix *= viewMatrix;
         }
+
+        // Reset flags
+        recalculateView = false;
+        recalculateProj = false;
 
         return projViewMatrix;
     }
@@ -759,22 +765,24 @@ namespace open_sea::gl {
 
     glm::mat4 PerspectiveCamera::getProjViewMatrix() {
         if (recalculateView) {
-            viewMatrix = glm::translate(position) * glm::toMat4(orientation);
-            recalculateView = false;
+            viewMatrix = glm::inverse(glm::translate(glm::toMat4(orientation), position));
         }
 
         if (recalculateProj) {
             projMatrix = glm::perspectiveFov(
-                    fov,
+                    glm::radians(fov),
                     size.x, size.y,
                     near, far);
-            recalculateProj = false;
         }
 
         if (recalculateView || recalculateProj) {
             projViewMatrix = projMatrix;
             projViewMatrix *= viewMatrix;
         }
+
+        // Reset flags
+        recalculateProj = false;
+        recalculateView = false;
 
         return projViewMatrix;
     }
@@ -791,7 +799,7 @@ namespace open_sea::gl {
     void PerspectiveCamera::showDebugControls() {
         Camera::showDebugControls();
         ImGui::NewLine();
-        ImGui::InputFloat("FOV:", &fov);
+        ImGui::InputFloat("FOV", &fov);
     }
 
 //--- end PerspectiveCamera implementation

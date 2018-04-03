@@ -97,6 +97,7 @@ namespace open_sea::model {
         std::vector<Vertex> vertices;
         std::vector<unsigned int> indices;
         int f = 1;
+        bool untextured = true;
         do {
             // Ignore non-face lines
             if (!boost::starts_with(line, "f "))
@@ -147,8 +148,8 @@ namespace open_sea::model {
                 if (descs.size() < 2 || descs[1].empty()) {
                     // Leave index as 0 and use [0,0] as UV
                     iUV = 0;
-                    //TODO - might want to report this fact if true for all faces as a warning and recommend UntexModel
                 } else {
+                    untextured = false;
                     try {
                         iUV = std::stoi(descs[0]);
                     } catch (std::exception &e) {
@@ -172,8 +173,7 @@ namespace open_sea::model {
                 } else {
                     t = UVs[iUV - 1];
                 }
-
-
+                
                 // Build the vertex representation and try to find it in the vertex container
                 Vertex v{
                         .position = p,
@@ -194,6 +194,11 @@ namespace open_sea::model {
 
             f++;
         } while (std::getline(stream, line));
+
+        // Warn if no vertex had a texture
+        if (untextured)
+            log::log(lg, log::warning, std::string("Using Model for and untextured model (should use UntexModel) in ").append(path));
+
 
         // Create and return the model form the data
         log::log(lg, log::info, std::string("Model loaded from ").append(path));

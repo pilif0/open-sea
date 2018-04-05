@@ -107,6 +107,14 @@ namespace open_sea::model {
             std::vector<std::string> parts;
             boost::split(parts, line, boost::is_space(), boost::token_compress_on);
 
+            // Check there are exactly three vertices
+            if (parts.size() != 4) {
+                std::ostringstream message;
+                message << "Face " << f << " doesn't have exactly three vertices in " << path;
+                log::log(lg, log::error, message.str());
+                return std::unique_ptr<Model>{};
+            }
+
             // For each vertex, find if it is already in vertices
             for (int j = 1; j <= 3; j++) {
                 // Separate the position, texture and normal indices
@@ -209,7 +217,7 @@ namespace open_sea::model {
      * \brief Draw the model
      * Bind the vertex array, draw the model, unbind the vertex array
      */
-    void Model::draw() {
+    void Model::draw() const {
         // Bind the vertex array
         glBindVertexArray(vertexArray);
 
@@ -312,6 +320,14 @@ namespace open_sea::model {
             // Separate the three vertex descriptions
             std::vector<std::string> parts;
             boost::split(parts, line, boost::is_space(), boost::token_compress_on);
+
+            // Check there are exactly three vertices
+            if (parts.size() != 4) {
+                std::ostringstream message;
+                message << "Face " << f << " doesn't have exactly three vertices in " << path;
+                log::log(lg, log::error, message.str());
+                return std::unique_ptr<UntexModel>{};
+            }
 
             // For each vertex, find if it is already in vertices
             for (int j = 1; j <= 3; j++) {

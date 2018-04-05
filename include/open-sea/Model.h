@@ -49,7 +49,7 @@ namespace open_sea::model {
             Model(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices);
             static std::unique_ptr<Model> fromFile(const std::string& path);
 
-            void draw();
+            void draw() const;
             virtual void showDebug();
 
             ~Model();

@@ -22,6 +22,66 @@ namespace open_sea::model {
 
     // Note: OBJ files have 1-based indexing
 
+    /**
+     * \brief Read vertex descriptions from an OBJ file
+     * Read vertex positions and UV coordinates from a stream of an OBJ file.
+     * Read until the next line would be a face definition.
+     * Skip any empty, comment or unsupported lines.
+     * The destinations get cleared before use.
+     *
+     * \param stream File as stream
+     * \param positions Positions destination vector
+     * \param UVs UV coordinates destination vector (can be empty)
+     */
+    void read_OBJ_vertices(std::ifstream& stream, std::unique_ptr<std::vector<glm::vec3>>& positions,
+                  std::unique_ptr<std::vector<glm::vec2>>& UVs) {
+        // Clear the destination vectors
+        if (positions)
+            positions->clear();
+        if (UVs)
+            UVs->clear();
+
+        // Read the vertex descriptions until the first face
+        while (!stream.eof()) {
+            // Peek
+            int peek = stream.peek();
+
+            // Stop when next would be a face definition
+            if (peek == 'f')
+                break;
+
+            // Skip empty or comment lines
+            if (peek == '\n' || peek == '#')
+                stream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+            // Decide based on first two characters
+            int start[2]{stream.get(), stream.get()};
+            if (start[0] == 'v') {
+                if (start[1] == 't' && UVs) {
+                    // Line is UV coordinate and the UV destination is present
+                    std::string line;
+                    std::getline(stream, line);
+                    std::vector<std::string> parts;
+                    boost::split(parts, line, boost::is_space(), boost::token_compress_on);
+                    positions->emplace_back(std::stof(parts[0]), std::stof(parts[1]), std::stof(parts[2]));
+                } else if (start[1] == ' ') {
+                    // Line is position
+                    std::string line;
+                    std::getline(stream, line);
+                    std::vector<std::string> parts;
+                    boost::split(parts, line, boost::is_space(), boost::token_compress_on);
+                    positions->emplace_back(std::stof(parts[0]), std::stof(parts[1]), std::stof(parts[2]));
+                } else {
+                    // Not supported -> skip line
+                    stream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                }
+            } else {
+                // Not supported -> skip line
+                stream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            }
+        }
+    }
+
     //--- start Model implementation
     /**
      * \brief Construct a model from vertices and indices
@@ -30,7 +90,7 @@ namespace open_sea::model {
      * \param vertices Vertex descriptions
      * \param indices Indices of vertices
      */
-    Model::Model(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices) {
+    Model::Model(const std::vector<Model::Vertex>& vertices, const std::vector<unsigned int>& indices) {
         vertexCount = static_cast<unsigned int>(indices.size());
         uniqueVertexCount = static_cast<unsigned int>(vertices.size());
 
@@ -71,34 +131,19 @@ namespace open_sea::model {
         }
 
         // Read the vertex descriptions until the first face
-        std::vector<glm::vec3> positions;
-        std::vector<glm::vec2> UVs;
-        std::string line;
-        while (std::getline(stream, line)) {
-            if (boost::starts_with(line, "v ")) {
-                // Line is a vertex position (3 floats)
-                std::vector<std::string> parts;
-                boost::split(parts, line, boost::is_space(), boost::token_compress_on);
-                positions.emplace_back(std::stof(parts[1]), std::stof(parts[2]), std::stof(parts[3]));
-            } else if (boost::starts_with(line, "vt ")) {
-                // Line is UV coordinate (2 floats)
-                std::vector<std::string> parts;
-                boost::split(parts, line, boost::is_space(), boost::token_compress_on);
-                UVs.emplace_back(std::stof(parts[1]), std::stof(parts[2]));
-            } else if (boost::starts_with(line, "f ")) {
-                // Line is a face
-                break;
-            }
-        }
+        std::unique_ptr<std::vector<glm::vec3>> positions = std::make_unique<std::vector<glm::vec3>>();
+        std::unique_ptr<std::vector<glm::vec2>> UVs = std::make_unique<std::vector<glm::vec2>>();
+        read_OBJ_vertices(stream, positions, UVs);
 
         // Read the face description to construct Vertex instances and add corresponding indices
         // Note: first face is already in line
         // Note: assuming triangulated, therefore exactly three vertices per face
         std::vector<Vertex> vertices;
         std::vector<unsigned int> indices;
+        std::string line;
         int f = 1;
         bool untextured = true;
-        do {
+        while (std::getline(stream, line)) {
             // Ignore non-face lines
             if (!boost::starts_with(line, "f "))
                 break;
@@ -140,7 +185,7 @@ namespace open_sea::model {
                     }
                 }
                 glm::vec3 p{};
-                if (iP < 1 || iP > positions.size()) {
+                if (iP < 1 || iP > positions->size()) {
                     // Undeclared position
                     std::ostringstream message;
                     message << "Face " << f << " referencing unknown vertex " << j <<" position ('" << descs[0]
@@ -148,7 +193,7 @@ namespace open_sea::model {
                     log::log(lg, log::error, message.str());
                     return std::unique_ptr<Model>{};
                 } else {
-                    p = positions[iP - 1];
+                    p = (*positions)[iP - 1];
                 }
 
                 // Parse the UV index and get the UV
@@ -171,7 +216,7 @@ namespace open_sea::model {
                 glm::vec2 t{};
                 if (iUV == 0) {
                     // Leave t as [0,0]
-                } else if(iUV < 1 || iUV > UVs.size()) {
+                } else if(iUV < 1 || iUV > UVs->size()) {
                     // Undeclared UV
                     std::ostringstream message;
                     message << "Face " << f << " referencing unknown vertex " << j <<" UV ('" << descs[1]
@@ -179,7 +224,7 @@ namespace open_sea::model {
                     log::log(lg, log::error, message.str());
                     return std::unique_ptr<Model>{};
                 } else {
-                    t = UVs[iUV - 1];
+                    t = (*UVs)[iUV - 1];
                 }
                 
                 // Build the vertex representation and try to find it in the vertex container
@@ -201,7 +246,7 @@ namespace open_sea::model {
             }
 
             f++;
-        } while (std::getline(stream, line));
+        }
 
         // Warn if no vertex had a texture
         if (untextured)
@@ -292,27 +337,18 @@ namespace open_sea::model {
         }
 
         // Read the vertex descriptions until the first face
-        std::vector<glm::vec3> positions;
-        std::string line;
-        while (std::getline(stream, line)) {
-            if (boost::starts_with(line, "v ")) {
-                // Line is a vertex position (3 floats)
-                std::vector<std::string> parts;
-                boost::split(parts, line, boost::is_space(), boost::token_compress_on);
-                positions.emplace_back(std::stof(parts[1]), std::stof(parts[2]), std::stof(parts[3]));
-            } else if (boost::starts_with(line, "f ")) {
-                // Line is a face
-                break;
-            }
-        }
+        std::unique_ptr<std::vector<glm::vec3>> positions = std::make_unique<std::vector<glm::vec3>>();
+        std::unique_ptr<std::vector<glm::vec2>> UVs{};
+        read_OBJ_vertices(stream, positions, UVs);
 
         // Read the face description to construct Vertex instances and add corresponding indices
         // Note: first face is already in line
         // Note: assuming triangulated, therefore exactly three vertices per face
         std::vector<Vertex> vertices;
         std::vector<unsigned int> indices;
+        std::string line;
         int f = 1;
-        do {
+        while (std::getline(stream, line)) {
             // Ignore non-face lines
             if (!boost::starts_with(line, "f "))
                 continue;
@@ -354,7 +390,7 @@ namespace open_sea::model {
                     }
                 }
                 glm::vec3 p{};
-                if (iP < 1 || iP > positions.size()) {
+                if (iP < 1 || iP > positions->size()) {
                     // Undeclared position
                     std::ostringstream message;
                     message << "Face " << f << " referencing unknown vertex " << j <<" position ('" << descs[0]
@@ -362,7 +398,7 @@ namespace open_sea::model {
                     log::log(lg, log::error, message.str());
                     return std::unique_ptr<UntexModel>{};
                 } else {
-                    p = positions[iP - 1];
+                    p = (*positions)[iP - 1];
                 }
 
                 // Build the vertex representation and try to find it in the vertex container
@@ -381,7 +417,7 @@ namespace open_sea::model {
             }
 
             f++;
-        } while (std::getline(stream, line));
+        }
 
         // Create and return the model form the data
         log::log(lg, log::info, std::string("Untextured model loaded from ").append(path));

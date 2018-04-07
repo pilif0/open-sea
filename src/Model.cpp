@@ -30,11 +30,18 @@ namespace open_sea::model {
      * The destinations get cleared before use.
      *
      * \param stream File as stream
+     * \param path Path to the file (for error messages)
      * \param positions Positions destination vector
      * \param UVs UV coordinates destination vector (can be empty)
      */
-    void read_OBJ_vertices(std::ifstream& stream, std::unique_ptr<std::vector<glm::vec3>>& positions,
-                  std::unique_ptr<std::vector<glm::vec2>>& UVs) {
+    bool read_OBJ_vertices(std::ifstream& stream, const std::string& path,
+                           std::shared_ptr<std::vector<glm::vec3>> &positions, std::shared_ptr<std::vector<glm::vec2>> &UVs) {
+        // Check positions is present
+        if (!positions) {
+            log::log(lg, log::error, std::string("Positions not present when reading vertices from ").append(path));
+            return false;
+        }
+
         // Clear the destination vectors
         if (positions)
             positions->clear();
@@ -80,6 +87,158 @@ namespace open_sea::model {
                 stream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             }
         }
+
+        // Success
+        return true;
+    }
+
+    /**
+     * \brief Read faces from an OBJ file given previously read positions and UV coordinates
+     * Read face descriptions form an OBJ file and use previously read vertex positions and UV coordinates to construct
+     * a list of unique vertices and indices to use.
+     * Assumes triangular faces.
+     * Any non-face line until the end of file gets ignored.
+     * The destinations get cleared before use.
+     *
+     * \param stream File as stream just before the first face line
+     * \param path Path to the file (for error messages)
+     * \param positions Vertex positions
+     * \param UVs UV coordinates
+     * \param vertices Unique vertices destination
+     * \param indices Indices destination
+     * \return \c false on failure, \c true otherwise
+     */
+    bool read_OBJ_faces(std::ifstream& stream, const std::string& path,
+                        std::shared_ptr<std::vector<glm::vec3>> &positions, std::shared_ptr<std::vector<glm::vec2>> &UVs,
+                        std::vector<Model::Vertex> &vertices, std::vector<unsigned int> &indices) {
+        // Check positions is present
+        if (!positions) {
+            log::log(lg, log::error, std::string("Positions not present when reading faces from ").append(path));
+            return false;
+        }
+
+        // Clear the destination vectors
+        vertices.clear();
+        indices.clear();
+
+        // Parse line by line
+        int f = 1;
+        while (!stream.eof()) {
+            // Decide based on first two characters
+            int start[2]{stream.get(), stream.get()};
+
+            // Skip non-face lines
+            if (start[0] != 'f' || start[1] != ' ') {
+                stream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                continue;
+            }
+
+            // Separate rest of the line by spaces into vertex description references
+            std::string line;
+            std::getline(stream, line);
+            std::vector<std::string> parts;
+            boost::split(parts, line, boost::is_space(), boost::token_compress_on);
+
+            // Check the face is a triangle
+            if (parts.size() != 3) {
+                std::ostringstream message;
+                message << "Face " << f << " doesn't have exactly three vertices in " << path;
+                log::log(lg, log::error, message.str());
+                return false;
+            }
+
+            // Process each vertex
+            for (int v = 0; v < 3; v++) {
+                // Separate description references
+                std::vector<std::string> refs;
+                boost::split(refs, parts[v], boost::is_any_of("/"), boost::token_compress_off);
+
+                // Parse position index and get the position
+                int iP;
+                if (refs.empty() || refs[0].empty()) {
+                    // Position reference not present
+                    std::ostringstream message;
+                    message << "Face " << f << " missing vertex " << v << " position in " << path;
+                    log::log(lg, log::error, message.str());
+                    return false;
+                } else {
+                    try {
+                        iP = std::stoi(refs[0]);
+                    } catch (std::exception &e) {
+                        // Position reference not a valid number
+                        std::ostringstream message;
+                        message << "Face " << f << " referencing non-numeric vertex " << v <<" position ('" << refs[0]
+                                << "') in " << path;
+                        log::log(lg, log::error, message.str());
+                        return false;
+                    }
+                }
+                glm::vec3 p{};
+                if (iP < 1 || iP > positions->size()) {
+                    // Undeclared position
+                    std::ostringstream message;
+                    message << "Face " << f << " referencing unknown vertex " << v <<" position ('" << refs[0]
+                            << "') in " << path;
+                    log::log(lg, log::error, message.str());
+                    return false;
+                } else {
+                    p = (*positions)[iP - 1];
+                }
+
+                // Parse the UV index and get the UV
+                int iUV;
+                if (refs.size() < 2 || refs[1].empty()) {
+                    // UV reference not present -> Set index as 0 and use [0,0] as UV
+                    iUV = 0;
+                } else {
+                    try {
+                        iUV = std::stoi(refs[1]);
+                    } catch (std::exception &e) {
+                        // UV reference not a valid number
+                        std::ostringstream message;
+                        message << "Face " << f << " referencing non-numeric vertex " << v <<" UV ('" << refs[1]
+                                << "') in " << path;
+                        log::log(lg, log::error, message.str());
+                        return false;
+                    }
+                }
+                glm::vec2 t{};
+                if (iUV == 0 || !UVs) {
+                    // Leave t as [0,0]
+                } else if(iUV < 1 || iUV > UVs->size()) {
+                    // Undeclared UV
+                    std::ostringstream message;
+                    message << "Face " << f << " referencing unknown vertex " << v <<" UV ('" << refs[1]
+                            << "') in " << path;
+                    log::log(lg, log::error, message.str());
+                    return false;
+                } else {
+                    t = (*UVs)[iUV - 1];
+                }
+
+                // Construct the vertex
+                Model::Vertex vertex{.position = p, .UV = t};
+
+                // Try to find the vertex in already used ones
+                auto i = std::find(vertices.begin(), vertices.end(), vertex);
+
+                // Add if not present, use the index if present
+                if (i == vertices.end()) {
+                    // Not present -> new vertex -> add it
+                    vertices.push_back(vertex);
+                    indices.push_back(static_cast<unsigned int &&>(vertices.size() - 1));
+                } else {
+                    // Present -> repeated vertex -> use its index
+                    indices.push_back(static_cast<unsigned int &&>(i - vertices.begin()));
+                }
+            }
+
+            // Increment face counter
+            f++;
+        }
+
+        // Success
+        return true;
     }
 
     //--- start Model implementation
@@ -131,127 +290,17 @@ namespace open_sea::model {
         }
 
         // Read the vertex descriptions until the first face
-        std::unique_ptr<std::vector<glm::vec3>> positions = std::make_unique<std::vector<glm::vec3>>();
-        std::unique_ptr<std::vector<glm::vec2>> UVs = std::make_unique<std::vector<glm::vec2>>();
-        read_OBJ_vertices(stream, positions, UVs);
+        std::shared_ptr<std::vector<glm::vec3>> positions = std::make_shared<std::vector<glm::vec3>>();
+        std::shared_ptr<std::vector<glm::vec2>> UVs = std::make_shared<std::vector<glm::vec2>>();
+        read_OBJ_vertices(stream, path, positions, UVs);
 
-        // Read the face description to construct Vertex instances and add corresponding indices
-        // Note: first face is already in line
-        // Note: assuming triangulated, therefore exactly three vertices per face
+        // Read the face descriptions
         std::vector<Vertex> vertices;
         std::vector<unsigned int> indices;
-        std::string line;
-        int f = 1;
-        bool untextured = true;
-        while (std::getline(stream, line)) {
-            // Ignore non-face lines
-            if (!boost::starts_with(line, "f "))
-                break;
-
-            // Separate the three vertex descriptions
-            std::vector<std::string> parts;
-            boost::split(parts, line, boost::is_space(), boost::token_compress_on);
-
-            // Check there are exactly three vertices
-            if (parts.size() != 4) {
-                std::ostringstream message;
-                message << "Face " << f << " doesn't have exactly three vertices in " << path;
-                log::log(lg, log::error, message.str());
-                return std::unique_ptr<Model>{};
-            }
-
-            // For each vertex, find if it is already in vertices
-            for (int j = 1; j <= 3; j++) {
-                // Separate the position, texture and normal indices
-                std::vector<std::string> descs;
-                boost::split(descs, parts[j], boost::is_any_of("/"), boost::token_compress_on);
-
-                // Parse the position index and get the position
-                int iP;
-                if (descs.empty() || descs[0].empty()) {
-                    std::ostringstream message;
-                    message << "Face " << f << " missing vertex " << j << " position in " << path;
-                    log::log(lg, log::error, message.str());
-                    return std::unique_ptr<Model>{};
-                } else {
-                    try {
-                        iP = std::stoi(descs[0]);
-                    } catch (std::exception &e) {
-                        std::ostringstream message;
-                        message << "Face " << f << " referencing non-numeric vertex " << j <<" position ('" << descs[0]
-                                << "') in " << path;
-                        log::log(lg, log::error, message.str());
-                        return std::unique_ptr<Model>{};
-                    }
-                }
-                glm::vec3 p{};
-                if (iP < 1 || iP > positions->size()) {
-                    // Undeclared position
-                    std::ostringstream message;
-                    message << "Face " << f << " referencing unknown vertex " << j <<" position ('" << descs[0]
-                            << "') in " << path;
-                    log::log(lg, log::error, message.str());
-                    return std::unique_ptr<Model>{};
-                } else {
-                    p = (*positions)[iP - 1];
-                }
-
-                // Parse the UV index and get the UV
-                int iUV;
-                if (descs.size() < 2 || descs[1].empty()) {
-                    // Leave index as 0 and use [0,0] as UV
-                    iUV = 0;
-                } else {
-                    untextured = false;
-                    try {
-                        iUV = std::stoi(descs[0]);
-                    } catch (std::exception &e) {
-                        std::ostringstream message;
-                        message << "Face " << f << " referencing non-numeric vertex " << j <<" UV ('" << descs[1]
-                                << "') in " << path;
-                        log::log(lg, log::error, message.str());
-                        return std::unique_ptr<Model>{};
-                    }
-                }
-                glm::vec2 t{};
-                if (iUV == 0) {
-                    // Leave t as [0,0]
-                } else if(iUV < 1 || iUV > UVs->size()) {
-                    // Undeclared UV
-                    std::ostringstream message;
-                    message << "Face " << f << " referencing unknown vertex " << j <<" UV ('" << descs[1]
-                            << "') in " << path;
-                    log::log(lg, log::error, message.str());
-                    return std::unique_ptr<Model>{};
-                } else {
-                    t = (*UVs)[iUV - 1];
-                }
-                
-                // Build the vertex representation and try to find it in the vertex container
-                Vertex v{
-                        .position = p,
-                        .UV = t
-                };
-                auto i = std::find(vertices.begin(), vertices.end(), v);
-
-                // Add if not present, use the index if present
-                if (i == vertices.end()) {
-                    // New vertex
-                    vertices.push_back(v);
-                    indices.push_back(vertices.size() - 1);
-                } else {
-                    // Already present
-                    indices.push_back(i - vertices.begin());
-                }
-            }
-
-            f++;
+        if (!read_OBJ_faces(stream, path, positions, UVs, vertices, indices)) {
+            log::log(lg, log::info, std::string("Failed to read faces from ").append(path));
+            return std::unique_ptr<Model>{};
         }
-
-        // Warn if no vertex had a texture
-        if (untextured)
-            log::log(lg, log::warning, std::string("Using Model for and untextured model (should use UntexModel) in ").append(path));
-
 
         // Create and return the model form the data
         log::log(lg, log::info, std::string("Model loaded from ").append(path));
@@ -290,6 +339,16 @@ namespace open_sea::model {
     //--- end Model implementation
 
     //--- start UntexModel implementation
+    /**
+     * \brief Reduce general vertex to untextured vertex
+     *
+     * \param source General vertex
+     * \return Untextured vertex
+     */
+    UntexModel::Vertex UntexModel::Vertex::reduce(const Model::Vertex source) {
+        return UntexModel::Vertex{.position = source.position};
+    }
+
     /**
      * \brief Construct an untextured model from vertices and indices
      * Construct an untextured model from vertex descriptions and indices of the vertices in triangular faces.
@@ -337,91 +396,26 @@ namespace open_sea::model {
         }
 
         // Read the vertex descriptions until the first face
-        std::unique_ptr<std::vector<glm::vec3>> positions = std::make_unique<std::vector<glm::vec3>>();
-        std::unique_ptr<std::vector<glm::vec2>> UVs{};
-        read_OBJ_vertices(stream, positions, UVs);
+        std::shared_ptr<std::vector<glm::vec3>> positions = std::make_shared<std::vector<glm::vec3>>();
+        std::shared_ptr<std::vector<glm::vec2>> UVs{};
+        read_OBJ_vertices(stream, path, positions, UVs);
 
-        // Read the face description to construct Vertex instances and add corresponding indices
-        // Note: first face is already in line
-        // Note: assuming triangulated, therefore exactly three vertices per face
-        std::vector<Vertex> vertices;
+        // Read the face descriptions
+        std::vector<Model::Vertex> vertices;
         std::vector<unsigned int> indices;
-        std::string line;
-        int f = 1;
-        while (std::getline(stream, line)) {
-            // Ignore non-face lines
-            if (!boost::starts_with(line, "f "))
-                continue;
-
-            // Separate the three vertex descriptions
-            std::vector<std::string> parts;
-            boost::split(parts, line, boost::is_space(), boost::token_compress_on);
-
-            // Check there are exactly three vertices
-            if (parts.size() != 4) {
-                std::ostringstream message;
-                message << "Face " << f << " doesn't have exactly three vertices in " << path;
-                log::log(lg, log::error, message.str());
-                return std::unique_ptr<UntexModel>{};
-            }
-
-            // For each vertex, find if it is already in vertices
-            for (int j = 1; j <= 3; j++) {
-                // Separate the position, texture and normal indices
-                std::vector<std::string> descs;
-                boost::split(descs, parts[j], boost::is_any_of("/"), boost::token_compress_on);
-
-                // Parse the position index and get the position
-                int iP;
-                if (descs.empty() || descs[0].empty()) {
-                    std::ostringstream message;
-                    message << "Face " << f << " missing vertex " << j << " position in " << path;
-                    log::log(lg, log::error, message.str());
-                    return std::unique_ptr<UntexModel>{};
-                } else {
-                    try {
-                        iP = std::stoi(descs[0]);
-                    } catch (std::exception &e) {
-                        std::ostringstream message;
-                        message << "Face " << f << " referencing non-numeric vertex " << j <<" position ('" << descs[0]
-                                << "') in " << path;
-                        log::log(lg, log::error, message.str());
-                        return std::unique_ptr<UntexModel>{};
-                    }
-                }
-                glm::vec3 p{};
-                if (iP < 1 || iP > positions->size()) {
-                    // Undeclared position
-                    std::ostringstream message;
-                    message << "Face " << f << " referencing unknown vertex " << j <<" position ('" << descs[0]
-                            << "') in " << path;
-                    log::log(lg, log::error, message.str());
-                    return std::unique_ptr<UntexModel>{};
-                } else {
-                    p = (*positions)[iP - 1];
-                }
-
-                // Build the vertex representation and try to find it in the vertex container
-                Vertex v{ .position = p };
-                auto i = std::find(vertices.begin(), vertices.end(), v);
-
-                // Add if not present, use the index if present
-                if (i == vertices.end()) {
-                    // New vertex
-                    vertices.push_back(v);
-                    indices.push_back(vertices.size() - 1);
-                } else {
-                    // Already present
-                    indices.push_back(i - vertices.begin());
-                }
-            }
-
-            f++;
+        if (!read_OBJ_faces(stream, path, positions, UVs, vertices, indices)) {
+            log::log(lg, log::info, std::string("Failed to read faces from ").append(path));
+            return std::unique_ptr<UntexModel>{};
         }
+
+        // Reduce vertices
+        std::vector<Vertex> reduced;
+        reduced.resize(vertices.size());
+        std::transform(vertices.begin(), vertices.end(), reduced.begin(), [](Model::Vertex v){return Vertex::reduce(v);});
 
         // Create and return the model form the data
         log::log(lg, log::info, std::string("Untextured model loaded from ").append(path));
-        return std::make_unique<UntexModel>(vertices, indices);
+        return std::make_unique<UntexModel>(reduced, indices);
     }
 
     /**

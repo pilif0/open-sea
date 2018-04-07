@@ -68,11 +68,19 @@ namespace open_sea::model {
 
                 bool operator==(const Vertex &rhs) const { return position == rhs.position; }
                 bool operator!=(const Vertex &rhs) const { return !(rhs == *this); }
+                static Vertex reduce(Model::Vertex source);
             };
             UntexModel(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices);
             static std::unique_ptr<UntexModel> fromFile(const std::string& path);
             void showDebug() override;
     };
+
+    // OBJ functions
+    bool read_OBJ_vertices(std::ifstream& stream, const std::string& path,
+                           std::shared_ptr<std::vector<glm::vec3>> &positions, std::shared_ptr<std::vector<glm::vec2>> &UVs);
+    bool read_OBJ_faces(std::ifstream& stream, const std::string& path,
+                        std::shared_ptr<std::vector<glm::vec3>> &positions, std::shared_ptr<std::vector<glm::vec2>> &UVs,
+                        std::vector<Model::Vertex> &vertices, std::vector<unsigned int> &indices);
 }
 
 #endif //OPEN_SEA_MODEL_H

@@ -65,7 +65,7 @@ namespace open_sea::window {
         closeSignal = std::make_unique<close_signal>();
 
         // Add a slot to update viewport dimensions on each size change
-        size->connect([](float w, float h){ ::glViewport(0, current->fbHeight, current->fbWidth, 0); });
+        size->connect([](float w, float h){ ::glViewport(0, 0, current->fbWidth, current->fbHeight); });
 
         log::log(lg, log::info, "Window module initialized");
         return true;

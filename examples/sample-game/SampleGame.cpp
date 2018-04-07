@@ -14,13 +14,19 @@
 #include <open-sea/ImGui.h>
 #include <open-sea/Delta.h>
 #include <open-sea/GL.h>
+#include <open-sea/Model.h>
 namespace os_log = open_sea::log;
 namespace window = open_sea::window;
 namespace input = open_sea::input;
 namespace imgui = open_sea::imgui;
 namespace gl = open_sea::gl;
+namespace model = open_sea::model;
+
+#include <glm/gtc/matrix_transform.hpp>
 
 #include <boost/filesystem.hpp>
+
+#include <sstream>
 
 int main() {
     // Initialize logging
@@ -28,7 +34,7 @@ int main() {
     os_log::severity_logger lg = os_log::get_logger("Sample Game");
 
     // Set the current path to outside the example directory
-    boost::filesystem::current_path("../");
+    boost::filesystem::current_path("../../");
     os_log::log(lg, os_log::info, "Working directory set to outside the example directory");
 
     // Initialize window module
@@ -75,16 +81,92 @@ int main() {
     // ImGui test data
     bool show_demo_window = true;
 
+    // Prepare test shader
+    std::unique_ptr<gl::ShaderProgram> test_shader = std::make_unique<gl::ShaderProgram>();
+    test_shader->attachVertexFile("data/shaders/Test.vshader");
+    test_shader->attachFragmentFile("data/shaders/Test.fshader");
+    test_shader->link();
+    test_shader->validate();
+    int pM_location = test_shader->getUniformLocation("projectionMatrix");
+    int wM_location = test_shader->getUniformLocation("worldMatrix");
+
+    // Prepare test cameras
+    std::unique_ptr<gl::OrthographicCamera> test_camera_ort =
+            std::make_unique<gl::OrthographicCamera>(
+                    glm::vec3{-640.0f, -360.0f, 1000.0f},
+                    glm::quat(),
+                    glm::vec2{1280, 720},
+                    0.1f, 1000.0f);
+    std::unique_ptr<gl::PerspectiveCamera> test_camera_per =
+            std::make_unique<gl::PerspectiveCamera>(
+                    glm::vec3{0.0f, 0.0f, 1000.0f},
+                    glm::quat(),
+                    glm::vec2{1280, 720},
+                    0.1f, 1000.0f, 90.0f);
+
+    // Prepare test models
+    std::unique_ptr<model::Model> test_model_tex = model::Model::fromFile("examples/sample-game/data/models/teapot.obj");
+    if (!test_model_tex)
+        return -1;
+    std::unique_ptr<model::UntexModel> test_model_unt = model::UntexModel::fromFile("examples/sample-game/data/models/teapot.obj");
+    if (!test_model_unt)
+        return -1;
+    glm::vec3 test_position(0.0f, 0.0f, 0.0f);
+    glm::vec3 test_scale(100.0f, 100.0f, 100.0f);
+
+    // Set background to black
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+    // Enable depth test
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+
     // Loop until the user closes the window
     open_sea::time::start_delta();
     while (!window::should_close()) {
         // Clear
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // Draw the test
+        static bool use_per_cam = true;
+        static bool use_tex_mod = true;
+        glm::mat4 world_matrix = glm::translate(glm::scale(glm::mat4(1.0f), test_scale), test_position);
+        glm::mat4 camera_matrix = (use_per_cam) ? test_camera_per->getProjViewMatrix() : test_camera_ort->getProjViewMatrix();
+        test_shader->use();
+        glUniformMatrix4fv(pM_location, 1, GL_FALSE, &camera_matrix[0][0]);
+        glUniformMatrix4fv(wM_location, 1, GL_FALSE, &world_matrix[0][0]);
+        (use_tex_mod) ? test_model_tex->draw() : test_model_unt->draw();
+        gl::ShaderProgram::unset();
 
         // ImGui debug GUI
         if (show_imgui) {
             // Prepare new frame
             imgui::new_frame();
+
+            // Test controls
+            {
+                ImGui::Begin("Test controls");
+
+                ImGui::Checkbox("Use perspective camera", &use_per_cam);
+                ImGui::Checkbox("Use textured model", &use_tex_mod);
+
+                ImGui::Text("Test model:");
+                (use_tex_mod) ? test_model_tex->showDebug() : test_model_unt->showDebug();
+                ImGui::Spacing();
+
+                ImGui::Text("Test camera:");
+                if (use_per_cam)
+                    test_camera_per->showDebugControls();
+                else
+                    test_camera_ort->showDebugControls();
+                ImGui::Spacing();
+
+                ImGui::Text("Test world transformation:");
+                ImGui::InputFloat3("Model pos", &test_position[0]);
+                ImGui::InputFloat3("Model scale", &test_scale[0]);
+
+                ImGui::End();
+            }
 
             // Additional window open flags
             static bool show_window_debug = false;
@@ -140,6 +222,12 @@ int main() {
         open_sea::time::update_delta();
     }
     os_log::log(lg, os_log::info, "Main loop ended");
+
+    test_camera_per.release();
+    test_camera_ort.release();
+    test_model_tex.release();
+    test_model_unt.release();
+    test_shader.release();
 
     c.disconnect();
     imgui_toggle.disconnect();

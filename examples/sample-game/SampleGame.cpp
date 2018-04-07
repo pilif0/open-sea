@@ -223,11 +223,11 @@ int main() {
     }
     os_log::log(lg, os_log::info, "Main loop ended");
 
-    test_camera_per.release();
-    test_camera_ort.release();
-    test_model_tex.release();
-    test_model_unt.release();
-    test_shader.release();
+    test_camera_per.reset();
+    test_camera_ort.reset();
+    test_model_tex.reset();
+    test_model_unt.reset();
+    test_shader.reset();
 
     c.disconnect();
     imgui_toggle.disconnect();

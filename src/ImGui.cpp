@@ -270,7 +270,7 @@ namespace open_sea::imgui {
 
         // Setup inputs
         if (glfwGetWindowAttrib(window::window, GLFW_FOCUSED)) {
-            if (io.WantMoveMouse) {
+            if (io.WantSetMousePos) {
                 // Set mouse position if requested by io.WantMoveMouse flag (used when io.NavMovesTrue is enabled by
                 // user and using directional navigation)
                 glfwSetCursorPos(window::window, (double) io.MousePos.x, (double) io.MousePos.y);
@@ -442,7 +442,7 @@ namespace open_sea::imgui {
         if (elements) glDeleteBuffers(1, &elements);
         vbo = elements = 0;
 
-        shader_program.release();
+        shader_program.reset();
 
         if (fontTexture) {
             glDeleteTextures(1, &fontTexture);

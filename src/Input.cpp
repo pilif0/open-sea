@@ -46,10 +46,20 @@ namespace open_sea::input {
         state state = (action == GLFW_PRESS) ? press : (action == GLFW_REPEAT) ? repeat : release;
 
         // Fire a signal
-        if (ImGui::GetIO().WantCaptureKeyboard)
-            open_sea::imgui::key_callback(key, scancode, action, mods);
-        else
-            (*keyboard)(key, scancode, state, mods);
+        static bool imgui_waits_esc = false;        // Fixes #12: True when ImGui is waiting for ESC release signal
+        if (ImGui::GetIO().WantCaptureKeyboard) {
+            // Let ImGui take all input when it wants it
+            open_sea::imgui::key_callback(key, scancode, state, mods);
+
+            if (key == GLFW_KEY_ESCAPE && state == press) imgui_waits_esc = true;
+        } else {
+            if (imgui_waits_esc && key == GLFW_KEY_ESCAPE && state == release) {
+                open_sea::imgui::key_callback(key, scancode, state, mods);
+                imgui_waits_esc = false;
+            } else {
+                (*keyboard)(key, scancode, state, mods);
+            }
+        }
     }
 
     /**

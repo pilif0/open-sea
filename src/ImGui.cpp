@@ -31,86 +31,68 @@ namespace open_sea::imgui {
     static int          attribLocationPosition = 0, attribLocationUV = 0, attribLocationColor = 0;
     static unsigned int vbo = 0, elements = 0;
 
-    // Input connections
-    std::optional<input::connection> mouseConn = std::nullopt;
-    std::optional<input::connection> scrollConn = std::nullopt;
-    std::optional<input::connection> keyConn = std::nullopt;
-    std::optional<input::connection> charConn = std::nullopt;
-
     /**
-     * \brief Connect signal listeners for input
-     * Connect signal listeners (slots) for input
+     * \brief Keyboard input callback
+     *
+     * \param key Relevant GLFW key code
+     * \param scancode System-specific key code
+     * \param action Relevant action
+     * \param mods Bitfield of applied modifier keys
      */
-    void connect_listeners() {
-        log::log(lg, log::info, "Connecting slots...");
+    void key_callback(int key, int scancode, int action, int mods) {
+        ImGuiIO& io = ImGui::GetIO();
 
-        if (!mouseConn)
-            *mouseConn = input::connect_mouse([](int b, input::state a, int m){
-                if (a == input::press) {
-                    // Set the corresponding flag
-                    switch (b) {
-                        case GLFW_MOUSE_BUTTON_1: mouseJustPressed[0] = true; break;
-                        case GLFW_MOUSE_BUTTON_2: mouseJustPressed[1] = true; break;
-                        case GLFW_MOUSE_BUTTON_3: mouseJustPressed[2] = true; break;
-                        default: break;
-                    }
-                }
-            });
+        // Set key state
+        if (action == input::press)
+            io.KeysDown[key] = true;
+        if (action == input::release)
+            io.KeysDown[key] = false;
 
-        if (!scrollConn)
-            *scrollConn = input::connect_scroll([](double x, double y){
-                ImGuiIO& io = ImGui::GetIO();
-                io.MouseWheel -= (float) y;
-            });
-
-        if (!keyConn)
-            *keyConn = input::connect_key([](int k, int s, input::state a, int m){
-                ImGuiIO& io = ImGui::GetIO();
-
-                // Set key state
-                if (a == input::press)
-                    io.KeysDown[k] = true;
-                if (a == input::release)
-                    io.KeysDown[k] = false;
-
-                // Update modifier flags
-                io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
-                io.KeyShift = io.KeysDown[GLFW_KEY_LEFT_SHIFT] || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];
-                io.KeyAlt = io.KeysDown[GLFW_KEY_LEFT_ALT] || io.KeysDown[GLFW_KEY_RIGHT_ALT];
-                io.KeySuper = io.KeysDown[GLFW_KEY_LEFT_SUPER] || io.KeysDown[GLFW_KEY_RIGHT_SUPER];
-            });
-
-        if (!charConn)
-            *charConn = input::connect_character([](unsigned int c){
-                ImGuiIO& io = ImGui::GetIO();
-
-                if (c > 0 && c < 0x10000)
-                    io.AddInputCharacter((unsigned short) c);
-            });
-
-        log::log(lg, log::info, "Slots connected");
+        // Update modifier flags
+        io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
+        io.KeyShift = io.KeysDown[GLFW_KEY_LEFT_SHIFT] || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];
+        io.KeyAlt = io.KeysDown[GLFW_KEY_LEFT_ALT] || io.KeysDown[GLFW_KEY_RIGHT_ALT];
+        io.KeySuper = io.KeysDown[GLFW_KEY_LEFT_SUPER] || io.KeysDown[GLFW_KEY_RIGHT_SUPER];
     }
 
     /**
-     * \brief Disconnect signal listeners from input
+     * \brief Mouse button input callback
+     *
+     * \param button Relevant GLFW button code
+     * \param action Relevan action
+     * \param mods Bitfield of applied modifier keys
      */
-    void disconnect_listeners() {
-        if (mouseConn) {
-            mouseConn->disconnect();
-            mouseConn.reset();
+    void mouse_callback(int button, int action, int mods) {
+        if (action == input::press) {
+            // Set the corresponding flag
+            switch (button) {
+                case GLFW_MOUSE_BUTTON_1: mouseJustPressed[0] = true; break;
+                case GLFW_MOUSE_BUTTON_2: mouseJustPressed[1] = true; break;
+                case GLFW_MOUSE_BUTTON_3: mouseJustPressed[2] = true; break;
+                default: break;
+            }
         }
-        if (scrollConn) {
-            scrollConn->disconnect();
-            scrollConn.reset();
-        }
-        if (keyConn) {
-            keyConn->disconnect();
-            keyConn.reset();
-        }
-        if (charConn) {
-            charConn->disconnect();
-            charConn.reset();
-        }
+    }
+
+    /**
+     * \brief Scroll input callback
+     *
+     * \param xoffset Horizontal scroll offset
+     * \param yoffset Vertical scroll offset
+     */
+    void scroll_callback(double xoffset, double yoffset) {
+        ImGuiIO& io = ImGui::GetIO();
+        io.MouseWheel -= (float) yoffset;
+    }
+
+    /**
+     * \brief Character input callback
+     *
+     * \param codepoint Unicode codepoint of the character
+     */
+    void char_callback(unsigned int codepoint) {
+        if (codepoint > 0 && codepoint < 0x10000)
+            ImGui::GetIO().AddInputCharacter((unsigned short) codepoint);
     }
 
     /**
@@ -160,9 +142,6 @@ namespace open_sea::imgui {
         cursors[ImGuiMouseCursor_ResizeEW] = ::glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR);
         cursors[ImGuiMouseCursor_ResizeNESW] = ::glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
         cursors[ImGuiMouseCursor_ResizeNWSE] = ::glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
-
-        // Connect input
-        connect_listeners();
 
         // Set style
         ImGui::StyleColorsDark();

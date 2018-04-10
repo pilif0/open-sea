@@ -6,7 +6,7 @@
 #include <open-sea/Input.h>
 #include <open-sea/Log.h>
 #include <open-sea/Window.h>
-namespace log = open_sea::log;
+#include <open-sea/ImGui.h>
 namespace w = open_sea::window;
 
 #include <sstream>
@@ -46,7 +46,10 @@ namespace open_sea::input {
         state state = (action == GLFW_PRESS) ? press : (action == GLFW_REPEAT) ? repeat : release;
 
         // Fire a signal
-        (*keyboard)(key, scancode, state, mods);
+        if (ImGui::GetIO().WantCaptureKeyboard)
+            open_sea::imgui::key_callback(key, scancode, action, mods);
+        else
+            (*keyboard)(key, scancode, state, mods);
     }
 
     /**
@@ -81,7 +84,10 @@ namespace open_sea::input {
         state state = (action == GLFW_PRESS) ? press : (action == GLFW_REPEAT) ? repeat : release;
 
         // Fire a signal
-        (*mouse)(button, state, mods);
+        if (ImGui::GetIO().WantCaptureMouse)
+            open_sea::imgui::mouse_callback(button, state, mods);
+        else
+            (*mouse)(button, state, mods);
     }
 
     /**
@@ -97,7 +103,10 @@ namespace open_sea::input {
             return;
 
         // Fire a signal
-        (*scroll)(xoffset, yoffset);
+        if (ImGui::GetIO().WantCaptureMouse)
+            open_sea::imgui::scroll_callback(xoffset, yoffset);
+        else
+            (*scroll)(xoffset, yoffset);
     }
 
     /**
@@ -112,7 +121,10 @@ namespace open_sea::input {
             return;
 
         // Fire a signal
-        (*character)(codepoint);
+        if (ImGui::GetIO().WantCaptureKeyboard)
+            open_sea::imgui::char_callback(codepoint);
+        else
+            (*character)(codepoint);
     }
 
     /**
@@ -287,6 +299,10 @@ namespace open_sea::input {
         ImGui::Text("Number of mouse slots: %d", mouse->num_slots());
         ImGui::Text("Number of scroll slots: %d", scroll->num_slots());
         ImGui::Text("Number of character slots: %d", character->num_slots());
+        ImGui::Spacing();
+
+        ImGui::Text("ImGui wants mouse: %s", ImGui::GetIO().WantCaptureMouse ? "true" : "false");
+        ImGui::Text("ImGui wants keyboard: %s", ImGui::GetIO().WantCaptureKeyboard ? "true" : "false");
 
         ImGui::End();
     }

@@ -69,12 +69,6 @@ int main() {
         if (s == input::press && k == GLFW_KEY_F3) {
             // Toggle the display flag
             show_imgui = !show_imgui;
-
-            // Toggle input connection
-            if (show_imgui)
-                imgui::connect_listeners();
-            else
-                imgui::disconnect_listeners();
         }
     });
 

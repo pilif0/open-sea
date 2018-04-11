@@ -15,12 +15,14 @@
 #include <open-sea/Delta.h>
 #include <open-sea/GL.h>
 #include <open-sea/Model.h>
+#include <open-sea/Entity.h>
 namespace os_log = open_sea::log;
 namespace window = open_sea::window;
 namespace input = open_sea::input;
 namespace imgui = open_sea::imgui;
 namespace gl = open_sea::gl;
 namespace model = open_sea::model;
+namespace ecs = open_sea::ecs;
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -108,6 +110,12 @@ int main() {
     glm::vec3 test_position(0.0f, 0.0f, 0.0f);
     glm::vec3 test_scale(100.0f, 100.0f, 100.0f);
 
+    // Generate test entity
+    ecs::EntityManager test_manager;
+    ecs::Entity test_entity = test_manager.create();
+    test_manager.kill(test_entity);
+    test_entity = test_manager.create();
+
     // Set background to black
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -136,6 +144,19 @@ int main() {
         if (show_imgui) {
             // Prepare new frame
             imgui::new_frame();
+
+            // Entity test
+            {
+                ImGui::Begin("Entity test");
+
+                test_manager.showDebug();
+                ImGui::Spacing();
+
+                ImGui::Text("Test entity index: %i", test_entity.index());
+                ImGui::Text("Test entity generation: %i", test_entity.generation());
+
+                ImGui::End();
+            }
 
             // Test controls
             {

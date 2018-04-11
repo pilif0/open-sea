@@ -3,7 +3,7 @@
  *
  * \author Filip Smola
  */
-// Heavily inspired by articles from niklasfrykholm at https://github.com/niklasfrykholm/blog/tree/master/2014
+// Heavily inspired by niklasfrykholm's articles at https://github.com/niklasfrykholm/blog/tree/master/2014
 #ifndef OPEN_SEA_ENTITY_H
 #define OPEN_SEA_ENTITY_H
 
@@ -17,6 +17,7 @@ namespace open_sea::ecs {
     //  - Supports 1024 generations before a previously used handle reappears
     //  - There should never be two entities alive with the same index and generation
     //  - Of two entities with equal index and distinct generation, the one with greater generation is considered alive
+    //  - Entity ID layout: (10 bits of generation)(22 bits of index)
 
     //! Handle type alias
     typedef uint32_t handle;
@@ -57,13 +58,13 @@ namespace open_sea::ecs {
 
             //! Minimum number of free indices in the queue before reusing from the queue
             // This means reuse of indices will be much more spread out and IDs will reappear much more rarely
-            constexpr unsigned MINIMUM_FREE_INDICES = 1024;
+            static constexpr unsigned MINIMUM_FREE_INDICES = 1024;
 
             Entity create();
-            bool alive(Entity e);
+            bool alive(Entity e) const;
             void kill(Entity e);
 
-            void showDebug();
+            void showDebug() const;
     };
 }
 

@@ -16,6 +16,7 @@
 #include <open-sea/GL.h>
 #include <open-sea/Model.h>
 #include <open-sea/Entity.h>
+#include <open-sea/Components.h>
 namespace os_log = open_sea::log;
 namespace window = open_sea::window;
 namespace input = open_sea::input;
@@ -101,20 +102,25 @@ int main() {
                     0.1f, 1000.0f, 90.0f);
 
     // Prepare test models
-    std::unique_ptr<model::Model> test_model_tex = model::Model::fromFile("examples/sample-game/data/models/teapot.obj");
+    std::shared_ptr<model::Model> test_model_tex = model::Model::fromFile("examples/sample-game/data/models/triangle.obj");
     if (!test_model_tex)
         return -1;
-    std::unique_ptr<model::UntexModel> test_model_unt = model::UntexModel::fromFile("examples/sample-game/data/models/teapot.obj");
+    std::shared_ptr<model::UntexModel> test_model_unt = model::UntexModel::fromFile("examples/sample-game/data/models/triangle.obj");
     if (!test_model_unt)
         return -1;
     glm::vec3 test_position(0.0f, 0.0f, 0.0f);
     glm::vec3 test_scale(100.0f, 100.0f, 100.0f);
 
-    // Generate test entity
+    // Generate test entities
     ecs::EntityManager test_manager;
-    ecs::Entity test_entity = test_manager.create();
-    test_manager.kill(test_entity);
-    test_entity = test_manager.create();
+    ecs::Entity tex_entity = test_manager.create();
+    ecs::Entity unt_entity = test_manager.create();
+
+    // Give the test entities model components
+    ecs::ModelComponent model_comp_manager(2);
+    ecs::Entity entities[2]{tex_entity, unt_entity};
+    std::shared_ptr<model::Model> models[2]{test_model_tex, test_model_unt};
+    model_comp_manager.add(entities, models, 2);
 
     // Set background to black
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -129,16 +135,24 @@ int main() {
         // Clear
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Draw the test
+        // Draw the test entity
         static bool use_per_cam = true;
-        static bool use_tex_mod = true;
+        static bool use_tex_ent = true;
         glm::mat4 world_matrix = glm::translate(glm::scale(glm::mat4(1.0f), test_scale), test_position);
         glm::mat4 camera_matrix = (use_per_cam) ? test_camera_per->getProjViewMatrix() : test_camera_ort->getProjViewMatrix();
         test_shader->use();
         glUniformMatrix4fv(pM_location, 1, GL_FALSE, &camera_matrix[0][0]);
         glUniformMatrix4fv(wM_location, 1, GL_FALSE, &world_matrix[0][0]);
-        (use_tex_mod) ? test_model_tex->draw() : test_model_unt->draw();
+        int indices[2]{};
+        model_comp_manager.lookup(entities, indices, 2);
+        std::shared_ptr<model::Model> current_model = (use_tex_ent) ?
+                                                      model_comp_manager.data.model[indices[0]] :
+                                                      model_comp_manager.data.model[indices[1]];
+        current_model->draw();
         gl::ShaderProgram::unset();
+
+        // Maintain components
+        model_comp_manager.gc(test_manager);
 
         // ImGui debug GUI
         if (show_imgui) {
@@ -152,8 +166,10 @@ int main() {
                 test_manager.showDebug();
                 ImGui::Spacing();
 
-                ImGui::Text("Test entity index: %i", test_entity.index());
-                ImGui::Text("Test entity generation: %i", test_entity.generation());
+                ImGui::Text("Textured entity index: %i", entities[0].index());
+                ImGui::Text("Textured entity generation: %i", entities[0].generation());
+                ImGui::Text("Untextured entity index: %i", entities[1].index());
+                ImGui::Text("Untextured entity generation: %i", entities[1].generation());
 
                 ImGui::End();
             }
@@ -163,10 +179,10 @@ int main() {
                 ImGui::Begin("Test controls");
 
                 ImGui::Checkbox("Use perspective camera", &use_per_cam);
-                ImGui::Checkbox("Use textured model", &use_tex_mod);
+                ImGui::Checkbox("Use textured entity", &use_tex_ent);
 
-                ImGui::Text("Test model:");
-                (use_tex_mod) ? test_model_tex->showDebug() : test_model_unt->showDebug();
+                ImGui::Text("Current model:");
+                current_model->showDebug();
                 ImGui::Spacing();
 
                 ImGui::Text("Test camera:");

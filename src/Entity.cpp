@@ -99,3 +99,9 @@ namespace open_sea::ecs {
     }
     //--- end EntityManager implementation
 }
+
+// Entity hash function
+std::size_t std::hash<open_sea::ecs::Entity>::operator()(const open_sea::ecs::Entity &e) const {
+    // Hash the id
+    return std::hash<int>()(e.id);
+}

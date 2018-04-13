@@ -22,7 +22,8 @@ set(open_sea_SOURCES
         Delta.cpp
         GL.cpp
         Model.cpp
-        Entity.cpp)
+        Entity.cpp
+        Components.cpp)
 
 # Add the library
 add_library(open_sea ${open_sea_SOURCES} ${open_sea_HEADERS} ${ImGui})

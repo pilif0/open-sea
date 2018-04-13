@@ -8,6 +8,7 @@
 
 #include <open-sea/Entity.h>
 #include <open-sea/Model.h>
+#include <open-sea/Log.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -25,38 +26,50 @@ namespace open_sea::ecs {
 
     //TODO: find out whether using maps to keep the indices is worth the space they use in the speedup they produce
 
+    //! Default starting size of component managers
+    constexpr unsigned DEFAULT_SIZE = 1;
+
     /** \class ModelComponent
      * \brief Associates an entity with a model
      */
+    //TODO: decide multiplicity of association (probably 1:1, is there any use case for multiple models for one entity
+    // without using a more specialised component for it?)
     class ModelComponent {
         public:
-            ModelComponent();
-            ModelComponent(unsigned size);
+            //! Logger
+            log::severity_logger lg = log::get_logger("Model Component Mgr");
+
+            ModelComponent() : ModelComponent(DEFAULT_SIZE) {}
+            explicit ModelComponent(unsigned size);
 
             // Data
             //! Data of component instances
             struct InstanceData {
                 //! Number of used instances
-                unsigned n;
+                unsigned n = 0;
                 //! Number of allocated instances
-                unsigned allocated;
+                unsigned allocated = 0;
                 //! Buffer with data
-                void *buffer;
+                void *buffer = nullptr;
 
                 //! Associated entity
-                Entity *entity;
+                Entity *entity = nullptr;
                 //! Pointer to associated model
-                std::shared_ptr<model::Model> *model;
+                std::shared_ptr<model::Model> *model = nullptr;
             };
-            InstanceData data;
+            InstanceData data{};
             void allocate(unsigned size);
+            //! Size of one record in bytes
+            static constexpr unsigned RECORD_SIZE = sizeof(Entity) + sizeof(std::shared_ptr<model::Model>);
+            //! Allocator used by the manager
+            std::allocator<unsigned char> ALLOCATOR;
 
             // Access
             //! Map of entities to data indices
             std::unordered_map<Entity, int> map;
             int lookup(Entity e) const;
-            int* lookup(Entity *e, unsigned count) const;
-            int* add(Entity *e, std::shared_ptr<model::Model> *m, unsigned count);
+            void lookup(Entity *e, int *dest, unsigned count) const;
+            void add(Entity *e, std::shared_ptr<model::Model> *m, unsigned count);
             void set(int *i, std::shared_ptr<model::Model> *m, unsigned count);
 
             // Maintenance
@@ -71,7 +84,7 @@ namespace open_sea::ecs {
     //TODO: add tree capabilities (parents, children, siblings, local x world transformation)
     class TransformationComponent {
         public:
-            TransformationComponent();
+            TransformationComponent() : TransformationComponent(DEFAULT_SIZE) {}
             TransformationComponent(unsigned size);
 
             // Data
@@ -97,13 +110,15 @@ namespace open_sea::ecs {
             };
             InstanceData data;
             void allocate(unsigned size);
+            //! Size of one record in bytes
+            static constexpr unsigned RECORD_SIZE = sizeof(Entity) + 2 * sizeof(glm::vec3) + sizeof(glm::quat) + sizeof(glm::mat4);
 
             // Access
             //! Map of entities to data indices
             std::unordered_map<Entity, int> map;
             int lookup(Entity e) const;
-            int* lookup(Entity *e, unsigned count) const;
-            int* add(Entity *e, glm::vec3 *position, glm::quat *orientation, glm::vec3 *scale, unsigned count);
+            void lookup(Entity *e, int *dest, unsigned count) const;
+            void add(Entity *e, glm::vec3 *position, glm::quat *orientation, glm::vec3 *scale, unsigned count);
             void set(int *i, glm::vec3 *position, glm::quat *orientation, glm::vec3 *scale, unsigned count);
 
             // Maintenance

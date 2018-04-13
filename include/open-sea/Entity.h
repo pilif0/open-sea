@@ -39,6 +39,9 @@ namespace open_sea::ecs {
         unsigned index() const { return id & ENTITY_INDEX_MASK; }
         //! Get generation of this entity
         unsigned generation() const { return (id >> ENTITY_INDEX_BITS) & ENTITY_GENERATION_MASK; }
+
+        bool operator==(const Entity &rhs) const { return id == rhs.id; }
+        bool operator!=(const Entity &rhs) const { return !(rhs == *this); }
     };
 
     class EntityManager {
@@ -67,5 +70,11 @@ namespace open_sea::ecs {
             void showDebug() const;
     };
 }
+
+// Hash function for entities
+template<>
+struct std::hash<open_sea::ecs::Entity> {
+    std::size_t operator()(const open_sea::ecs::Entity& e) const;
+};
 
 #endif //OPEN_SEA_ENTITY_H

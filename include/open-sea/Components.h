@@ -20,11 +20,7 @@ namespace open_sea::ecs {
     // Notes:
     //  - Index -1 means that the component for that entity was not found
     //  - Index can be represented by int, because it will always fit into non-negative int range (as long as at least
-    //      one bit is used for generation)
-    //  - If length of parameters for a transformation doesn't match count, loop back to start (i.e. act similarly to
-    //      Matlab's bsxfun)
-
-    //TODO: find out whether using maps to keep the indices is worth the space they use in the speedup they produce
+    //      one bit of the entity handles is used for generation)
 
     //! Default starting size of component managers
     constexpr unsigned DEFAULT_SIZE = 1;
@@ -35,10 +31,11 @@ namespace open_sea::ecs {
     //TODO: decide multiplicity of association (probably 1:1, is there any use case for multiple models for one entity
     // without using a more specialised component for it?)
     class ModelComponent {
-        public:
+        private:
             //! Logger
             log::severity_logger lg = log::get_logger("Model Component Mgr");
 
+        public:
             ModelComponent() : ModelComponent(DEFAULT_SIZE) {}
             explicit ModelComponent(unsigned size);
 
@@ -54,15 +51,19 @@ namespace open_sea::ecs {
 
                 //! Associated entity
                 Entity *entity = nullptr;
-                //! Pointer to associated model
-                std::shared_ptr<model::Model> *model = nullptr;
+                //! Index of associated model
+                int *model = nullptr;
             };
             InstanceData data{};
             void allocate(unsigned size);
             //! Size of one record in bytes
-            static constexpr unsigned RECORD_SIZE = sizeof(Entity) + sizeof(std::shared_ptr<model::Model>);
+            static constexpr unsigned RECORD_SIZE = sizeof(Entity) + sizeof(int);
             //! Allocator used by the manager
             std::allocator<unsigned char> ALLOCATOR;
+            //! Models used by components in this manager
+            // Manager relies on the ordering, therefore this should not be changed from the outside
+            std::vector<std::shared_ptr<model::Model>> models;
+            int modelToIndex(std::shared_ptr<model::Model> model);
 
             // Access
             //! Map of entities to data indices
@@ -70,7 +71,9 @@ namespace open_sea::ecs {
             int lookup(Entity e) const;
             void lookup(Entity *e, int *dest, unsigned count) const;
             void add(Entity *e, std::shared_ptr<model::Model> *m, unsigned count);
+            void add(Entity *e, int *m, unsigned count);
             void set(int *i, std::shared_ptr<model::Model> *m, unsigned count);
+            void set(int *i, int *m, unsigned count);
 
             // Maintenance
             void destroy(int i);

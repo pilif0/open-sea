@@ -53,7 +53,7 @@ int main() {
     input::init();
 
     // Add close action to ESC
-    input::connection c = input::connect_key([](int k, int c, input::state s, int m){
+    input::connection c = input::connect_key([](int k, int c, input::state s, int m) {
         if (s == input::press && k == GLFW_KEY_ESCAPE)
             window::close();
     });
@@ -68,7 +68,7 @@ int main() {
 
     // Add ImGui display toggle to F3
     bool show_imgui = false;
-    input::connection imgui_toggle = input::connect_key([&show_imgui](int k, int c, input::state s, int m){
+    input::connection imgui_toggle = input::connect_key([&show_imgui](int k, int c, input::state s, int m) {
         if (s == input::press && k == GLFW_KEY_F3) {
             // Toggle the display flag
             show_imgui = !show_imgui;
@@ -101,26 +101,30 @@ int main() {
                     glm::vec2{1280, 720},
                     0.1f, 1000.0f, 90.0f);
 
-    // Prepare test models
-    std::shared_ptr<model::Model> test_model_tex = model::Model::fromFile("examples/sample-game/data/models/triangle.obj");
-    if (!test_model_tex)
-        return -1;
-    std::shared_ptr<model::UntexModel> test_model_unt = model::UntexModel::fromFile("examples/sample-game/data/models/triangle.obj");
-    if (!test_model_unt)
-        return -1;
-    glm::vec3 test_position(0.0f, 0.0f, 0.0f);
-    glm::vec3 test_scale(100.0f, 100.0f, 100.0f);
-
     // Generate test entities
     ecs::EntityManager test_manager;
-    ecs::Entity tex_entity = test_manager.create();
-    ecs::Entity unt_entity = test_manager.create();
+    ecs::Entity entities[]{
+            test_manager.create(),
+            test_manager.create()
+    };
 
-    // Give the test entities model components
-    ecs::ModelComponent model_comp_manager(2);
-    ecs::Entity entities[2]{tex_entity, unt_entity};
-    std::shared_ptr<model::Model> models[2]{test_model_tex, test_model_unt};
-    model_comp_manager.add(entities, models, 2);
+    // Prepare and assign test models
+    std::unique_ptr<ecs::ModelComponent> model_comp_manager = std::make_unique<ecs::ModelComponent>(2);
+    {
+        std::shared_ptr<model::Model> models[]{
+                model::Model::fromFile("examples/sample-game/data/models/teapot.obj"),
+                model::UntexModel::fromFile("examples/sample-game/data/models/teapot.obj")
+        };
+        if (!models[0] || !models[1]) {
+            return -1;
+        }
+
+        model_comp_manager->add(entities, models, 2);
+    }
+
+    // Prepare test transformation
+    glm::vec3 test_position(0.0f, 0.0f, 0.0f);
+    glm::vec3 test_scale(100.0f, 100.0f, 100.0f);
 
     // Set background to black
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -139,20 +143,24 @@ int main() {
         static bool use_per_cam = true;
         static bool use_tex_ent = true;
         glm::mat4 world_matrix = glm::translate(glm::scale(glm::mat4(1.0f), test_scale), test_position);
-        glm::mat4 camera_matrix = (use_per_cam) ? test_camera_per->getProjViewMatrix() : test_camera_ort->getProjViewMatrix();
+        glm::mat4 camera_matrix = (use_per_cam) ?
+                                  test_camera_per->getProjViewMatrix() :
+                                  test_camera_ort->getProjViewMatrix();
         test_shader->use();
         glUniformMatrix4fv(pM_location, 1, GL_FALSE, &camera_matrix[0][0]);
         glUniformMatrix4fv(wM_location, 1, GL_FALSE, &world_matrix[0][0]);
         int indices[2]{};
-        model_comp_manager.lookup(entities, indices, 2);
-        std::shared_ptr<model::Model> current_model = (use_tex_ent) ?
-                                                      model_comp_manager.data.model[indices[0]] :
-                                                      model_comp_manager.data.model[indices[1]];
+        model_comp_manager->lookup(entities, indices, 2);
+        std::shared_ptr<model::Model> current_model(model_comp_manager->models[
+                (use_tex_ent) ?
+                      model_comp_manager->data.model[indices[0]] :
+                      model_comp_manager->data.model[indices[1]]
+        ]);
         current_model->draw();
         gl::ShaderProgram::unset();
 
         // Maintain components
-        model_comp_manager.gc(test_manager);
+        model_comp_manager->gc(test_manager);
 
         // ImGui debug GUI
         if (show_imgui) {
@@ -237,8 +245,7 @@ int main() {
 
             // Demo window
             if (show_demo) {
-                ImGui::SetNextWindowPos(ImVec2(650, 20),
-                                        ImGuiCond_FirstUseEver); // Normally user code doesn't need/want to call this because positions are saved in .ini file anyway. Here we just want to make the demo initial state a bit more friendly!
+                ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiCond_FirstUseEver);
                 ImGui::ShowDemoWindow(&show_demo_window);
             }
 
@@ -254,18 +261,16 @@ int main() {
     }
     os_log::log(lg, os_log::info, "Main loop ended");
 
-    test_camera_per.reset();
-    test_camera_ort.reset();
-    test_model_tex.reset();
-    test_model_unt.reset();
+    // Clean up OpenGL objects before termination of the context
+    model_comp_manager.reset();
     test_shader.reset();
 
     c.disconnect();
     imgui_toggle.disconnect();
     imgui::clean_up();
     window::clean_up();
-    os_log::clean_up();
     window::terminate();
+    os_log::clean_up();
 
     return 0;
 }

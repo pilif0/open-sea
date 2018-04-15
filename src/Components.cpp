@@ -6,12 +6,10 @@
 
 #include <stdexcept>
 #include <random>
+#include <algorithm>
 #include <sstream>
 
 namespace open_sea::ecs {
-    // Notes:
-    //  - I am fairly certain that after calling reset on a shared pointer, I can just deallocate the memory without
-    //      having to explicitly call its destructor (as reset will take care of the use count)
 
     //--- start ModelComponent implementation
     /**
@@ -39,22 +37,18 @@ namespace open_sea::ecs {
         InstanceData newData;
         unsigned byteCount = size * RECORD_SIZE;
 
-        std::ostringstream message;
-        message << "Allocating " << byteCount << " bytes for " << size << " records";
-        log::log(lg, log::debug, message.str());
-
         newData.buffer = ALLOCATOR.allocate(byteCount);
         newData.n = data.n;
         newData.allocated = size;
 
         // Compute pointers to data arrays
-        newData.entity = (Entity*) newData.buffer;                                  // Entity is at the start
-        newData.model = (std::shared_ptr<model::Model>*) (newData.entity + size);     // followed by model pointers
+        newData.entity = (Entity*) newData.buffer;          // Entity is at the start
+        newData.model = (int*) (newData.entity + size);     // followed by model indices
 
         // Copy data into new space
         if (data.n > 0) {
             std::memcpy(newData.entity, data.entity, data.n * sizeof(Entity));
-            std::memcpy(newData.model, data.model, data.n * sizeof(std::shared_ptr<model::Model>));
+            std::memcpy(newData.model, data.model, data.n * sizeof(int));
 
 
             // Deallocate old data
@@ -63,9 +57,30 @@ namespace open_sea::ecs {
 
         // Set the data
         data = newData;
-        std::ostringstream message2;
-        message2 << "Allocated addresses from " << data.buffer;
-        log::log(lg, log::debug, message2.str());
+    }
+
+    /**
+     * \brief Get index to a model
+     * Get index to a model, adding the model to the manager's storage if necessary.
+     *
+     * \param model Pointer to model
+     * \return Index into the \c models storage of this manager
+     */
+    int ModelComponent::modelToIndex(std::shared_ptr<model::Model> model) {
+        int modelIdx;
+
+        // Try to find the model in storage
+        auto modelPos = std::find(models.begin(), models.end(), model);
+        if (modelPos == models.end()) {
+            // Not found -> add the pointer (passed by value, is a copy)
+            modelIdx = static_cast<int>(models.size());
+            models.push_back(model);
+        } else {
+            // Found -> use found index
+            modelIdx = static_cast<int>(modelPos - models.begin());
+        }
+
+        return modelIdx;
     }
 
     /**
@@ -108,12 +123,35 @@ namespace open_sea::ecs {
 
     /**
      * \brief Add the component to the entities
+     * Add the component to the entities.
+     * The model pointers get converted to indices using \c modelToIndex .
+     * The number of entities and models must match.
      *
      * \param e Entities
-     * \param m Models to tie entities with (in the same order)
+     * \param m Models to assign
      * \param count Number of entities
      */
     void ModelComponent::add(Entity *e, std::shared_ptr<model::Model> *m, unsigned count) {
+        // Convert pointers to indices
+        int indices[count];
+        for (int *i = indices; i - indices < count; i++, m++) {
+            *i = modelToIndex(*m);
+        }
+
+        return add(e, indices, count);
+    }
+
+    /**
+     * \brief Add the component to the entities
+     * Add the component to the entities.
+     * The indices are passed naively and are not checked against the actual \c models storage.
+     * The number of entities and indices must match.
+     *
+     * \param e Entities
+     * \param m Indices into the \c models storage of this manager
+     * \param count Number of entities
+     */
+    void ModelComponent::add(Entity *e, int *m, unsigned count) {
         // Check data has enough space
         if (data.allocated < (data.n + count)) {
             // Too small -> reallocate
@@ -123,18 +161,13 @@ namespace open_sea::ecs {
 
         // For every entity, add a new record
         Entity *destE = data.entity + data.n;
-        std::shared_ptr<model::Model> *destM = data.model + data.n;
+        int *destM = data.model + data.n;
         for (unsigned i = 0; i < count; i++, e++, m++, destE++, destM++) {
             //TODO: check that the entity doesn't yet have this component?
 
-            std::ostringstream message;
-            message << "Adding record entity at " << destE << "(" << data.entity << " + " << data.n << "*"<< sizeof(Entity)
-                    <<") and model at " << destM << "("<<data.model<<" + "<<data.n<<"*"<<sizeof(std::shared_ptr<model::Model>) << ")";
-            log::log(lg, log::debug, message.str());
-
             // Write the data into the buffer
             *destE = *e;
-            ::new (destM) std::shared_ptr<model::Model>(*m);
+            *destM = *m;
 
             // Increment data count and add map entry for the new record
             data.n++;
@@ -146,13 +179,36 @@ namespace open_sea::ecs {
      * \brief Set the models at the indices
      * Set the models at the indices.
      * If an index is out of range (greater than or equal to \c data.n), nothing is set (points either to destroyed record
-     * or out of allocated range for that data array)
+     * or out of allocated range for that data array).
+     * The number of indices and models must match
      *
      * \param i Indices into the data arrays
      * \param m Models to assign
      * \param count Number of indices
      */
     void ModelComponent::set(int *i, std::shared_ptr<model::Model> *m, unsigned count) {
+        // Convert pointers to indices
+        int indices[count];
+        for (int *j = indices; j - indices < count; j++, m++) {
+            *j = modelToIndex(*m);
+        }
+
+        set(i, indices, count);
+    }
+
+    /**
+     * \brief Set the models at the indices
+     * Set the models at the indices.
+     * If an index is out of range (greater than or equal to \c data.n), nothing is set (points either to destroyed record
+     * or out of allocated range fro that data array).
+     * The model indices are passed naively and are not checked against the actual \c models storage.
+     * The number of indices and model indices must match.
+     *
+     * \param i Indices into the data arrays
+     * \param m Indices into the \c models storage of this manager
+     * \param count Number of indices
+     */
+    void ModelComponent::set(int *i, int *m, unsigned count) {
         // For every index, set the value
         for (int j = 0; j < count; j++, i++, m++) {
             int index = *i;
@@ -189,9 +245,6 @@ namespace open_sea::ecs {
         Entity last = data.entity[lastIdx];
         data.entity[i] = data.entity[lastIdx];
         data.model[i] = data.model[lastIdx];
-
-        // Reset shared pointer
-        data.model[lastIdx].reset();
 
         // Update data counts and index map
         map.erase(e);
@@ -230,11 +283,11 @@ namespace open_sea::ecs {
      * \brief Destroy the component manager, freeing up the used memory
      */
     ModelComponent::~ModelComponent() {
-        // Reset shared pointers to models
-        std::shared_ptr<model::Model> *m = data.model;
-        for (int i = 0; i < data.n; i++, m++) {
-            m->reset();
+        // Reset model pointers
+        for (auto &model : models) {
+            model.reset();
         }
+        models.clear();
 
         // Deallocate the data buffer
         ALLOCATOR.deallocate(static_cast<unsigned char *>(data.buffer), data.allocated * RECORD_SIZE);

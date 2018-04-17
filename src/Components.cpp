@@ -591,7 +591,7 @@ namespace open_sea::ecs {
             }
 
             // Set the values
-            data.orientation[*i] *= *delta;
+            data.orientation[*i] = *delta * data.orientation[*i];
             data.matrix[*i] = transformation(data.position[*i], data.orientation[*i], data.scale[*i]);
         }
     }

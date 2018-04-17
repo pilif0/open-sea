@@ -296,6 +296,22 @@ namespace open_sea::ecs {
         ALLOCATOR.deallocate(static_cast<unsigned char *>(data.buffer), data.allocated * RECORD_SIZE);
     }
     //--- end ModelComponent implementation
+
+    /**
+     * \brief Compute transformation matrix
+     *
+     * \param position Position
+     * \param orientation Orientation
+     * \param scale Scale
+     * \return Transformation
+     */
+    glm::mat4 transformation(glm::vec3 position, glm::quat orientation, glm::vec3 scale) {
+        glm::mat4 s = glm::scale(glm::mat4(1.0f), scale);
+        glm::mat4 r = glm::mat4_cast(orientation);
+        glm::mat4 t = glm::translate(glm::mat4(1.0f), position);
+        return t * r * s;
+    }
+
     //--- start TransformationComponent implementation
     /**
      * \brief Construct a transformation component manager
@@ -421,7 +437,7 @@ namespace open_sea::ecs {
             *destP = *position;
             *destO = *orientation;
             *destS = *scale;
-            *destM = glm::translate(glm::mat4_cast(*orientation).operator*=(glm::scale(glm::mat4(1.0f), *scale)), *position);
+            *destM = transformation(*position, *orientation, *scale);
 
             // Increment data count and add map entry for the new record
             data.n++;
@@ -458,7 +474,7 @@ namespace open_sea::ecs {
             data.position[*i] = *position;
             data.orientation[*i] = *orientation;
             data.scale[*i] = *scale;
-            data.matrix[*i] = glm::translate(glm::mat4_cast(*orientation).operator*=(glm::scale(glm::mat4(1.0f), *scale)), *position);
+            data.matrix[*i] = transformation(*position, *orientation, *scale);
         }
     }
 
@@ -550,7 +566,7 @@ namespace open_sea::ecs {
 
             // Set the values
             data.position[*i] += *delta;
-            data.matrix[*i] = glm::translate(glm::mat4_cast(data.orientation[*i]).operator*=(glm::scale(glm::mat4(1.0f), data.scale[*i])), data.position[*i]);
+            data.matrix[*i] = transformation(data.position[*i], data.orientation[*i], data.scale[*i]);
         }
     }
 
@@ -576,7 +592,7 @@ namespace open_sea::ecs {
 
             // Set the values
             data.orientation[*i] *= *delta;
-            data.matrix[*i] *= glm::translate(glm::mat4_cast(data.orientation[*i]).operator*=(glm::scale(glm::mat4(1.0f), data.scale[*i])), data.position[*i]);
+            data.matrix[*i] *= transformation(data.position[*i], data.orientation[*i], data.scale[*i]);
         }
     }
 
@@ -603,7 +619,7 @@ namespace open_sea::ecs {
 
             // Set the values
             data.scale[*i] *= *delta;
-            data.matrix[*i] *= glm::translate(glm::mat4_cast(data.orientation[*i]).operator*=(glm::scale(glm::mat4(1.0f), data.scale[*i])), data.position[*i]);
+            data.matrix[*i] *= transformation(data.position[*i], data.orientation[*i], data.scale[*i]);
         }
     }
 
@@ -629,7 +645,7 @@ namespace open_sea::ecs {
 
             // Set the values
             data.position[*i] = *position;
-            data.matrix[*i] *= glm::translate(glm::mat4_cast(data.orientation[*i]).operator*=(glm::scale(glm::mat4(1.0f), data.scale[*i])), *position);
+            data.matrix[*i] *= transformation(*position, data.orientation[*i], data.scale[*i]);
         }
     }
 
@@ -655,7 +671,7 @@ namespace open_sea::ecs {
 
             // Set the values
             data.orientation[*i] = *orientation;
-            data.matrix[*i] *= glm::translate(glm::mat4_cast(*orientation).operator*=(glm::scale(glm::mat4(1.0f), data.scale[*i])), data.position[*i]);
+            data.matrix[*i] *= transformation(data.position[*i], *orientation, data.scale[*i]);
         }
     }
 
@@ -681,7 +697,7 @@ namespace open_sea::ecs {
 
             // Set the values
             data.scale[*i] = *scale;
-            data.matrix[*i] *= glm::translate(glm::mat4_cast(data.orientation[*i]).operator*=(glm::scale(glm::mat4(1.0f), *scale)), data.position[*i]);
+            data.matrix[*i] *= transformation(data.position[*i], data.orientation[*i], *scale);
         }
     }
     //--- end TransformationComponent implementation

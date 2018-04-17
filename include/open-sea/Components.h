@@ -94,27 +94,29 @@ namespace open_sea::ecs {
             //! Data of component instances
             struct InstanceData {
                 //! Number of used instances
-                unsigned n;
+                unsigned n = 0;
                 //! Number of allocated instances
-                unsigned allocated;
+                unsigned allocated = 0;
                 //! Buffer with data
-                void *buffer;
+                void *buffer = nullptr;
 
                 //! Associated entity
-                Entity *entity;
+                Entity *entity = nullptr;
                 //! World position
-                glm::vec3 *position;
+                glm::vec3 *position = nullptr;
                 //! World orientation
-                glm::quat *orientation;
+                glm::quat *orientation = nullptr;
                 //! World scale
-                glm::vec3 *scale;
+                glm::vec3 *scale = nullptr;
                 //! World matrix
-                glm::mat4 *matrix;
+                glm::mat4 *matrix = nullptr;
             };
-            InstanceData data;
+            InstanceData data{};
             void allocate(unsigned size);
             //! Size of one record in bytes
             static constexpr unsigned RECORD_SIZE = sizeof(Entity) + 2 * sizeof(glm::vec3) + sizeof(glm::quat) + sizeof(glm::mat4);
+            //! Allocator used by the manager
+            std::allocator<unsigned char> ALLOCATOR;
 
             // Access
             //! Map of entities to data indices
@@ -132,7 +134,7 @@ namespace open_sea::ecs {
             // Transformation
             // Note: these each update both the relevant value and the matrix
             void translate(int *i, glm::vec3 *delta, unsigned count);
-            void rotate(int *i, glm::quat *dela, unsigned count);
+            void rotate(int *i, glm::quat *delta, unsigned count);
             void scale(int *i, glm::vec3 *delta, unsigned count);
             void setPosition(int *i,  glm::vec3 *position, unsigned count);
             void setOrientation(int *i, glm::quat *orientation, unsigned count);

@@ -592,7 +592,7 @@ namespace open_sea::ecs {
 
             // Set the values
             data.orientation[*i] *= *delta;
-            data.matrix[*i] *= transformation(data.position[*i], data.orientation[*i], data.scale[*i]);
+            data.matrix[*i] = transformation(data.position[*i], data.orientation[*i], data.scale[*i]);
         }
     }
 
@@ -619,7 +619,7 @@ namespace open_sea::ecs {
 
             // Set the values
             data.scale[*i] *= *delta;
-            data.matrix[*i] *= transformation(data.position[*i], data.orientation[*i], data.scale[*i]);
+            data.matrix[*i] = transformation(data.position[*i], data.orientation[*i], data.scale[*i]);
         }
     }
 
@@ -645,7 +645,7 @@ namespace open_sea::ecs {
 
             // Set the values
             data.position[*i] = *position;
-            data.matrix[*i] *= transformation(*position, data.orientation[*i], data.scale[*i]);
+            data.matrix[*i] = transformation(*position, data.orientation[*i], data.scale[*i]);
         }
     }
 
@@ -671,7 +671,7 @@ namespace open_sea::ecs {
 
             // Set the values
             data.orientation[*i] = *orientation;
-            data.matrix[*i] *= transformation(data.position[*i], *orientation, data.scale[*i]);
+            data.matrix[*i] = transformation(data.position[*i], *orientation, data.scale[*i]);
         }
     }
 
@@ -697,7 +697,7 @@ namespace open_sea::ecs {
 
             // Set the values
             data.scale[*i] = *scale;
-            data.matrix[*i] *= transformation(data.position[*i], data.orientation[*i], *scale);
+            data.matrix[*i] = transformation(data.position[*i], data.orientation[*i], *scale);
         }
     }
     //--- end TransformationComponent implementation

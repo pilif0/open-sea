@@ -105,10 +105,8 @@ int main() {
 
     // Generate test entities
     ecs::EntityManager test_manager;
-    ecs::Entity entities[]{
-            test_manager.create(),
-            test_manager.create()
-    };
+    ecs::Entity entities[2];
+    test_manager.create(entities, 2);
 
     // Prepare and assign test models
     std::unique_ptr<ecs::ModelComponent> model_comp_manager = std::make_unique<ecs::ModelComponent>(2);
@@ -291,7 +289,6 @@ int main() {
 
             // System stats
             {
-                ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Once);
                 ImGui::Begin("System Statistics");
 
                 open_sea::time::debug_widget();

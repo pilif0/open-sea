@@ -64,6 +64,18 @@ namespace open_sea::ecs {
     }
 
     /**
+     * \brief Create multiple new entities
+     *
+     * \param dest Destination for created entities
+     * \param count Number of entities to create
+     */
+    void EntityManager::create(Entity *dest, unsigned count) {
+        for (int i = 0; i < count; i++, dest++) {
+            *dest = create();
+        }
+    }
+
+    /**
      * \brief Get whether the entity is alive
      * Get whether the entity is alive.
      * An entity is considered alive iff its generation matches the generation at its index.

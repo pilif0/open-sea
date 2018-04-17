@@ -64,6 +64,7 @@ namespace open_sea::ecs {
             static constexpr unsigned MINIMUM_FREE_INDICES = 1024;
 
             Entity create();
+            void create(Entity* dest, unsigned count);
             bool alive(Entity e) const;
             void kill(Entity e);
 

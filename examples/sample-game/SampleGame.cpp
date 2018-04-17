@@ -32,6 +32,7 @@ namespace ecs = open_sea::ecs;
 #include <boost/filesystem.hpp>
 
 #include <sstream>
+#include <random>
 
 int main() {
     // Initialize logging
@@ -104,41 +105,60 @@ int main() {
                     0.1f, 1000.0f, 90.0f);
 
     // Generate test entities
+    unsigned N = 1024;
     ecs::EntityManager test_manager;
-    ecs::Entity entities[2];
-    test_manager.create(entities, 2);
+    ecs::Entity entities[N];
+    test_manager.create(entities, N);
 
-    // Prepare and assign test models
-    std::unique_ptr<ecs::ModelComponent> model_comp_manager = std::make_unique<ecs::ModelComponent>(2);
+    // Prepare and assign model
+    std::unique_ptr<ecs::ModelComponent> model_comp_manager = std::make_unique<ecs::ModelComponent>();
     {
-        std::shared_ptr<model::Model> models[]{
-                model::Model::fromFile("examples/sample-game/data/models/teapot.obj"),
-                model::UntexModel::fromFile("examples/sample-game/data/models/teapot.obj")
-        };
-        if (!models[0] || !models[1]) {
+        std::shared_ptr<model::Model> model(model::UntexModel::fromFile("examples/sample-game/data/models/teapot.obj"));
+        if (!model)
             return -1;
-        }
+        model_comp_manager->modelToIndex(model);
+        int models[N]{};   // modelIdx == 0, because it is the first model
 
-        model_comp_manager->add(entities, models, 2);
+        model_comp_manager->add(entities, models, N);
     }
 
-    // Prepare and assign test transformations
-    std::unique_ptr<ecs::TransformationComponent> trans_comp_manager = std::make_unique<ecs::TransformationComponent>(2);
+    // Prepare and assign random transformations
+    std::unique_ptr<ecs::TransformationComponent> trans_comp_manager = std::make_unique<ecs::TransformationComponent>();
     {
-        glm::vec3 positions[]{
-                {10.0f, 0.0f, 0.0f},
-                {0.0f, 0.0f, 0.0f}
-        };
-        glm::quat orientations[]{
-                glm::angleAxis(0.0f, glm::vec3{1.0f, 0.0f, 0.0f}),
-                glm::angleAxis(0.0f, glm::vec3{1.0f, 0.0f, 0.0f})
-        };
-        glm::vec3 scales[]{
-                {100.0f, 100.0f, 100.0f},
-                {100.0f, 100.0f, 100.0f}
-        };
+        // Prepare random distributions
+        std::random_device device;
+        std::mt19937_64 generator;
 
-        trans_comp_manager->add(entities, positions, orientations, scales, 2);
+        std::uniform_int_distribution<int> posX(-640, 640);
+        std::uniform_int_distribution<int> posY(-360, 360);
+        std::uniform_int_distribution<int> posZ(0, 750);
+
+        std::uniform_real_distribution<float> angle(0.0f, 360.0f);
+        glm::vec3 axis{0.0f, 0.0f, 1.0f};
+
+        std::uniform_real_distribution<float> scale(1.0f, 20.0f);
+
+        // Prepare data arrays
+        glm::vec3 positions[N]{};
+        glm::quat orientations[N]{};
+        glm::vec3 scales[N]{};
+
+        // Randomise the data
+        glm::vec3 *p = positions;
+        glm::quat *o = orientations;
+        glm::vec3 *s = scales;
+        for (int i = 0; i < N; i++, p++, o++, s++) {
+            *p = glm::vec3(posX(generator), posY(generator), posZ(generator));
+            *o = glm::angleAxis(angle(generator), axis);
+            float f = scale(generator);
+            *s = glm::vec3(f, f, f);
+        }
+
+        os_log::log(lg, os_log::info, "Transformations generated");
+
+        // Add the components
+        trans_comp_manager->add(entities, positions, orientations, scales, N);
+        os_log::log(lg, os_log::info, "Transformations set");
     }
 
     // Set background to black
@@ -154,28 +174,69 @@ int main() {
         // Clear
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Draw the test entity
+        // Draw the entities
         static bool use_per_cam = true;
-        static bool use_tex_ent = true;
-        glm::mat4 camera_matrix = (use_per_cam) ?
-                                  test_camera_per->getProjViewMatrix() :
-                                  test_camera_ort->getProjViewMatrix();
-        test_shader->use();
-        glUniformMatrix4fv(pM_location, 1, GL_FALSE, &camera_matrix[0][0]);
-        int indices[2]{};
-        trans_comp_manager->lookup(entities, indices, 2);
-        glUniformMatrix4fv(wM_location, 1, GL_FALSE, &(trans_comp_manager->data.matrix[(use_tex_ent) ? 0 : 1])[0][0]);
-        model_comp_manager->lookup(entities, indices, 2);
-        std::shared_ptr<model::Model> current_model(model_comp_manager->models[
-                (use_tex_ent) ?
-                      model_comp_manager->data.model[indices[0]] :
-                      model_comp_manager->data.model[indices[1]]
-        ]);
-        current_model->draw();
-        gl::ShaderProgram::unset();
+        {
+            // Set the shader and the projection-view matrix
+            test_shader->use();
+            glm::mat4 camera_matrix = (use_per_cam) ?
+                                      test_camera_per->getProjViewMatrix() :
+                                      test_camera_ort->getProjViewMatrix();
+            glUniformMatrix4fv(pM_location, 1, GL_FALSE, &camera_matrix[0][0]);
+
+            // Prepare render information
+            struct RenderInfo {
+                glm::mat4 matrix{1.0f};
+                GLuint vao = 0;
+                unsigned vertexCount = 0;
+            } infos[N]{};
+
+            // Get the world matrices of entities
+            int indices[N]{};
+            trans_comp_manager->lookup(entities, indices, N);
+            int *i = indices;
+            RenderInfo *r = infos;
+            for (int j = 0; j < N; j++, i++, r++) {
+                if (*i != -1)
+                    r->matrix = trans_comp_manager->data.matrix[*i];
+            }
+
+            // Get the model indices
+            model_comp_manager->lookup(entities, indices, N);
+            i = indices;
+            int models[N]{};
+            int *m = models;
+            int x = model_comp_manager->data.model[19];
+            int y = model_comp_manager->data.model[20];
+            int z = model_comp_manager->data.model[21];
+            for (int j = 0; j < N; j++, i++, m++) {
+                *m = model_comp_manager->data.model[*i];
+            }
+
+            // Get the model information
+            m = models;
+            r = infos;
+            for (int j = 0; j < N; j++, m++, r++) {
+                r->vao = model_comp_manager->models[*m]->getVertexArray();
+                r->vertexCount = model_comp_manager->models[*m]->getVertexCount();
+            }
+
+            // Render the information
+            r = infos;
+            for (int j = 0; j < N; j++, r++) {
+                glUniformMatrix4fv(wM_location, 1, GL_FALSE, &r->matrix[0][0]);
+                glBindVertexArray(r->vao);
+                glDrawElements(GL_TRIANGLES, r->vertexCount, GL_UNSIGNED_INT, nullptr);
+            }
+
+            // Reset vertex array and shader state
+            glBindVertexArray(0);
+            gl::ShaderProgram::unset();
+        }
 
         // Maintain components
         model_comp_manager->gc(test_manager);
+        trans_comp_manager->gc(test_manager);
 
         // ImGui debug GUI
         if (show_imgui) {
@@ -187,12 +248,6 @@ int main() {
                 ImGui::Begin("Entity test");
 
                 test_manager.showDebug();
-                ImGui::Spacing();
-
-                ImGui::Text("Textured entity index: %i", entities[0].index());
-                ImGui::Text("Textured entity generation: %i", entities[0].generation());
-                ImGui::Text("Untextured entity index: %i", entities[1].index());
-                ImGui::Text("Untextured entity generation: %i", entities[1].generation());
 
                 ImGui::End();
             }
@@ -202,11 +257,6 @@ int main() {
                 ImGui::Begin("Test controls");
 
                 ImGui::Checkbox("Use perspective camera", &use_per_cam);
-                ImGui::Checkbox("Use textured entity", &use_tex_ent);
-
-                ImGui::Text("Current model:");
-                current_model->showDebug();
-                ImGui::Spacing();
 
                 ImGui::Text("Test camera:");
                 if (use_per_cam)
@@ -214,69 +264,6 @@ int main() {
                 else
                     test_camera_ort->showDebugControls();
                 ImGui::Spacing();
-
-                ImGui::Text("World transformation control:");
-                constexpr float delta = 50.0f;
-                constexpr float deltaAngle = 20.0f;
-                constexpr float deltaFactor = 1.2f;
-                int index[1];
-                trans_comp_manager->lookup(entities + ((use_tex_ent) ? 0 : 1), index, 1);
-                if (ImGui::Button("-X")) {
-                    glm::vec3 deltas[1]{ {-delta, 0.0f, 0.0f} };
-                    trans_comp_manager->translate(index, deltas, 1);
-                }
-                ImGui::SameLine();
-                if (ImGui::Button("+X")) {
-                    glm::vec3 deltas[1]{ {delta, 0.0f, 0.0f} };
-                    trans_comp_manager->translate(index, deltas, 1);
-                }
-                ImGui::SameLine();
-                if (ImGui::Button("-Y")) {
-                    glm::vec3 deltas[1]{ {0.0f, -delta, 0.0f} };
-                    trans_comp_manager->translate(index, deltas, 1);
-                }
-                ImGui::SameLine();
-                if (ImGui::Button("+Y")) {
-                    glm::vec3 deltas[1]{ {0.0f, delta, 0.0f} };
-                    trans_comp_manager->translate(index, deltas, 1);
-                }
-                ImGui::SameLine();
-                if (ImGui::Button("-Z")) {
-                    glm::vec3 deltas[1]{ {0.0f, 0.0f, -delta} };
-                    trans_comp_manager->translate(index, deltas, 1);
-                }
-                ImGui::SameLine();
-                if (ImGui::Button("+Z")) {
-                    glm::vec3 deltas[1]{ {0.0f, 0.0f, delta} };
-                    trans_comp_manager->translate(index, deltas, 1);
-                }
-                if (ImGui::Button("Anticlockwise")) {
-                    glm::quat rots[1]{ glm::angleAxis(glm::radians(deltaAngle), glm::vec3{0.0f, 0.0f, 1.0f}) };
-                    trans_comp_manager->rotate(index, rots, 1);
-                }
-                ImGui::SameLine();
-                if (ImGui::Button("Clockwise")) {
-                    glm::quat rots[1]{ glm::angleAxis(-glm::radians(deltaAngle), glm::vec3{0.0f, 0.0f, 1.0f}) };
-                    trans_comp_manager->rotate(index, rots, 1);
-                }
-                if (ImGui::Button("Scale Up")) {
-                    glm::vec3 scales[1]{ {deltaFactor, deltaFactor, deltaFactor} };
-                    trans_comp_manager->scale(index, scales, 1);
-                }
-                ImGui::SameLine();
-                if (ImGui::Button("Scale Down")) {
-                    glm::vec3 scales[1]{ {1 / deltaFactor, 1 / deltaFactor, 1 / deltaFactor} };
-                    trans_comp_manager->scale(index, scales, 1);
-                }
-                ImGui::Spacing();
-
-                ImGui::Text("Position: %.1f, %.1f, %.1f", trans_comp_manager->data.position[index[0]].x,
-                            trans_comp_manager->data.position[index[0]].y, trans_comp_manager->data.position[index[0]].z);
-                ImGui::Text("Orientation: %.3f, %.3f, %.3f, %.3f", trans_comp_manager->data.orientation[index[0]].x,
-                            trans_comp_manager->data.orientation[index[0]].y, trans_comp_manager->data.orientation[index[0]].z,
-                            trans_comp_manager->data.orientation[index[0]].w);
-                ImGui::Text("Scale: %.1f, %.1f, %.1f", trans_comp_manager->data.scale[index[0]].x,
-                            trans_comp_manager->data.scale[index[0]].y, trans_comp_manager->data.scale[index[0]].z);
 
                 ImGui::End();
             }

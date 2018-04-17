@@ -25,6 +25,8 @@ namespace gl = open_sea::gl;
 namespace model = open_sea::model;
 namespace ecs = open_sea::ecs;
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <boost/filesystem.hpp>
@@ -122,9 +124,24 @@ int main() {
         model_comp_manager->add(entities, models, 2);
     }
 
-    // Prepare test transformation
-    glm::vec3 test_position(0.0f, 0.0f, 0.0f);
-    glm::vec3 test_scale(100.0f, 100.0f, 100.0f);
+    // Prepare and assign test transformations
+    std::unique_ptr<ecs::TransformationComponent> trans_comp_manager = std::make_unique<ecs::TransformationComponent>(2);
+    {
+        glm::vec3 positions[]{
+                {10.0f, 0.0f, 0.0f},
+                {0.0f, 0.0f, 0.0f}
+        };
+        glm::quat orientations[]{
+                glm::angleAxis(0.0f, glm::vec3{1.0f, 0.0f, 0.0f}),
+                glm::angleAxis(0.0f, glm::vec3{1.0f, 0.0f, 0.0f})
+        };
+        glm::vec3 scales[]{
+                {100.0f, 100.0f, 100.0f},
+                {100.0f, 100.0f, 100.0f}
+        };
+
+        trans_comp_manager->add(entities, positions, orientations, scales, 2);
+    }
 
     // Set background to black
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -142,14 +159,14 @@ int main() {
         // Draw the test entity
         static bool use_per_cam = true;
         static bool use_tex_ent = true;
-        glm::mat4 world_matrix = glm::translate(glm::scale(glm::mat4(1.0f), test_scale), test_position);
         glm::mat4 camera_matrix = (use_per_cam) ?
                                   test_camera_per->getProjViewMatrix() :
                                   test_camera_ort->getProjViewMatrix();
         test_shader->use();
         glUniformMatrix4fv(pM_location, 1, GL_FALSE, &camera_matrix[0][0]);
-        glUniformMatrix4fv(wM_location, 1, GL_FALSE, &world_matrix[0][0]);
         int indices[2]{};
+        trans_comp_manager->lookup(entities, indices, 2);
+        glUniformMatrix4fv(wM_location, 1, GL_FALSE, &(trans_comp_manager->data.matrix[(use_tex_ent) ? 0 : 1])[0][0]);
         model_comp_manager->lookup(entities, indices, 2);
         std::shared_ptr<model::Model> current_model(model_comp_manager->models[
                 (use_tex_ent) ?
@@ -200,9 +217,68 @@ int main() {
                     test_camera_ort->showDebugControls();
                 ImGui::Spacing();
 
-                ImGui::Text("Test world transformation:");
-                ImGui::InputFloat3("Model pos", &test_position[0]);
-                ImGui::InputFloat3("Model scale", &test_scale[0]);
+                ImGui::Text("World transformation control:");
+                constexpr float delta = 50.0f;
+                constexpr float deltaAngle = 20.0f;
+                constexpr float deltaFactor = 1.2f;
+                int index[1];
+                trans_comp_manager->lookup(entities + ((use_tex_ent) ? 0 : 1), index, 1);
+                if (ImGui::Button("-X")) {
+                    glm::vec3 deltas[1]{ {-delta, 0.0f, 0.0f} };
+                    trans_comp_manager->translate(index, deltas, 1);
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("+X")) {
+                    glm::vec3 deltas[1]{ {delta, 0.0f, 0.0f} };
+                    trans_comp_manager->translate(index, deltas, 1);
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("-Y")) {
+                    glm::vec3 deltas[1]{ {0.0f, -delta, 0.0f} };
+                    trans_comp_manager->translate(index, deltas, 1);
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("+Y")) {
+                    glm::vec3 deltas[1]{ {0.0f, delta, 0.0f} };
+                    trans_comp_manager->translate(index, deltas, 1);
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("-Z")) {
+                    glm::vec3 deltas[1]{ {0.0f, 0.0f, -delta} };
+                    trans_comp_manager->translate(index, deltas, 1);
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("+Z")) {
+                    glm::vec3 deltas[1]{ {0.0f, 0.0f, delta} };
+                    trans_comp_manager->translate(index, deltas, 1);
+                }
+                if (ImGui::Button("Anticlockwise")) {
+                    glm::quat rots[1]{ glm::angleAxis(glm::radians(deltaAngle), glm::vec3{0.0f, 0.0f, 1.0f}) };
+                    trans_comp_manager->rotate(index, rots, 1);
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Clockwise")) {
+                    glm::quat rots[1]{ glm::angleAxis(-glm::radians(deltaAngle), glm::vec3{0.0f, 0.0f, 1.0f}) };
+                    trans_comp_manager->rotate(index, rots, 1);
+                }
+                if (ImGui::Button("Scale Up")) {
+                    glm::vec3 scales[1]{ {deltaFactor, deltaFactor, deltaFactor} };
+                    trans_comp_manager->scale(index, scales, 1);
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Scale Down")) {
+                    glm::vec3 scales[1]{ {1 / deltaFactor, 1 / deltaFactor, 1 / deltaFactor} };
+                    trans_comp_manager->scale(index, scales, 1);
+                }
+                ImGui::Spacing();
+
+                ImGui::Text("Position: %.1f, %.1f, %.1f", trans_comp_manager->data.position[index[0]].x,
+                            trans_comp_manager->data.position[index[0]].y, trans_comp_manager->data.position[index[0]].z);
+                ImGui::Text("Orientation: %.3f, %.3f, %.3f, %.3f", trans_comp_manager->data.orientation[index[0]].x,
+                            trans_comp_manager->data.orientation[index[0]].y, trans_comp_manager->data.orientation[index[0]].z,
+                            trans_comp_manager->data.orientation[index[0]].w);
+                ImGui::Text("Scale: %.1f, %.1f, %.1f", trans_comp_manager->data.scale[index[0]].x,
+                            trans_comp_manager->data.scale[index[0]].y, trans_comp_manager->data.scale[index[0]].z);
 
                 ImGui::End();
             }

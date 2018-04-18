@@ -17,6 +17,7 @@
 #include <open-sea/Model.h>
 #include <open-sea/Entity.h>
 #include <open-sea/Components.h>
+#include <open-sea/Render.h>
 namespace os_log = open_sea::log;
 namespace window = open_sea::window;
 namespace input = open_sea::input;
@@ -24,6 +25,7 @@ namespace imgui = open_sea::imgui;
 namespace gl = open_sea::gl;
 namespace model = open_sea::model;
 namespace ecs = open_sea::ecs;
+namespace render = open_sea::render;
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
@@ -81,24 +83,15 @@ int main() {
     // ImGui test data
     bool show_demo_window = true;
 
-    // Prepare test shader
-    std::unique_ptr<gl::ShaderProgram> test_shader = std::make_unique<gl::ShaderProgram>();
-    test_shader->attachVertexFile("data/shaders/Test.vshader");
-    test_shader->attachFragmentFile("data/shaders/Test.fshader");
-    test_shader->link();
-    test_shader->validate();
-    int pM_location = test_shader->getUniformLocation("projectionMatrix");
-    int wM_location = test_shader->getUniformLocation("worldMatrix");
-
     // Prepare test cameras
-    std::unique_ptr<gl::OrthographicCamera> test_camera_ort =
-            std::make_unique<gl::OrthographicCamera>(
+    std::shared_ptr<gl::Camera> test_camera_ort =
+            std::make_shared<gl::OrthographicCamera>(
                     glm::vec3{-640.0f, -360.0f, 1000.0f},
                     glm::quat(),
                     glm::vec2{1280, 720},
                     0.1f, 1000.0f);
-    std::unique_ptr<gl::PerspectiveCamera> test_camera_per =
-            std::make_unique<gl::PerspectiveCamera>(
+    std::shared_ptr<gl::Camera> test_camera_per =
+            std::make_shared<gl::PerspectiveCamera>(
                     glm::vec3{0.0f, 0.0f, 1000.0f},
                     glm::quat(),
                     glm::vec2{1280, 720},
@@ -111,9 +104,9 @@ int main() {
     test_manager.create(entities, N);
 
     // Prepare and assign model
-    std::unique_ptr<ecs::ModelComponent> model_comp_manager = std::make_unique<ecs::ModelComponent>();
+    std::shared_ptr<ecs::ModelComponent> model_comp_manager = std::make_shared<ecs::ModelComponent>();
     {
-        std::shared_ptr<model::Model> model(model::UntexModel::fromFile("examples/sample-game/data/models/teapot.obj"));
+        std::shared_ptr<model::Model> model(model::UntexModel::fromFile("examples/sample-game/data/models/cube.obj"));
         if (!model)
             return -1;
         model_comp_manager->modelToIndex(model);
@@ -123,7 +116,7 @@ int main() {
     }
 
     // Prepare and assign random transformations
-    std::unique_ptr<ecs::TransformationComponent> trans_comp_manager = std::make_unique<ecs::TransformationComponent>();
+    std::shared_ptr<ecs::TransformationComponent> trans_comp_manager = std::make_shared<ecs::TransformationComponent>();
     {
         // Prepare random distributions
         std::random_device device;
@@ -161,6 +154,9 @@ int main() {
         os_log::log(lg, os_log::info, "Transformations set");
     }
 
+    // Prepare renderer
+    std::unique_ptr<render::UntexturedRenderer> renderer = std::make_unique<render::UntexturedRenderer>(model_comp_manager, trans_comp_manager);
+
     // Set background to black
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -176,63 +172,7 @@ int main() {
 
         // Draw the entities
         static bool use_per_cam = true;
-        {
-            // Set the shader and the projection-view matrix
-            test_shader->use();
-            glm::mat4 camera_matrix = (use_per_cam) ?
-                                      test_camera_per->getProjViewMatrix() :
-                                      test_camera_ort->getProjViewMatrix();
-            glUniformMatrix4fv(pM_location, 1, GL_FALSE, &camera_matrix[0][0]);
-
-            // Prepare render information
-            struct RenderInfo {
-                glm::mat4 matrix{1.0f};
-                GLuint vao = 0;
-                unsigned vertexCount = 0;
-            } infos[N]{};
-
-            // Get the world matrices of entities
-            int indices[N]{};
-            trans_comp_manager->lookup(entities, indices, N);
-            int *i = indices;
-            RenderInfo *r = infos;
-            for (int j = 0; j < N; j++, i++, r++) {
-                if (*i != -1)
-                    r->matrix = trans_comp_manager->data.matrix[*i];
-            }
-
-            // Get the model indices
-            model_comp_manager->lookup(entities, indices, N);
-            i = indices;
-            int models[N]{};
-            int *m = models;
-            int x = model_comp_manager->data.model[19];
-            int y = model_comp_manager->data.model[20];
-            int z = model_comp_manager->data.model[21];
-            for (int j = 0; j < N; j++, i++, m++) {
-                *m = model_comp_manager->data.model[*i];
-            }
-
-            // Get the model information
-            m = models;
-            r = infos;
-            for (int j = 0; j < N; j++, m++, r++) {
-                r->vao = model_comp_manager->models[*m]->getVertexArray();
-                r->vertexCount = model_comp_manager->models[*m]->getVertexCount();
-            }
-
-            // Render the information
-            r = infos;
-            for (int j = 0; j < N; j++, r++) {
-                glUniformMatrix4fv(wM_location, 1, GL_FALSE, &r->matrix[0][0]);
-                glBindVertexArray(r->vao);
-                glDrawElements(GL_TRIANGLES, r->vertexCount, GL_UNSIGNED_INT, nullptr);
-            }
-
-            // Reset vertex array and shader state
-            glBindVertexArray(0);
-            gl::ShaderProgram::unset();
-        }
+        renderer->render((use_per_cam) ? test_camera_per : test_camera_ort, entities, N);
 
         // Maintain components
         model_comp_manager->gc(test_manager);
@@ -323,7 +263,7 @@ int main() {
 
     // Clean up OpenGL objects before termination of the context
     model_comp_manager.reset();
-    test_shader.reset();
+    renderer.reset();
 
     c.disconnect();
     imgui_toggle.disconnect();

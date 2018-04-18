@@ -54,30 +54,28 @@ namespace open_sea::render {
                 r->matrix = &transformMgr->data.matrix[*i][0][0];
         }
 
-        // Get the model indices
+        // Get the model information
         modelMgr->lookup(e, indices, count);
         i = indices;
-        int models[count]{};
-        int *m = models;
-        for (int j = 0; j < count; j++, i++, m++) {
-            *m = modelMgr->data.model[*i];
-        }
-
-        // Get the model information
-        m = models;
         r = infos;
-        for (int j = 0; j < count; j++, m++, r++) {
-            std::shared_ptr<model::Model> model = modelMgr->models[*m];
-            r->vao = model->getVertexArray();
-            r->vertexCount = model->getVertexCount();
+        for (int j = 0; j < count; j++, i++, r++) {
+            // Skip invalid indices
+            if (*i != -1) {
+                std::shared_ptr<model::Model> model = modelMgr->models[modelMgr->data.model[*i]];
+                r->vao = model->getVertexArray();
+                r->vertexCount = model->getVertexCount();
+            }
         }
 
         // Render the information
         r = infos;
         for (int j = 0; j < count; j++, r++) {
-            glUniformMatrix4fv(wMatLocation, 1, GL_FALSE, r->matrix);
-            glBindVertexArray(r->vao);
-            glDrawElements(GL_TRIANGLES, r->vertexCount, GL_UNSIGNED_INT, nullptr);
+            // Skip invalid entities
+            if (r->matrix != nullptr) {
+                glUniformMatrix4fv(wMatLocation, 1, GL_FALSE, r->matrix);
+                glBindVertexArray(r->vao);
+                glDrawElements(GL_TRIANGLES, r->vertexCount, GL_UNSIGNED_INT, nullptr);
+            }
         }
 
         // Reset state

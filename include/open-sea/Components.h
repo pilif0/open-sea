@@ -31,10 +31,6 @@ namespace open_sea::ecs {
     //TODO: decide multiplicity of association (probably 1:1, is there any use case for multiple models for one entity
     // without using a more specialised component for it?)
     class ModelComponent {
-        private:
-            //! Logger
-            log::severity_logger lg = log::get_logger("Model Component Mgr");
-
         public:
             ModelComponent() : ModelComponent(DEFAULT_SIZE) {}
             explicit ModelComponent(unsigned size);
@@ -82,10 +78,15 @@ namespace open_sea::ecs {
     };
 
     /** \class TransformationComponent
-     * \breif Associates an entity with a world transformation
+     * \breif Associates an entity with a transformation relative to some parent
+     * Associates an entity with a local transformation relative to some parent.
+     * If the entity has no parent (index -1) then it is considered a root and its transformation is relative to identity.
+     * Multiple root entities are not considered siblings.
      */
-    //TODO: add tree capabilities (parents, children, siblings, local x world transformation)
     class TransformationComponent {
+        private:
+            void swap(int i, int j);
+
         public:
             TransformationComponent() : TransformationComponent(DEFAULT_SIZE) {}
             TransformationComponent(unsigned size);
@@ -102,19 +103,27 @@ namespace open_sea::ecs {
 
                 //! Associated entity
                 Entity *entity = nullptr;
-                //! World position
+                //! Local position
                 glm::vec3 *position = nullptr;
-                //! World orientation
+                //! Local orientation
                 glm::quat *orientation = nullptr;
-                //! World scale
+                //! Local scale
                 glm::vec3 *scale = nullptr;
                 //! World matrix
                 glm::mat4 *matrix = nullptr;
+                //! Parent index (-1 if root)
+                int *parent = nullptr;
+                //! Index of first child (-1 if none)
+                int *firstChild = nullptr;
+                //! Index of next sibling (-1 if none)
+                int *nextSibling = nullptr;
+                //! Index of previous sibling (-1 if none)
+                int *prevSibling = nullptr;
             };
             InstanceData data{};
             void allocate(unsigned size);
             //! Size of one record in bytes
-            static constexpr unsigned RECORD_SIZE = sizeof(Entity) + 2 * sizeof(glm::vec3) + sizeof(glm::quat) + sizeof(glm::mat4);
+            static constexpr unsigned RECORD_SIZE = sizeof(Entity) + 2 * sizeof(glm::vec3) + sizeof(glm::quat) + sizeof(glm::mat4) + 4 * sizeof(int);
             //! Allocator used by the manager
             std::allocator<unsigned char> ALLOCATOR;
 
@@ -123,8 +132,10 @@ namespace open_sea::ecs {
             std::unordered_map<Entity, int> map;
             int lookup(Entity e) const;
             void lookup(Entity *e, int *dest, unsigned count) const;
-            void add(Entity *e, glm::vec3 *position, glm::quat *orientation, glm::vec3 *scale, unsigned count);
+            void add(Entity *e, glm::vec3 *position, glm::quat *orientation, glm::vec3 *scale, unsigned count, int parent = -1);
             void set(int *i, glm::vec3 *position, glm::quat *orientation, glm::vec3 *scale, unsigned count);
+            void adopt(int i, int parent = -1);
+            void updateMatrix(int i);
 
             // Maintenance
             void destroy(int i);

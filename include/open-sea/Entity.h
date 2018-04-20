@@ -7,6 +7,8 @@
 #ifndef OPEN_SEA_ENTITY_H
 #define OPEN_SEA_ENTITY_H
 
+#include <open-sea/Log.h>
+
 #include <vector>
 #include <cstdint>
 #include <queue>
@@ -50,6 +52,8 @@ namespace open_sea::ecs {
             std::vector<uint16_t> generation;
             //! Queue of indices with latest generation dead
             std::queue<unsigned> freeIndices;
+            //! Logger for this manager
+            log::severity_logger lg = log::get_logger("Entity Manager");
         public:
             // Debug info
             //! Number of entities alive

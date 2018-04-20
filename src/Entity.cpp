@@ -6,6 +6,8 @@
 
 #include <imgui.h>
 
+#include <stdexcept>
+
 namespace open_sea::ecs {
 
     /**
@@ -26,6 +28,7 @@ namespace open_sea::ecs {
      * \brief Create a new entity
      *
      * \return Created entity
+     * \throw \c std::runtime_error when there is no available index for new entity
      */
     Entity EntityManager::create() {
         unsigned index;
@@ -49,7 +52,8 @@ namespace open_sea::ecs {
                     freeIndices.pop();
                 } else {
                     // No index available at all -> unable to create a new entity
-                    //TODO: decide what to do here; fail completely, throw exception, or make return value optional?
+                    log::log(lg, log::error, "No available index for new entity");
+                    throw std::runtime_error("No available index for new entity");
                 }
             }
         }

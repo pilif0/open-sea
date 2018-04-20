@@ -28,9 +28,9 @@ namespace open_sea::ecs {
     /** \class ModelComponent
      * \brief Associates an entity with a model
      */
-    //TODO: decide multiplicity of association (probably 1:1, is there any use case for multiple models for one entity
-    // without using a more specialised component for it?)
     class ModelComponent {
+        private:
+            log::severity_logger lg = log::get_logger("Model Component Mgr");
         public:
             ModelComponent() : ModelComponent(DEFAULT_SIZE) {}
             explicit ModelComponent(unsigned size);
@@ -85,6 +85,7 @@ namespace open_sea::ecs {
      */
     class TransformationComponent {
         private:
+            log::severity_logger lg = log::get_logger("Transformation Component Mgr");
             void swap(int i, int j);
 
         public:

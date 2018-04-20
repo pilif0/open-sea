@@ -129,6 +129,7 @@ namespace open_sea::ecs {
      * Add the component to the entities.
      * The model pointers get converted to indices using \c modelToIndex .
      * The number of entities and models must match.
+     * Skips any attempt to add the component to an entity that already has it.
      *
      * \param e Entities
      * \param m Models to assign
@@ -149,6 +150,7 @@ namespace open_sea::ecs {
      * Add the component to the entities.
      * The indices are passed naively and are not checked against the actual \c models storage.
      * The number of entities and indices must match.
+     * Skips any attempt to add the component to an entity that already has it.
      *
      * \param e Entities
      * \param m Indices into the \c models storage of this manager
@@ -166,7 +168,15 @@ namespace open_sea::ecs {
         Entity *destE = data.entity + data.n;
         int *destM = data.model + data.n;
         for (unsigned i = 0; i < count; i++, e++, m++, destE++, destM++) {
-            //TODO: check that the entity doesn't yet have this component?
+            // Check the entity doesn't have this component yet
+            try {
+                map.at(*e);     // Produces the exception when entity doesn't have the component
+                std::ostringstream message;
+                message << "Tried to add component to entity " << e->index() << "-" << e->generation()
+                        << " that already has this component";
+                log::log(lg, log::warning, message.str());
+                continue;
+            } catch (std::out_of_range &e) {}
 
             // Write the data into the buffer
             *destE = *e;
@@ -414,6 +424,7 @@ namespace open_sea::ecs {
      * \brief Add the component to the entities
      * Add the component to the entities.
      * The number of each argument must match.
+     * Skips any attempt to add the component to an entity that already has it.
      *
      * \param e Entities
      * \param position Positions
@@ -429,11 +440,6 @@ namespace open_sea::ecs {
             // Too small -> reallocate
             //TODO is there a better increment?
             allocate(data.n + count);
-        }
-
-        // Add first child to parent
-        if (count > 0 && parent != -1) {
-            data.firstChild[parent] = data.n;
         }
 
         // Find last child of parent
@@ -462,7 +468,20 @@ namespace open_sea::ecs {
         int *destPrevSib = data.prevSibling + data.n;
         for (unsigned i = 0; i < count; i++, e++, position++, orientation++, scale++,
                 destE++, destP++, destO++, destS++, destM++, destParent++, destFirstCh++, destNextSib++, destPrevSib++) {
-            //TODO: check that the entity doesn't yet have this component?
+            // Check that the entity doesn't yet have this component
+            try {
+                map.at(*e);     // Produces the exception when entity doesn't have the component
+                std::ostringstream message;
+                message << "Tried to add component to entity " << e->index() << "-" << e->generation()
+                        << " that already has this component";
+                log::log(lg, log::warning, message.str());
+                continue;
+            } catch (std::out_of_range &e) {}
+
+            // Add as first child to parent if it had no children and this is the first child being added
+            if (count > 0 && parent != -1 && prevSib == -1) {
+                data.firstChild[parent] = data.n;
+            }
 
             // Write the data into the buffer
             *destE = *e;

@@ -61,7 +61,7 @@ namespace open_sea::render {
         for (int j = 0; j < count; j++, i++, r++) {
             // Skip invalid indices
             if (*i != -1) {
-                std::shared_ptr<model::Model> model = modelMgr->models[modelMgr->data.model[*i]];
+                std::shared_ptr<model::Model> model = modelMgr->getModel(modelMgr->data.model[*i]);
                 r->vao = model->getVertexArray();
                 r->vertexCount = model->getVertexCount();
             }

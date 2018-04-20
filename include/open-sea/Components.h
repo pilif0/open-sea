@@ -30,7 +30,10 @@ namespace open_sea::ecs {
      */
     class ModelComponent {
         private:
+            //! Logger for this manager
             log::severity_logger lg = log::get_logger("Model Component Mgr");
+            //! Models used by components in this manager
+            std::vector<std::shared_ptr<model::Model>> models;
         public:
             ModelComponent() : ModelComponent(DEFAULT_SIZE) {}
             explicit ModelComponent(unsigned size);
@@ -56,10 +59,8 @@ namespace open_sea::ecs {
             static constexpr unsigned RECORD_SIZE = sizeof(Entity) + sizeof(int);
             //! Allocator used by the manager
             std::allocator<unsigned char> ALLOCATOR;
-            //! Models used by components in this manager
-            // Manager relies on the ordering, therefore this should not be changed from the outside
-            std::vector<std::shared_ptr<model::Model>> models;
             int modelToIndex(std::shared_ptr<model::Model> model);
+            std::shared_ptr<model::Model> getModel(int i);
 
             // Access
             //! Map of entities to data indices
@@ -85,6 +86,7 @@ namespace open_sea::ecs {
      */
     class TransformationComponent {
         private:
+            //! Logger for this manager
             log::severity_logger lg = log::get_logger("Transformation Component Mgr");
             void swap(int i, int j);
 

@@ -125,6 +125,17 @@ namespace open_sea::ecs {
     }
 
     /**
+     * \brief Get the model at the index
+     * Get the model at the index from the internal storage
+     *
+     * \param i Index
+     * \return Model pointer
+     */
+    std::shared_ptr<model::Model> ModelComponent::getModel(int i) {
+        return std::shared_ptr<model::Model>(models[i]);
+    }
+
+    /**
      * \brief Add the component to the entities
      * Add the component to the entities.
      * The model pointers get converted to indices using \c modelToIndex .

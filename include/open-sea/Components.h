@@ -76,6 +76,8 @@ namespace open_sea::ecs {
             void destroy(int i);
             void gc(const EntityManager &manager);
             ~ModelComponent();
+
+            void showDebug();
     };
 
     /** \class TransformationComponent
@@ -153,6 +155,8 @@ namespace open_sea::ecs {
             void setPosition(int *i,  glm::vec3 *position, unsigned count);
             void setOrientation(int *i, glm::quat *orientation, unsigned count);
             void setScale(int *i, glm::vec3 *scale, unsigned count);
+
+            void showDebug();
     };
 }
 

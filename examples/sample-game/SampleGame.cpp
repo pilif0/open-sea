@@ -189,6 +189,13 @@ int main() {
 
                 test_manager.showDebug();
 
+                if (ImGui::CollapsingHeader("Model Component Manager")) {
+                    model_comp_manager->showDebug();
+                }
+                if (ImGui::CollapsingHeader("Transformation Component Manager")) {
+                    trans_comp_manager->showDebug();
+                }
+
                 ImGui::End();
             }
 

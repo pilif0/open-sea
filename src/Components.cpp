@@ -4,6 +4,8 @@
 
 #include <open-sea/Components.h>
 
+#include <imgui.h>
+
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/glm.hpp>
 
@@ -315,6 +317,16 @@ namespace open_sea::ecs {
 
         // Deallocate the data buffer
         ALLOCATOR.deallocate(static_cast<unsigned char *>(data.buffer), data.allocated * RECORD_SIZE);
+    }
+
+    /**
+     * \brief Show ImGui debug information
+     */
+    void ModelComponent::showDebug() {
+        ImGui::Text("Record size: %i bytes", RECORD_SIZE);
+        ImGui::Text("Records (allocated): %i (%i)", data.n, data.allocated);
+        ImGui::Text("Stored models: %i", models.size());
+        ImGui::Text("Size data arrays (allocated): %i (%i) bytes", RECORD_SIZE * data.n, RECORD_SIZE * data.allocated);
     }
     //--- end ModelComponent implementation
 
@@ -970,6 +982,15 @@ namespace open_sea::ecs {
             data.scale[*i] = *scale;
             updateMatrix(*i);
         }
+    }
+
+    /**
+     * \brief Show ImGui debug information
+     */
+    void TransformationComponent::showDebug() {
+        ImGui::Text("Record size: %i bytes", RECORD_SIZE);
+        ImGui::Text("Records (allocated): %i (%i)", data.n, data.allocated);
+        ImGui::Text("Size data arrays (allocated): %i (%i) bytes", RECORD_SIZE * data.n, RECORD_SIZE * data.allocated);
     }
     //--- end TransformationComponent implementation
 }

@@ -56,9 +56,11 @@ namespace open_sea::ecs {
             std::memcpy(newData.model, data.model, data.n * sizeof(int));
 
 
-            // Deallocate old data
-            ALLOCATOR.deallocate(static_cast<unsigned char *>(data.buffer), data.allocated * RECORD_SIZE);
         }
+
+        // Deallocate old data
+        if (data.allocated > 0)
+            ALLOCATOR.deallocate(static_cast<unsigned char *>(data.buffer), data.allocated * RECORD_SIZE);
 
         // Set the data
         data = newData;
@@ -399,9 +401,11 @@ namespace open_sea::ecs {
             std::memcpy(newData.prevSibling, data.prevSibling, data.n * sizeof(int));
 
 
-            // Deallocate old data
-            ALLOCATOR.deallocate(static_cast<unsigned char *>(data.buffer), data.allocated * RECORD_SIZE);
         }
+
+        // Deallocate old data
+        if (data.allocated > 0)
+            ALLOCATOR.deallocate(static_cast<unsigned char *>(data.buffer), data.allocated * RECORD_SIZE);
 
         // Set the data
         data = newData;

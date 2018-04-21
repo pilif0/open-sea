@@ -47,15 +47,20 @@ namespace open_sea::input {
 
         // Fire a signal
         static bool imgui_waits_esc = false;        // Fixes #12: True when ImGui is waiting for ESC release signal
+        static bool imgui_waits_ent = false;        // Fixes #14: True when ImGui is waiting for Enter release signal
         if (ImGui::GetIO().WantCaptureKeyboard) {
             // Let ImGui take all input when it wants it
             open_sea::imgui::key_callback(key, scancode, state, mods);
 
             if (key == GLFW_KEY_ESCAPE && state == press) imgui_waits_esc = true;
+            if (key == GLFW_KEY_ENTER && state == press) imgui_waits_ent = true;
         } else {
             if (imgui_waits_esc && key == GLFW_KEY_ESCAPE && state == release) {
                 open_sea::imgui::key_callback(key, scancode, state, mods);
                 imgui_waits_esc = false;
+            } else if(imgui_waits_ent && key == GLFW_KEY_ENTER && state == release){
+                open_sea::imgui::key_callback(key, scancode, state, mods);
+                imgui_waits_ent = false;
             } else {
                 (*keyboard)(key, scancode, state, mods);
             }

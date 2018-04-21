@@ -7,7 +7,8 @@ add_executable(sample-game "SampleGame.cpp")
 
 # Declare models
 set(MODELS data/models/teapot.obj
-        data/models/triangle.obj)
+        data/models/triangle.obj
+        data/models/cube.obj)
 list(APPEND DATA_FILES ${MODELS})
 
 # Copy all data files

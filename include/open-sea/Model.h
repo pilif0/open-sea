@@ -52,6 +52,9 @@ namespace open_sea::model {
             void draw() const;
             virtual void showDebug();
 
+            GLuint getVertexArray() { return vertexArray; }
+            unsigned getVertexCount() { return vertexCount; }
+
             ~Model();
     };
 

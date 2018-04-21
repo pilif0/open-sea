@@ -15,18 +15,26 @@
 #include <open-sea/Delta.h>
 #include <open-sea/GL.h>
 #include <open-sea/Model.h>
+#include <open-sea/Entity.h>
+#include <open-sea/Components.h>
+#include <open-sea/Render.h>
 namespace os_log = open_sea::log;
 namespace window = open_sea::window;
 namespace input = open_sea::input;
 namespace imgui = open_sea::imgui;
 namespace gl = open_sea::gl;
 namespace model = open_sea::model;
+namespace ecs = open_sea::ecs;
+namespace render = open_sea::render;
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <boost/filesystem.hpp>
 
 #include <sstream>
+#include <random>
 
 int main() {
     // Initialize logging
@@ -50,7 +58,7 @@ int main() {
     input::init();
 
     // Add close action to ESC
-    input::connection c = input::connect_key([](int k, int c, input::state s, int m){
+    input::connection c = input::connect_key([](int k, int c, input::state s, int m) {
         if (s == input::press && k == GLFW_KEY_ESCAPE)
             window::close();
     });
@@ -65,7 +73,7 @@ int main() {
 
     // Add ImGui display toggle to F3
     bool show_imgui = false;
-    input::connection imgui_toggle = input::connect_key([&show_imgui](int k, int c, input::state s, int m){
+    input::connection imgui_toggle = input::connect_key([&show_imgui](int k, int c, input::state s, int m) {
         if (s == input::press && k == GLFW_KEY_F3) {
             // Toggle the display flag
             show_imgui = !show_imgui;
@@ -75,38 +83,79 @@ int main() {
     // ImGui test data
     bool show_demo_window = true;
 
-    // Prepare test shader
-    std::unique_ptr<gl::ShaderProgram> test_shader = std::make_unique<gl::ShaderProgram>();
-    test_shader->attachVertexFile("data/shaders/Test.vshader");
-    test_shader->attachFragmentFile("data/shaders/Test.fshader");
-    test_shader->link();
-    test_shader->validate();
-    int pM_location = test_shader->getUniformLocation("projectionMatrix");
-    int wM_location = test_shader->getUniformLocation("worldMatrix");
-
     // Prepare test cameras
-    std::unique_ptr<gl::OrthographicCamera> test_camera_ort =
-            std::make_unique<gl::OrthographicCamera>(
+    std::shared_ptr<gl::Camera> test_camera_ort =
+            std::make_shared<gl::OrthographicCamera>(
                     glm::vec3{-640.0f, -360.0f, 1000.0f},
                     glm::quat(),
                     glm::vec2{1280, 720},
                     0.1f, 1000.0f);
-    std::unique_ptr<gl::PerspectiveCamera> test_camera_per =
-            std::make_unique<gl::PerspectiveCamera>(
+    std::shared_ptr<gl::Camera> test_camera_per =
+            std::make_shared<gl::PerspectiveCamera>(
                     glm::vec3{0.0f, 0.0f, 1000.0f},
                     glm::quat(),
                     glm::vec2{1280, 720},
                     0.1f, 1000.0f, 90.0f);
 
-    // Prepare test models
-    std::unique_ptr<model::Model> test_model_tex = model::Model::fromFile("examples/sample-game/data/models/teapot.obj");
-    if (!test_model_tex)
-        return -1;
-    std::unique_ptr<model::UntexModel> test_model_unt = model::UntexModel::fromFile("examples/sample-game/data/models/teapot.obj");
-    if (!test_model_unt)
-        return -1;
-    glm::vec3 test_position(0.0f, 0.0f, 0.0f);
-    glm::vec3 test_scale(100.0f, 100.0f, 100.0f);
+    // Generate test entities
+    unsigned N = 1024;
+    ecs::EntityManager test_manager;
+    ecs::Entity entities[N];
+    test_manager.create(entities, N);
+
+    // Prepare and assign model
+    std::shared_ptr<ecs::ModelComponent> model_comp_manager = std::make_shared<ecs::ModelComponent>();
+    {
+        std::shared_ptr<model::Model> model(model::UntexModel::fromFile("examples/sample-game/data/models/cube.obj"));
+        if (!model)
+            return -1;
+        model_comp_manager->modelToIndex(model);
+        int models[N]{};   // modelIdx == 0, because it is the first model
+
+        model_comp_manager->add(entities, models, N);
+    }
+
+    // Prepare and assign random transformations
+    std::shared_ptr<ecs::TransformationComponent> trans_comp_manager = std::make_shared<ecs::TransformationComponent>();
+    {
+        // Prepare random distributions
+        std::random_device device;
+        std::mt19937_64 generator;
+
+        std::uniform_int_distribution<int> posX(-640, 640);
+        std::uniform_int_distribution<int> posY(-360, 360);
+        std::uniform_int_distribution<int> posZ(0, 750);
+
+        std::uniform_real_distribution<float> angle(0.0f, 360.0f);
+        glm::vec3 axis{0.0f, 0.0f, 1.0f};
+
+        std::uniform_real_distribution<float> scale(1.0f, 20.0f);
+
+        // Prepare data arrays
+        glm::vec3 positions[N]{};
+        glm::quat orientations[N]{};
+        glm::vec3 scales[N]{};
+
+        // Randomise the data
+        glm::vec3 *p = positions;
+        glm::quat *o = orientations;
+        glm::vec3 *s = scales;
+        for (int i = 0; i < N; i++, p++, o++, s++) {
+            *p = glm::vec3(posX(generator), posY(generator), posZ(generator));
+            *o = glm::angleAxis(angle(generator), axis);
+            float f = scale(generator);
+            *s = glm::vec3(f, f, f);
+        }
+
+        os_log::log(lg, os_log::info, "Transformations generated");
+
+        // Add the components
+        trans_comp_manager->add(entities, positions, orientations, scales, N);
+        os_log::log(lg, os_log::info, "Transformations set");
+    }
+
+    // Prepare renderer
+    std::unique_ptr<render::UntexturedRenderer> renderer = std::make_unique<render::UntexturedRenderer>(model_comp_manager, trans_comp_manager);
 
     // Set background to black
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -121,32 +170,40 @@ int main() {
         // Clear
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Draw the test
+        // Draw the entities
         static bool use_per_cam = true;
-        static bool use_tex_mod = true;
-        glm::mat4 world_matrix = glm::translate(glm::scale(glm::mat4(1.0f), test_scale), test_position);
-        glm::mat4 camera_matrix = (use_per_cam) ? test_camera_per->getProjViewMatrix() : test_camera_ort->getProjViewMatrix();
-        test_shader->use();
-        glUniformMatrix4fv(pM_location, 1, GL_FALSE, &camera_matrix[0][0]);
-        glUniformMatrix4fv(wM_location, 1, GL_FALSE, &world_matrix[0][0]);
-        (use_tex_mod) ? test_model_tex->draw() : test_model_unt->draw();
-        gl::ShaderProgram::unset();
+        renderer->render((use_per_cam) ? test_camera_per : test_camera_ort, entities, N);
+
+        // Maintain components
+        model_comp_manager->gc(test_manager);
+        trans_comp_manager->gc(test_manager);
 
         // ImGui debug GUI
         if (show_imgui) {
             // Prepare new frame
             imgui::new_frame();
 
+            // Entity test
+            {
+                ImGui::Begin("Entity test");
+
+                test_manager.showDebug();
+
+                if (ImGui::CollapsingHeader("Model Component Manager")) {
+                    model_comp_manager->showDebug();
+                }
+                if (ImGui::CollapsingHeader("Transformation Component Manager")) {
+                    trans_comp_manager->showDebug();
+                }
+
+                ImGui::End();
+            }
+
             // Test controls
             {
                 ImGui::Begin("Test controls");
 
                 ImGui::Checkbox("Use perspective camera", &use_per_cam);
-                ImGui::Checkbox("Use textured model", &use_tex_mod);
-
-                ImGui::Text("Test model:");
-                (use_tex_mod) ? test_model_tex->showDebug() : test_model_unt->showDebug();
-                ImGui::Spacing();
 
                 ImGui::Text("Test camera:");
                 if (use_per_cam)
@@ -154,10 +211,6 @@ int main() {
                 else
                     test_camera_ort->showDebugControls();
                 ImGui::Spacing();
-
-                ImGui::Text("Test world transformation:");
-                ImGui::InputFloat3("Model pos", &test_position[0]);
-                ImGui::InputFloat3("Model scale", &test_scale[0]);
 
                 ImGui::End();
             }
@@ -170,7 +223,6 @@ int main() {
 
             // System stats
             {
-                ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Once);
                 ImGui::Begin("System Statistics");
 
                 open_sea::time::debug_widget();
@@ -200,8 +252,7 @@ int main() {
 
             // Demo window
             if (show_demo) {
-                ImGui::SetNextWindowPos(ImVec2(650, 20),
-                                        ImGuiCond_FirstUseEver); // Normally user code doesn't need/want to call this because positions are saved in .ini file anyway. Here we just want to make the demo initial state a bit more friendly!
+                ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiCond_FirstUseEver);
                 ImGui::ShowDemoWindow(&show_demo_window);
             }
 
@@ -217,18 +268,16 @@ int main() {
     }
     os_log::log(lg, os_log::info, "Main loop ended");
 
-    test_camera_per.reset();
-    test_camera_ort.reset();
-    test_model_tex.reset();
-    test_model_unt.reset();
-    test_shader.reset();
+    // Clean up OpenGL objects before termination of the context
+    model_comp_manager.reset();
+    renderer.reset();
 
     c.disconnect();
     imgui_toggle.disconnect();
     imgui::clean_up();
     window::clean_up();
-    os_log::clean_up();
     window::terminate();
+    os_log::clean_up();
 
     return 0;
 }

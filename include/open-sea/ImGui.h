@@ -1,4 +1,4 @@
-/** \file ImGUI.h
+/** \file ImGui.h
  * ImGUI integration
  *
  * \author Filip Smola

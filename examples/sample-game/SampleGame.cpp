@@ -22,6 +22,7 @@ namespace os_log = open_sea::log;
 namespace window = open_sea::window;
 namespace input = open_sea::input;
 namespace imgui = open_sea::imgui;
+namespace os_time = open_sea::time;
 namespace gl = open_sea::gl;
 namespace model = open_sea::model;
 namespace ecs = open_sea::ecs;
@@ -92,7 +93,7 @@ int main() {
                     0.1f, 1000.0f);
     std::shared_ptr<gl::Camera> test_camera_per =
             std::make_shared<gl::PerspectiveCamera>(
-                    glm::vec3{0.0f, 0.0f, 1000.0f},
+                    glm::vec3{},
                     glm::quat(),
                     glm::vec2{1280, 720},
                     0.1f, 1000.0f, 90.0f);
@@ -157,6 +158,13 @@ int main() {
     // Prepare renderer
     std::unique_ptr<render::UntexturedRenderer> renderer = std::make_unique<render::UntexturedRenderer>(model_comp_manager, trans_comp_manager);
 
+    // Create camera guide entity
+    ecs::Entity camera_guide = test_manager.create();
+    glm::vec3 camera_guide_pos{0.0f, 0.0f, 1000.0f};
+    glm::quat camera_guide_ori{};
+    glm::vec3 camera_guide_sca(1.0f, 1.0f, 1.0f);
+    trans_comp_manager->add(&camera_guide, &camera_guide_pos, &camera_guide_ori, &camera_guide_sca, 1);
+
     // Set background to black
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -169,6 +177,52 @@ int main() {
     while (!window::should_close()) {
         // Clear
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // Update camera guide position
+        glm::vec3 camera_global{};
+        {
+            constexpr float camera_speed = 150;
+            int camera_index = trans_comp_manager->lookup(camera_guide);
+            glm::vec3 local{};
+
+            // Gather input
+            if (input::key_state(GLFW_KEY_A) == input::press)
+                // A pressed -> move left from the perspective of the camera
+                local.x += -1;
+            if (input::key_state(GLFW_KEY_D) == input::press)
+                // D pressed -> move right from the perspective of the camera
+                local.x += 1;
+            if (input::key_state(GLFW_KEY_W) == input::press)
+                // W pressed -> move forward from the perspective of the camera
+                local.z += -1;
+            if (input::key_state(GLFW_KEY_S) == input::press)
+                // S pressed -> move backward from the perspective of the camera
+                local.z += 1;
+            if (input::key_state(GLFW_KEY_Q) == input::press)
+                // Q pressed -> move up from the perspective of the camera
+                local.y += 1;
+            if (input::key_state(GLFW_KEY_Z) == input::press)
+                // Z pressed -> move down from the perspective of the camera
+                local.y += -1;
+
+            // Normalise
+            float l = glm::length(local);
+            if (l != 0.0f && l != 1.0f)
+                local /= l;
+
+            // Transform and apply
+            camera_global = glm::rotate(trans_comp_manager->data.orientation[camera_index], local);
+            camera_global *= camera_speed * os_time::get_delta();
+            trans_comp_manager->translate(&camera_index, &camera_global, 1);
+        }
+
+        // Update perspective camera based on guide
+        {
+            //Note: this assumes camera guide is a root
+            int index = trans_comp_manager->lookup(camera_guide);
+            test_camera_per->setPosition(trans_comp_manager->data.position[index]);
+            test_camera_per->setRotation(trans_comp_manager->data.orientation[index]);
+        }
 
         // Draw the entities
         static bool use_per_cam = true;
@@ -204,6 +258,8 @@ int main() {
                 ImGui::Begin("Test controls");
 
                 ImGui::Checkbox("Use perspective camera", &use_per_cam);
+
+                ImGui::Text("Camera control delta: %.3f, %.3f, %.3f", camera_global.x, camera_global.y, camera_global.z);
 
                 ImGui::Text("Test camera:");
                 if (use_per_cam)

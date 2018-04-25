@@ -1,6 +1,6 @@
 # Link common libraries and include relevant directories
 link_libraries(glfw ${GLFW_LIBRARIES} glad)
-include_directories("${GLFW_DIR}/include" "${GLAD_DIR}/include" ${GLM_DIR} ${ImGui_DIR})
+include_directories("${GLFW_DIR}/include" "${GLAD_DIR}/include" ${GLM_DIR} ${ImGui_DIR} ${Boost_INCLUDE_DIRS})
 
 # Set up source and header lists
 set(open_sea_HEADERS

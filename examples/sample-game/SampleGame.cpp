@@ -36,6 +36,7 @@ namespace render = open_sea::render;
 
 #include <sstream>
 #include <random>
+#include <vector>
 
 int main() {
     // Initialize logging
@@ -111,9 +112,9 @@ int main() {
         if (!model)
             return -1;
         model_comp_manager->modelToIndex(model);
-        int models[N]{};   // modelIdx == 0, because it is the first model
+        std::vector<int> models(N);   // modelIdx == 0, because it is the first model
 
-        model_comp_manager->add(entities, models, N);
+        model_comp_manager->add(entities, models.data(), N);
     }
 
     // Prepare and assign random transformations
@@ -133,14 +134,14 @@ int main() {
         std::uniform_real_distribution<float> scale(1.0f, 20.0f);
 
         // Prepare data arrays
-        glm::vec3 positions[N]{};
-        glm::quat orientations[N]{};
-        glm::vec3 scales[N]{};
+        std::vector<glm::vec3> positions(N);
+        std::vector<glm::quat> orientations(N);
+        std::vector<glm::vec3> scales(N);
 
         // Randomise the data
-        glm::vec3 *p = positions;
-        glm::quat *o = orientations;
-        glm::vec3 *s = scales;
+        glm::vec3 *p = positions.data();
+        glm::quat *o = orientations.data();
+        glm::vec3 *s = scales.data();
         for (int i = 0; i < N; i++, p++, o++, s++) {
             *p = glm::vec3(posX(generator), posY(generator), posZ(generator));
             *o = glm::angleAxis(angle(generator), axis);
@@ -151,7 +152,7 @@ int main() {
         os_log::log(lg, os_log::info, "Transformations generated");
 
         // Add the components
-        trans_comp_manager->add(entities, positions, orientations, scales, N);
+        trans_comp_manager->add(entities, positions.data(), orientations.data(), scales.data(), N);
         os_log::log(lg, os_log::info, "Transformations set");
     }
 

@@ -728,10 +728,10 @@ namespace open_sea::gl {
         }
 
         if (recalculateProj) {
-            // Projection assumes origin in bottom left
+            // Projection assumes origin in centre
             projMatrix = glm::ortho(
-                    0.0f, size.x,
-                    0.0f, size.y,
+                    -size.x / 2, size.x / 2,
+                    -size.y / 2, size.y / 2,
                     near, far);
         }
 

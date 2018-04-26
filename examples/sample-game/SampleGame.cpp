@@ -38,6 +38,31 @@ namespace render = open_sea::render;
 #include <random>
 #include <vector>
 
+//! Whether mouse input should be used for turning the camera
+bool camera_want_turn = false;
+//! Last cursor position used for turning the camera
+glm::vec2 last_cursor_pos{};
+
+/**
+ * \brief Slot to toggle camera turn mode with RMB click
+ *
+ * \param button
+ * \param action
+ * \param mods
+ */
+void camera_mode_toggle(int button, input::state action, int mods) {
+    if (button == GLFW_MOUSE_BUTTON_2 && action == input::press) {
+        if (camera_want_turn) {
+            camera_want_turn = false;
+            ::glfwSetInputMode(window::window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        } else {
+            camera_want_turn = true;
+            ::glfwSetInputMode(window::window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            last_cursor_pos = input::cursor_position();
+        }
+    }
+}
+
 int main() {
     // Initialize logging
     os_log::init_logging();
@@ -162,9 +187,12 @@ int main() {
     // Create camera guide entity
     ecs::Entity camera_guide = test_manager.create();
     glm::vec3 camera_guide_pos{0.0f, 0.0f, 1000.0f};
-    glm::quat camera_guide_ori{};
+    glm::quat camera_guide_ori{0.0f, 0.0f, 0.0f, 1.0f};
     glm::vec3 camera_guide_sca(1.0f, 1.0f, 1.0f);
     trans_comp_manager->add(&camera_guide, &camera_guide_pos, &camera_guide_ori, &camera_guide_sca, 1);
+
+    // Connect a slot to click of right mouse button to toggle camera turn mode
+    input::connect_mouse(camera_mode_toggle);
 
     // Set background to black
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -182,7 +210,7 @@ int main() {
         // Update camera guide position
         glm::vec3 camera_global{};
         {
-            constexpr float camera_speed = 150;
+            constexpr float camera_speed = 150;     // Units per second
             int camera_index = trans_comp_manager->lookup(camera_guide);
             glm::vec3 local{};
 
@@ -217,14 +245,53 @@ int main() {
             trans_comp_manager->translate(&camera_index, &camera_global, 1);
         }
 
-        // Update perspective camera based on guide
+        // Update camera guide rotation
+        glm::vec2 cursor_delta{};
+        glm::quat camera_rot{};
+        if (camera_want_turn) {
+            constexpr float turn_rate = 0.3f;                      // Degrees per screen unit
+            constexpr glm::vec3 pitch_axis{1.0f, 0.0f, 0.0f};   // Positive x axis
+            constexpr glm::vec3 yaw_axis{0.0f, 1.0f, 0.0f};     // Positive y axis
+            int camera_index = trans_comp_manager->lookup(camera_guide);
+
+            // Compute delta
+            glm::vec2 cursor_pos = input::cursor_position();
+            cursor_delta = cursor_pos - last_cursor_pos;
+
+            // Positive pitch is up
+            float pitch = cursor_delta.y * (- turn_rate);
+
+            // Positive yaw is left
+            float yaw = cursor_delta.x * (- turn_rate);
+
+            // Compute transformation quaternion and transform
+            if (pitch != 0 || yaw != 0) {
+                // Transform axes of rotation
+                glm::quat camera_or = trans_comp_manager->data.orientation[camera_index];
+                glm::vec3 tr_pitch_ax = glm::rotate(camera_or,  pitch_axis);
+                glm::vec3 tr_yaw_ax = glm::rotate(camera_or, yaw_axis);
+
+                // Compute transformation
+                camera_rot = glm::angleAxis(glm::radians(pitch), tr_pitch_ax)
+                             * glm::angleAxis(glm::radians(yaw), tr_yaw_ax);
+
+                // Apply
+                trans_comp_manager->rotate(&camera_index, &camera_rot, 1);
+            }
+
+            // Update last cursor position
+            last_cursor_pos = cursor_pos;
+        }
+
+        // Update cameras based on guide
         {
             //Note: this assumes camera guide is a root
             int index = trans_comp_manager->lookup(camera_guide);
             test_camera_per->setPosition(trans_comp_manager->data.position[index]);
             test_camera_per->setRotation(trans_comp_manager->data.orientation[index]);
+            test_camera_ort->setPosition(trans_comp_manager->data.position[index]);
+            test_camera_ort->setRotation(trans_comp_manager->data.orientation[index]);
         }
-
         // Draw the entities
         static bool use_per_cam = true;
         renderer->render((use_per_cam) ? test_camera_per : test_camera_ort, entities, N);
@@ -260,7 +327,10 @@ int main() {
 
                 ImGui::Checkbox("Use perspective camera", &use_per_cam);
 
+                ImGui::Text("Camera want turn: %s", (camera_want_turn) ? "true" : "false");
+                ImGui::Text("Cursor delta: %.3f, %.3f", cursor_delta.x, cursor_delta.y);
                 ImGui::Text("Camera control delta: %.3f, %.3f, %.3f", camera_global.x, camera_global.y, camera_global.z);
+                ImGui::Text("Camera control rotation: %.3f, %.3f, %.3f, %.3f", camera_rot.x, camera_rot.y, camera_rot.z, camera_rot.w);
 
                 ImGui::Text("Test camera:");
                 if (use_per_cam)

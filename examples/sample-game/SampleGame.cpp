@@ -113,7 +113,7 @@ int main() {
     // Prepare test cameras
     std::shared_ptr<gl::Camera> test_camera_ort =
             std::make_shared<gl::OrthographicCamera>(
-                    glm::vec3{-640.0f, -360.0f, 1000.0f},
+                    glm::vec3{},
                     glm::quat(),
                     glm::vec2{1280, 720},
                     0.1f, 1000.0f);
@@ -227,11 +227,11 @@ int main() {
             if (input::key_state(GLFW_KEY_S) == input::press)
                 // S pressed -> move backward from the perspective of the camera
                 local.z += 1;
-            if (input::key_state(GLFW_KEY_Q) == input::press)
-                // Q pressed -> move up from the perspective of the camera
+            if (input::key_state(GLFW_KEY_LEFT_SHIFT) == input::press)
+                // Shift pressed -> move up from the perspective of the camera
                 local.y += 1;
-            if (input::key_state(GLFW_KEY_Z) == input::press)
-                // Z pressed -> move down from the perspective of the camera
+            if (input::key_state(GLFW_KEY_LEFT_CONTROL) == input::press)
+                // Ctrl pressed -> move down from the perspective of the camera
                 local.y += -1;
 
             // Normalise
@@ -249,9 +249,10 @@ int main() {
         glm::vec2 cursor_delta{};
         glm::quat camera_rot{};
         if (camera_want_turn) {
-            constexpr float turn_rate = 0.3f;                      // Degrees per screen unit
+            constexpr float turn_rate = 0.3f;                   // Degrees per screen unit
             constexpr glm::vec3 pitch_axis{1.0f, 0.0f, 0.0f};   // Positive x axis
             constexpr glm::vec3 yaw_axis{0.0f, 1.0f, 0.0f};     // Positive y axis
+            constexpr glm::vec3 roll_axis{0.0f, 0.0f, 1.0f};     // Positive z axis
             int camera_index = trans_comp_manager->lookup(camera_guide);
 
             // Compute delta
@@ -264,16 +265,27 @@ int main() {
             // Positive yaw is left
             float yaw = cursor_delta.x * (- turn_rate);
 
+            // Positive roll is counter clockwise
+            float roll = 0.0f;
+            if (input::key_state(GLFW_KEY_Q) == input::press)
+                roll += turn_rate * 100;
+            if (input::key_state(GLFW_KEY_E) == input::press)
+                roll -= turn_rate * 100;
+            roll *= os_time::get_delta();
+
             // Compute transformation quaternion and transform
-            if (pitch != 0 || yaw != 0) {
+            if (pitch != 0 || yaw != 0 || roll != 0) {
                 // Transform axes of rotation
                 glm::quat camera_or = trans_comp_manager->data.orientation[camera_index];
                 glm::vec3 tr_pitch_ax = glm::rotate(camera_or,  pitch_axis);
                 glm::vec3 tr_yaw_ax = glm::rotate(camera_or, yaw_axis);
+                glm::vec3 tr_roll_ax = glm::rotate(camera_or, roll_axis);
 
                 // Compute transformation
-                camera_rot = glm::angleAxis(glm::radians(pitch), tr_pitch_ax)
-                             * glm::angleAxis(glm::radians(yaw), tr_yaw_ax);
+                glm::quat pitchQ = glm::angleAxis(glm::radians(pitch), tr_pitch_ax);
+                glm::quat yawQ = glm::angleAxis(glm::radians(yaw), tr_yaw_ax);
+                glm::quat rollQ = glm::angleAxis(glm::radians(roll), tr_roll_ax);
+                camera_rot = rollQ * yawQ * pitchQ;
 
                 // Apply
                 trans_comp_manager->rotate(&camera_index, &camera_rot, 1);

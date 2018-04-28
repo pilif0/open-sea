@@ -18,6 +18,7 @@
 #include <open-sea/Entity.h>
 #include <open-sea/Components.h>
 #include <open-sea/Render.h>
+#include <open-sea/Systems.h>
 namespace os_log = open_sea::log;
 namespace window = open_sea::window;
 namespace input = open_sea::input;
@@ -191,6 +192,25 @@ int main() {
     glm::vec3 camera_guide_sca(1.0f, 1.0f, 1.0f);
     trans_comp_manager->add(&camera_guide, &camera_guide_pos, &camera_guide_ori, &camera_guide_sca, 1);
 
+    // Prepare camera component
+    std::shared_ptr<ecs::CameraComponent> camera_comp_manager = std::make_shared<ecs::CameraComponent>();
+    {
+        std::shared_ptr<gl::Camera> cameras[]{
+                std::shared_ptr(test_camera_per),
+                std::shared_ptr(test_camera_ort)
+        };
+
+        ecs::Entity es[]{
+                camera_guide,
+                camera_guide
+        };
+
+        camera_comp_manager->add(es, cameras, 2);
+    }
+
+    // Prepare camera follow system
+    std::unique_ptr<ecs::CameraFollow> camera_follow = std::make_unique<ecs::CameraFollow>(trans_comp_manager, camera_comp_manager);
+
     // Connect a slot to click of right mouse button to toggle camera turn mode
     input::connect_mouse(camera_mode_toggle);
 
@@ -295,15 +315,9 @@ int main() {
             last_cursor_pos = cursor_pos;
         }
 
-        // Update cameras based on guide
-        {
-            //Note: this assumes camera guide is a root
-            int index = trans_comp_manager->lookup(camera_guide);
-            test_camera_per->setPosition(trans_comp_manager->data.position[index]);
-            test_camera_per->setRotation(trans_comp_manager->data.orientation[index]);
-            test_camera_ort->setPosition(trans_comp_manager->data.position[index]);
-            test_camera_ort->setRotation(trans_comp_manager->data.orientation[index]);
-        }
+        // Update cameras based on associated guides
+        camera_follow->transform();
+
         // Draw the entities
         static bool use_per_cam = true;
         renderer->render((use_per_cam) ? test_camera_per : test_camera_ort, entities, N);
@@ -311,6 +325,7 @@ int main() {
         // Maintain components
         model_comp_manager->gc(test_manager);
         trans_comp_manager->gc(test_manager);
+        camera_comp_manager->gc(test_manager);
 
         // ImGui debug GUI
         if (show_imgui) {

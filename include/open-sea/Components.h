@@ -9,6 +9,7 @@
 #include <open-sea/Entity.h>
 #include <open-sea/Model.h>
 #include <open-sea/Log.h>
+#include <open-sea/GL.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -155,6 +156,59 @@ namespace open_sea::ecs {
             void setPosition(int *i,  glm::vec3 *position, unsigned count);
             void setOrientation(int *i, glm::quat *orientation, unsigned count);
             void setScale(int *i, glm::vec3 *scale, unsigned count);
+
+            void showDebug();
+    };
+
+    /** \class CameraComponent
+     * \brief Associates an entity with a camera
+     * Associates an entity with a camera.
+     * Each camera should have at most one entity associated with it (otherwise following it might be unpredictable).
+     * One entity can have multiple associated cameras.
+     */
+    //TODO: deal with multiple cameras (return linked lists from lookup?)
+    class CameraComponent {
+        private:
+            //! Logger for this manager
+            log::severity_logger lg = log::get_logger("Camera Component Mgr");
+        public:
+            CameraComponent() : CameraComponent(DEFAULT_SIZE) {}
+            explicit CameraComponent(unsigned size);
+
+            // Data
+            //! Data of component instances
+            struct InstanceData {
+                //! Number of used instances
+                unsigned n = 0;
+                //! Number of allocated instances
+                unsigned allocated = 0;
+                //! Buffer with data
+                void *buffer = nullptr;
+
+                //! Associated entity
+                Entity *entity = nullptr;
+                //! Shared pointer to camera
+                std::shared_ptr<gl::Camera> *camera = nullptr;
+            };
+            InstanceData data{};
+            void allocate(unsigned size);
+            //! Size of one record in bytes
+            static constexpr unsigned RECORD_SIZE = sizeof(Entity) + sizeof(std::shared_ptr<gl::Camera>);
+            //! Allocator used by the manager
+            std::allocator<unsigned char> ALLOCATOR;
+
+            // Access
+            //! Map of entities to data indices
+            std::unordered_map<Entity, int> map;
+            int lookup(Entity e) const;
+            void lookup(Entity *e, int *dest, unsigned count) const;
+            void add(Entity *e, std::shared_ptr<gl::Camera> *c, unsigned count);
+            void set(int *i, std::shared_ptr<gl::Camera> *c, unsigned count);
+
+            // Maintenance
+            void destroy(int i);
+            void gc(const EntityManager &manager);
+            ~CameraComponent();
 
             void showDebug();
     };

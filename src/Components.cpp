@@ -997,4 +997,230 @@ namespace open_sea::ecs {
         ImGui::Text("Size data arrays (allocated): %i (%i) bytes", RECORD_SIZE * data.n, RECORD_SIZE * data.allocated);
     }
     //--- end TransformationComponent implementation
+
+    //--- start CameraComponent implementation
+    /**
+     * \brief Construct a camera component manager
+     * Construct a camera component manager and pre-allocate space for the given number of components.
+     *
+     * \param size Number of components
+     */
+    CameraComponent::CameraComponent(unsigned size) {
+        // Allocate the desired size
+        allocate(size);
+    }
+
+    /**
+     * \brief Allocate space for components
+     * Allocate space for the given number of components
+     *
+     * \param size Number of components
+     */
+    void CameraComponent::allocate(unsigned size) {
+        // Make sure data will fit into new space
+        assert(size > data.n);
+
+        // Allocate new space
+        InstanceData newData;
+        unsigned byteCount = size * RECORD_SIZE;
+
+        newData.buffer = ALLOCATOR.allocate(byteCount);
+        newData.n = data.n;
+        newData.allocated = size;
+
+        // Compute pointers to data arrays
+        newData.entity = (Entity*) newData.buffer;
+        newData.camera = (std::shared_ptr<gl::Camera>*) (newData.entity + size);
+
+        // Copy data into new space
+        if (data.n > 0) {
+            std::memcpy(newData.entity, data.entity, data.n * sizeof(Entity));
+            std::memcpy(newData.camera, data.camera, data.n * sizeof(std::shared_ptr<gl::Camera>));
+        }
+
+        // Deallocate old data
+        if (data.allocated > 0)
+            ALLOCATOR.deallocate(static_cast<unsigned char *>(data.buffer), data.allocated * RECORD_SIZE);
+
+        // Set the data
+        data = newData;
+    }
+
+    /**
+     * \brief Look up index of the entity
+     *
+     * \param e Entity to look up
+     * \return Index of the entity in the data arrays, or \c -1 if the entity was not found
+     */
+    int CameraComponent::lookup(Entity e) const {
+        try {
+            return map.at(e);
+        } catch (std::out_of_range &e) {
+            return -1;
+        }
+    }
+
+    /**
+     * \brief Look up indices of the entities
+     * Look up indices of the entities in the data arrays and write them into the destination.
+     * Indices are written in the same order as the entities.
+     * Index of \c -1 means the entity was not found.
+     *
+     * \param e Entities to look up
+     * \param count Number of entities
+     * \param dest Destination
+     */
+    void CameraComponent::lookup(Entity *e, int *dest, unsigned count) const {
+        // For each entity retrieve its position from the map
+        for (unsigned i = 0; i < count; i++, e++, dest++) {
+            try {
+                *dest = map.at(*e);
+            } catch (std::out_of_range &e) {
+                // If not found, set to -1
+                *dest = -1;
+            }
+        }
+    }
+
+    /**
+     * \brief Add the component to the entities
+     * Add the component to the entities.
+     * The number of entities and cameras must match.
+     *
+     * \param e Entities
+     * \param c Cameras to assign
+     * \param count Number of entities
+     */
+    void CameraComponent::add(Entity *e, std::shared_ptr<gl::Camera> *c, unsigned count) {
+        // Check data has enough space
+        if (data.allocated < (data.n + count)) {
+            // Too small -> reallocate
+            //TODO is there a better increment?
+            allocate(data.n + count);
+        }
+
+        // For every entity, add a new record
+        Entity *destE = data.entity + data.n;
+        std::shared_ptr<gl::Camera> *destC = data.camera + data.n;
+        for (unsigned i = 0; i < count; i++, e++, c++, destE++, destC++) {
+            // Write the data into the buffer
+            *destE = *e;
+            new (destC) std::shared_ptr<gl::Camera>(*c);
+            // TODO: make sure the deleter is called properly when destroying manager or this record
+
+            // Increment data count and add map entry for the new record
+            data.n++;
+            map[*e] = data.n - 1;
+        }
+    }
+
+
+    /**
+     * \brief Set the cameras at the indices
+     * Set the cameras at the indices.
+     * If an index is out of range (greater than or equal to \c data.n), nothing is set (points either to destroyed record
+     * or out of allocated range for that data array).
+     * The number of indices and cameras must match
+     *
+     * \param i Indices into the data arrays
+     * \param c Cameras to assign
+     * \param count Number of indices
+     */
+    void CameraComponent::set(int *i, std::shared_ptr<gl::Camera> *c, unsigned count) {
+        // For every index, set the value
+        for (int j = 0; j < count; j++, i++, c++) {
+            int index = *i;
+
+            // Check the index is in range
+            if (index >= data.n) {
+                // Setting value of destroyed records should not have any effect
+                return;
+            }
+
+            // Change the pointer to share ownership of the new camera
+            data.camera[*i] = *c;
+        }
+    }
+
+    /**
+     * \brief Destroy the record at the index
+     * Destroy the record at the index.
+     * This can lead to reshuffling of the data arrays (to keep them tightly packed) and therefore invalidation of
+     * previously looked up indices.
+     *
+     * \param i Index
+     */
+    void CameraComponent::destroy(int i) {
+        // Check index is in range
+        if (i >= data.n) {
+            // Records out of range are considered already destroyed
+            return;
+        }
+
+        // Move last record into i-th place
+        int lastIdx = data.n - 1;
+        Entity e = data.entity[i];
+        Entity last = data.entity[lastIdx];
+        data.entity[i] = data.entity[lastIdx];
+        data.camera[i] = data.camera[lastIdx];
+
+        // Destroy the pointer at the last record (as it is now invalidated)
+        data.camera[lastIdx].~shared_ptr<gl::Camera>();
+
+        // Update data counts and index map
+        map.erase(e);
+        map[last] = i;
+        data.n--;
+    }
+
+    /**
+     * \brief Collect garbage
+     * Destroy records for dead entities.
+     * This is done by checking random records until a certain number of live entities in a row are found.
+     * Therefore with few dead entities not much time is wasted iterating through the array, and with many dead entities
+     * they are destroyed within couple calls.
+     *
+     * \param manager Entity manager to check entities against
+     */
+    void CameraComponent::gc(const EntityManager &manager) {
+        // Randomly check records until 4 live entities in a row are found
+        unsigned aliveInRow = 0;
+        static std::random_device device;
+        static std::mt19937_64 generator;
+        std::uniform_int_distribution<int> distribution(0, data.n);
+        while (data.n > 0 && aliveInRow < 4) {
+            // Note: % data.n required because data.n can change and this keeps indices in valid range
+            unsigned i = distribution(generator) % data.n;
+            if (manager.alive(data.entity[i])) {
+                aliveInRow++;
+            } else {
+                aliveInRow = 0;
+                destroy(i);
+            }
+        }
+    }
+
+    /**
+     * \brief Destroy the component manager, freeing up the used memory
+     */
+    CameraComponent::~CameraComponent() {
+        // Destroy all pointers
+        std::shared_ptr<gl::Camera> *c = data.camera;
+        for (int i = 0; i < data.n; i++, c++) {
+            c->~shared_ptr<gl::Camera>();
+        }
+
+        // Deallocate the data buffer
+        ALLOCATOR.deallocate(static_cast<unsigned char *>(data.buffer), data.allocated * RECORD_SIZE);
+    }
+
+    /**
+     * \brief Show ImGui debug information
+     */
+    void CameraComponent::showDebug() {
+        ImGui::Text("Record size: %i bytes", RECORD_SIZE);
+        ImGui::Text("Records (allocated): %i (%i)", data.n, data.allocated);
+        ImGui::Text("Size data arrays (allocated): %i (%i) bytes", RECORD_SIZE * data.n, RECORD_SIZE * data.allocated);
+    }
+    //--- end CameraComponent implementation
 }

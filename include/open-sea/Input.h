@@ -50,10 +50,11 @@ namespace open_sea::input {
         //! Device-specific input code
         // KB -> scancode, Mouse -> button no. (0 based)
         unsigned int code : 28;
-    };
 
-    //! Set of held down unified inputs
-    std::set<unified_input> unified_state;
+        friend bool operator<(const open_sea::input::unified_input &lhs, const open_sea::input::unified_input &rhs) {
+            return ((lhs.device << 28) + lhs.code) < ((rhs.device << 28) + rhs.code);
+        }
+    };
 
     bool is_held(unified_input input);
 

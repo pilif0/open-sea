@@ -27,6 +27,10 @@ namespace open_sea::input {
     //! Character signal
     std::unique_ptr<character_signal> character;
 
+    // Unified input
+    //! Set of held down unified inputs
+    std::set<unified_input> unified_state;
+
     // Callbacks
     /**
      * \brief Send signal about a key event

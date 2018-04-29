@@ -14,6 +14,7 @@
 namespace signals = boost::signals2;
 
 #include <string>
+#include <set>
 
 namespace open_sea::input {
     //! GLFW name for the unknown key
@@ -40,6 +41,21 @@ namespace open_sea::input {
     typedef signals::signal<void (double, double)> scroll_signal;
     //! Character signal type
     typedef signals::signal<void (unsigned int)> character_signal;
+
+    //! Unified input key
+    struct unified_input {
+        //! Device code
+        // 0 -> KB, 1 -> Mouse
+        unsigned int device : 4;
+        //! Device-specific input code
+        // KB -> scancode, Mouse -> button no. (0 based)
+        unsigned int code : 28;
+    };
+
+    //! Set of held down unified inputs
+    std::set<unified_input> unified_state;
+
+    bool is_held(unified_input input);
 
     void init();
     void reattach();

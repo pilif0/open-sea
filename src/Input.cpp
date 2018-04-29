@@ -45,6 +45,15 @@ namespace open_sea::input {
         // Transform values
         state state = (action == GLFW_PRESS) ? press : (action == GLFW_REPEAT) ? repeat : release;
 
+        // Update unified input state
+        if (action == GLFW_PRESS) {
+            // Press -> insert
+            unified_state.insert(unified_input{.device = 0, .code = static_cast<unsigned int>(scancode)});
+        } else if(action == GLFW_RELEASE) {
+            // Release -> remove
+            unified_state.erase(unified_input{.device = 0, .code = static_cast<unsigned int>(scancode)});
+        }
+
         // Fire a signal
         static bool imgui_waits_esc = false;        // Fixes #12: True when ImGui is waiting for ESC release signal
         static bool imgui_waits_ent = false;        // Fixes #14: True when ImGui is waiting for Enter release signal
@@ -98,6 +107,15 @@ namespace open_sea::input {
         // Transform values
         state state = (action == GLFW_PRESS) ? press : (action == GLFW_REPEAT) ? repeat : release;
 
+        // Update unified input state
+        if (action == GLFW_PRESS) {
+            // Press -> insert
+            unified_state.insert(unified_input{.device = 1, .code = static_cast<unsigned int>(button)});
+        } else if(action == GLFW_RELEASE) {
+            // Release -> remove
+            unified_state.erase(unified_input{.device = 1, .code = static_cast<unsigned int>(button)});
+        }
+
         // Fire a signal
         if (ImGui::GetIO().WantCaptureMouse)
             open_sea::imgui::mouse_callback(button, state, mods);
@@ -140,6 +158,16 @@ namespace open_sea::input {
             open_sea::imgui::char_callback(codepoint);
         else
             (*character)(codepoint);
+    }
+
+    /**
+     * \brief Whether the unified input is held down
+     *
+     * \param input Unified input to check
+     * \return Whether the input is held down
+     */
+    bool is_held(unified_input input) {
+        return unified_state.count(input) != 0;
     }
 
     /**

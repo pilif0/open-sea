@@ -384,12 +384,16 @@ namespace open_sea::input {
         ImGui::Begin("Input");
 
         glm::dvec2 cur_pos = cursor_position();
-        ImGui::Text("Cursor position: (%.2f,%.2f)", cur_pos.x, cur_pos.y);
+        ImGui::Text("Cursor position: %.2f, %.2f", cur_pos.x, cur_pos.y);
         ImGui::Text("Number of key slots: %d", keyboard->num_slots());
         ImGui::Text("Number of enter slots: %d", enter->num_slots());
         ImGui::Text("Number of mouse slots: %d", mouse->num_slots());
         ImGui::Text("Number of scroll slots: %d", scroll->num_slots());
         ImGui::Text("Number of character slots: %d", character->num_slots());
+        ImGui::Text("Number of unified input slots: %d", unified->num_slots());
+        ImGui::Spacing();
+
+        ImGui::Text("Cursor delta: %.2f, %.2f", cursor_d.x, cursor_d.y);
         ImGui::Spacing();
 
         ImGui::Text("ImGui wants mouse: %s", ImGui::GetIO().WantCaptureMouse ? "true" : "false");

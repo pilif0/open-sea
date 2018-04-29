@@ -26,6 +26,8 @@ namespace open_sea::input {
     std::unique_ptr<scroll_signal> scroll;
     //! Character signal
     std::unique_ptr<character_signal> character;
+    //! Unified input signal
+    std::unique_ptr<unified_signal> unified;
 
     // Unified input
     //! Set of held down unified inputs
@@ -50,12 +52,15 @@ namespace open_sea::input {
         state state = (action == GLFW_PRESS) ? press : (action == GLFW_REPEAT) ? repeat : release;
 
         // Update unified input state
+        unified_input ui{.device = 0, .code = static_cast<unsigned int>(scancode)};
         if (action == GLFW_PRESS) {
             // Press -> insert
-            unified_state.insert(unified_input{.device = 0, .code = static_cast<unsigned int>(scancode)});
+            unified_state.insert(ui);
+            (*unified)(ui, press);
         } else if(action == GLFW_RELEASE) {
             // Release -> remove
-            unified_state.erase(unified_input{.device = 0, .code = static_cast<unsigned int>(scancode)});
+            unified_state.erase(ui);
+            (*unified)(ui, release);
         }
 
         // Fire a signal
@@ -112,12 +117,15 @@ namespace open_sea::input {
         state state = (action == GLFW_PRESS) ? press : (action == GLFW_REPEAT) ? repeat : release;
 
         // Update unified input state
+        unified_input ui{.device = 1, .code = static_cast<unsigned int>(button)};
         if (action == GLFW_PRESS) {
             // Press -> insert
-            unified_state.insert(unified_input{.device = 1, .code = static_cast<unsigned int>(button)});
+            unified_state.insert(ui);
+            (*unified)(ui, press);
         } else if(action == GLFW_RELEASE) {
             // Release -> remove
-            unified_state.erase(unified_input{.device = 1, .code = static_cast<unsigned int>(button)});
+            unified_state.erase(ui);
+            (*unified)(ui, release);
         }
 
         // Fire a signal
@@ -204,6 +212,7 @@ namespace open_sea::input {
         mouse = std::make_unique<mouse_signal>();
         scroll = std::make_unique<scroll_signal>();
         character = std::make_unique<character_signal>();
+        unified = std::make_unique<unified_signal>();
 
         // Attach the callbacks
         reattach();
@@ -331,6 +340,16 @@ namespace open_sea::input {
      */
     connection connect_character(const character_signal::slot_type &slot) {
         return character->connect(slot);
+    }
+
+    /**
+     * \brief Connect a slot to the unified input signal
+     *
+     * \param slot Slot to connect
+     * \return Connection
+     */
+    connection connect_unified(const unified_signal::slot_type &slot) {
+        return unified->connect(slot);
     }
 
     /**

@@ -19,6 +19,7 @@
 #include <open-sea/Components.h>
 #include <open-sea/Render.h>
 #include <open-sea/Systems.h>
+#include <open-sea/Controls.h>
 namespace os_log = open_sea::log;
 namespace window = open_sea::window;
 namespace input = open_sea::input;
@@ -28,6 +29,7 @@ namespace gl = open_sea::gl;
 namespace model = open_sea::model;
 namespace ecs = open_sea::ecs;
 namespace render = open_sea::render;
+namespace controls = open_sea::controls;
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
@@ -38,31 +40,6 @@ namespace render = open_sea::render;
 #include <sstream>
 #include <random>
 #include <vector>
-
-//! Whether mouse input should be used for turning the camera
-bool camera_want_turn = false;
-//! Last cursor position used for turning the camera
-glm::vec2 last_cursor_pos{};
-
-/**
- * \brief Slot to toggle camera turn mode with RMB click
- *
- * \param button
- * \param action
- * \param mods
- */
-void camera_mode_toggle(int button, input::state action, int mods) {
-    if (button == GLFW_MOUSE_BUTTON_2 && action == input::press) {
-        if (camera_want_turn) {
-            camera_want_turn = false;
-            ::glfwSetInputMode(window::window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-        } else {
-            camera_want_turn = true;
-            ::glfwSetInputMode(window::window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-            last_cursor_pos = input::cursor_position();
-        }
-    }
-}
 
 int main() {
     // Initialize logging
@@ -210,9 +187,25 @@ int main() {
 
     // Prepare camera follow system
     std::unique_ptr<ecs::CameraFollow> camera_follow = std::make_unique<ecs::CameraFollow>(trans_comp_manager, camera_comp_manager);
-
-    // Connect a slot to click of right mouse button to toggle camera turn mode
-    input::connect_mouse(camera_mode_toggle);
+    
+    // Prepare free controls for the camera guide
+    controls::FreeControls::Controls controls {
+            .forward = input::unified_input::keyboard(GLFW_KEY_W),
+            .backward = input::unified_input::keyboard(GLFW_KEY_S),
+            .left = input::unified_input::keyboard(GLFW_KEY_A),
+            .right = input::unified_input::keyboard(GLFW_KEY_D),
+            .up = input::unified_input::keyboard(GLFW_KEY_LEFT_SHIFT),
+            .down = input::unified_input::keyboard(GLFW_KEY_LEFT_CONTROL),
+            .clockwise = input::unified_input::keyboard(GLFW_KEY_Q),
+            .counter_clockwise = input::unified_input::keyboard(GLFW_KEY_E),
+            .turn = input::unified_input::mouse(GLFW_MOUSE_BUTTON_RIGHT),
+            .speed_x = 150.0f,
+            .speed_z = 150.0f,
+            .speed_y = 150.0f,
+            .turn_rate = 0.3f,
+            .roll_rate = 30.0f
+    };
+    std::unique_ptr<controls::FreeControls> free_controls = std::make_unique<controls::FreeControls>(trans_comp_manager, camera_guide, controls);
 
     // Set background to black
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -227,93 +220,11 @@ int main() {
         // Clear
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Update camera guide position
-        glm::vec3 camera_global{};
-        {
-            constexpr float camera_speed = 150;     // Units per second
-            int camera_index = trans_comp_manager->lookup(camera_guide);
-            glm::vec3 local{};
+        // Update cursor delta
+        input::update_cursor_delta();
 
-            // Gather input
-            if (input::key_state(GLFW_KEY_A) == input::press)
-                // A pressed -> move left from the perspective of the camera
-                local.x += -1;
-            if (input::key_state(GLFW_KEY_D) == input::press)
-                // D pressed -> move right from the perspective of the camera
-                local.x += 1;
-            if (input::key_state(GLFW_KEY_W) == input::press)
-                // W pressed -> move forward from the perspective of the camera
-                local.z += -1;
-            if (input::key_state(GLFW_KEY_S) == input::press)
-                // S pressed -> move backward from the perspective of the camera
-                local.z += 1;
-            if (input::key_state(GLFW_KEY_LEFT_SHIFT) == input::press)
-                // Shift pressed -> move up from the perspective of the camera
-                local.y += 1;
-            if (input::key_state(GLFW_KEY_LEFT_CONTROL) == input::press)
-                // Ctrl pressed -> move down from the perspective of the camera
-                local.y += -1;
-
-            // Normalise
-            float l = glm::length(local);
-            if (l != 0.0f && l != 1.0f)
-                local /= l;
-
-            // Transform and apply
-            camera_global = glm::rotate(trans_comp_manager->data.orientation[camera_index], local);
-            camera_global *= camera_speed * os_time::get_delta();
-            trans_comp_manager->translate(&camera_index, &camera_global, 1);
-        }
-
-        // Update camera guide rotation
-        glm::vec2 cursor_delta{};
-        glm::quat camera_rot{};
-        if (camera_want_turn) {
-            constexpr float turn_rate = 0.3f;                   // Degrees per screen unit
-            constexpr glm::vec3 pitch_axis{1.0f, 0.0f, 0.0f};   // Positive x axis
-            constexpr glm::vec3 yaw_axis{0.0f, 1.0f, 0.0f};     // Positive y axis
-            constexpr glm::vec3 roll_axis{0.0f, 0.0f, 1.0f};     // Positive z axis
-            int camera_index = trans_comp_manager->lookup(camera_guide);
-
-            // Compute delta
-            glm::vec2 cursor_pos = input::cursor_position();
-            cursor_delta = cursor_pos - last_cursor_pos;
-
-            // Positive pitch is up
-            float pitch = cursor_delta.y * (- turn_rate);
-
-            // Positive yaw is left
-            float yaw = cursor_delta.x * (- turn_rate);
-
-            // Positive roll is counter clockwise
-            float roll = 0.0f;
-            if (input::key_state(GLFW_KEY_Q) == input::press)
-                roll += turn_rate * 100;
-            if (input::key_state(GLFW_KEY_E) == input::press)
-                roll -= turn_rate * 100;
-            roll *= os_time::get_delta();
-
-            // Compute transformation quaternion and transform
-            if (pitch != 0 || yaw != 0 || roll != 0) {
-                // Transform axes of rotation
-                glm::quat camera_or = trans_comp_manager->data.orientation[camera_index];
-                glm::vec3 tr_pitch_ax = glm::rotate(camera_or,  pitch_axis);
-                glm::vec3 tr_yaw_ax = glm::rotate(camera_or, yaw_axis);
-                glm::vec3 tr_roll_ax = glm::rotate(camera_or, roll_axis);
-
-                // Compute transformation
-                glm::quat pitchQ = glm::angleAxis(glm::radians(pitch), tr_pitch_ax);
-                glm::quat yawQ = glm::angleAxis(glm::radians(yaw), tr_yaw_ax);
-                glm::quat rollQ = glm::angleAxis(glm::radians(roll), tr_roll_ax);
-                camera_rot = rollQ * yawQ * pitchQ;
-
-                // Apply
-                trans_comp_manager->rotate(&camera_index, &camera_rot, 1);
-            }
-
-            // Update last cursor position
-            last_cursor_pos = cursor_pos;
-        }
+        // Update camera guide controls
+        free_controls->transform();
 
         // Update cameras based on associated guides
         camera_follow->transform();
@@ -354,10 +265,10 @@ int main() {
 
                 ImGui::Checkbox("Use perspective camera", &use_per_cam);
 
-                ImGui::Text("Camera want turn: %s", (camera_want_turn) ? "true" : "false");
-                ImGui::Text("Cursor delta: %.3f, %.3f", cursor_delta.x, cursor_delta.y);
-                ImGui::Text("Camera control delta: %.3f, %.3f, %.3f", camera_global.x, camera_global.y, camera_global.z);
-                ImGui::Text("Camera control rotation: %.3f, %.3f, %.3f, %.3f", camera_rot.x, camera_rot.y, camera_rot.z, camera_rot.w);
+//                ImGui::Text("Camera want turn: %s", (camera_want_turn) ? "true" : "false");
+//                ImGui::Text("Cursor delta: %.3f, %.3f", cursor_delta.x, cursor_delta.y);
+//                ImGui::Text("Camera control delta: %.3f, %.3f, %.3f", camera_global.x, camera_global.y, camera_global.z);
+//                ImGui::Text("Camera control rotation: %.3f, %.3f, %.3f, %.3f", camera_rot.x, camera_rot.y, camera_rot.z, camera_rot.w);
 
                 ImGui::Text("Test camera:");
                 if (use_per_cam)

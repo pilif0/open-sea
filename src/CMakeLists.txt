@@ -15,7 +15,8 @@ set(open_sea_HEADERS
         "${INCL_DIR}/open-sea/Entity.h"
         "${INCL_DIR}/open-sea/Components.h"
         "${INCL_DIR}/open-sea/Render.h"
-        "${INCL_DIR}/open-sea/Systems.h")
+        "${INCL_DIR}/open-sea/Systems.h"
+        "${INCL_DIR}/open-sea/Controls.h")
 set(open_sea_SOURCES
         Log.cpp
         Window.cpp
@@ -27,7 +28,8 @@ set(open_sea_SOURCES
         Entity.cpp
         Components.cpp
         Render.cpp
-        Systems.cpp)
+        Systems.cpp
+        Controls.cpp)
 
 # Add the library
 add_library(open_sea ${open_sea_SOURCES} ${open_sea_HEADERS} ${ImGui})

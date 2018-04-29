@@ -232,6 +232,31 @@ namespace open_sea::input {
         return glm::dvec2(x, y);
     }
 
+    //! Latest cursor delta
+    ::glm::dvec2 cursor_d{};
+
+    /**
+     * \brief Get latest cursor delta
+     *
+     * \return Latest cursor delta
+     */
+    ::glm::dvec2 cursor_delta() {
+        return cursor_d;
+    }
+
+    //! Cursor position during last cursor delta update
+    ::glm::dvec2 last_cursor_pos{};
+
+    /**
+     * \brief Update cursor delta
+     * Compute new cursor delta based on current and last cursor position
+     */
+    void update_cursor_delta() {
+        glm::dvec2 pos = cursor_position();
+        cursor_d = pos - last_cursor_pos;
+        last_cursor_pos = pos;
+    }
+
     /**
      * \brief Get key state
      * Get state of a key. Only returns \c press or \c release (due to GLFW).

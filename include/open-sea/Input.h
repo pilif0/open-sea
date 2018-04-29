@@ -79,6 +79,8 @@ namespace open_sea::input {
     connection connect_unified(const unified_signal::slot_type &slot);
 
     ::glm::dvec2 cursor_position();
+    glm::dvec2 cursor_delta();
+    void update_cursor_delta();
     state key_state(int key);
     state mouse_state(int button);
     std::string key_name(int key, int scancode);

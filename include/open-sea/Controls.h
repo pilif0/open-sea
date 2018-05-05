@@ -24,11 +24,13 @@ namespace open_sea::controls {
      * Only one entity should be controlled at one time.
      */
     class FreeControls {
+        private:
+            //! Entity being controlled
+            ecs::Entity subject;
+
         public:
             //! Transformation component manager
             std::shared_ptr<ecs::TransformationComponent> transformMgr{};
-            //! Entity being controlled
-            ecs::Entity subject;
             //! Key bindings and factors
             struct Controls {
                 // Key bindings
@@ -64,6 +66,58 @@ namespace open_sea::controls {
 
             void transform();
             void setSubject(ecs::Entity newSubject);
+            ecs::Entity getSubject();
+
+            void showDebug();
+    };
+
+
+    /** \class FPSControls
+     * \brief Controls an entity using FPS controls
+     * Controls an entity using FPS controls.
+     * Position control in XZ plane without restriction through unified input.
+     * Rotation control of yaw around global Y axis and of pitch within [+90,-90] degrees through mouse input.
+     * No control over roll and movement along the Y axis.
+     * Orientation control always on (disables cursor).
+     * Only one entity should be controlled at one time.
+     */
+    // Note: this still allows Y motion through external means, just not through this specific control
+    class FPSControls {
+        private:
+            //! Current subject's pitch (in degrees)
+            float pitch;
+            //! Entity being controlled
+            ecs::Entity subject;
+            void updatePitch();
+
+        public:
+            //! Transformation component manager
+            std::shared_ptr<ecs::TransformationComponent> transformMgr{};
+            //! Key bindings and factors
+            struct Controls {
+                // Key bindings
+                input::unified_input forward;
+                input::unified_input backward;
+                input::unified_input left;
+                input::unified_input right;
+
+                // Factors
+                //! Left-right (strafing) speed in (units / second)
+                float speed_x;
+                //! Forward-backward speed (units / second)
+                float speed_z;
+                //! Degrees turned per screen unit of mouse movement
+                float turn_rate;    //TODO: should probably be independent of the screen size (deg per screen fraction?)
+            } controls;
+
+
+            //! Constuct the controls assigning it a pointer to the relevant transformation component manager, subject and controls.
+            FPSControls(std::shared_ptr<ecs::TransformationComponent> t, ecs::Entity s, Controls c)
+                    : transformMgr(std::move(t)), subject(s), controls(c), pitch(0.0f) { updatePitch(); }
+
+            void transform();
+            void setSubject(ecs::Entity newSubject);
+            ecs::Entity getSubject();
 
             void showDebug();
     };

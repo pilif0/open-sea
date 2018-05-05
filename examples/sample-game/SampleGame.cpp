@@ -226,6 +226,9 @@ int main() {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
 
+    // Update cursor delta once before main loop to avoid extreme first cursor delta
+    input::update_cursor_delta();
+
     // Loop until the user closes the window
     open_sea::time::start_delta();
     while (!window::should_close()) {

@@ -24,9 +24,6 @@ namespace open_sea::controls {
      * Only one entity should be controlled at one time.
      */
     class FreeControls {
-        private:
-            //! Logger for this manager
-            log::severity_logger lg = log::get_logger("Camera Component Mgr");
         public:
             //! Transformation component manager
             std::shared_ptr<ecs::TransformationComponent> transformMgr{};
@@ -61,7 +58,9 @@ namespace open_sea::controls {
                 float roll_rate;
             } controls;
 
-            FreeControls(std::shared_ptr<ecs::TransformationComponent> t, ecs::Entity s, Controls c);
+            //! Constuct the controls assigning it a pointer to the relevant transformation component manager, subject and controls.
+            FreeControls(std::shared_ptr<ecs::TransformationComponent> t, ecs::Entity s, Controls c)
+                    : transformMgr(std::move(t)), subject(s), controls(c) {}
 
             void transform();
             void setSubject(ecs::Entity newSubject);

@@ -13,19 +13,6 @@ namespace open_sea::controls {
 
     //--- start FreeControls implementation
     /**
-     * \brief Construct the controls
-     * Constuct the controls assigning it a pointer to the relevant transformation component manager, subject and controls.
-     *
-     * \param t Transformation component manager
-     * \param s Subject
-     * \param c Controls
-     */
-    FreeControls::FreeControls(std::shared_ptr<ecs::TransformationComponent> t, ecs::Entity s,
-                               FreeControls::Controls c) : transformMgr(std::move(t)), subject(s), controls(c) {
-        //TODO: move to header?
-    }
-
-    /**
      * \brief Transform the subject according to input
      */
     void FreeControls::transform() {

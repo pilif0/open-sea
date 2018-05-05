@@ -264,6 +264,10 @@ namespace open_sea::window {
         if (w != window)
             return;
 
+        // Update properties
+        ::glfwGetWindowSize(window, &current->width, &current->height);
+        ::glfwGetFramebufferSize(window, &current->fbWidth, &current->fbHeight);
+
         // Fire the signal
         (*size)(width, height);
     }

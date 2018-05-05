@@ -55,8 +55,9 @@ int main() {
         return -1;
 
     // Create window
+    constexpr glm::ivec2 window_size{1280, 720};
     window::set_title("Sample Game");
-    if (!window::make_windowed(1280, 720))
+    if (!window::make_windowed(window_size.x, window_size.y))
         return -1;
 
     // Initialize input
@@ -85,22 +86,40 @@ int main() {
         }
     });
 
-    // ImGui test data
-    bool show_demo_window = true;
-
     // Prepare test cameras
     std::shared_ptr<gl::Camera> test_camera_ort =
             std::make_shared<gl::OrthographicCamera>(
                     glm::vec3{},
                     glm::quat(),
-                    glm::vec2{1280, 720},
+                    glm::vec2{window_size.x, window_size.y},
                     0.1f, 1000.0f);
     std::shared_ptr<gl::Camera> test_camera_per =
             std::make_shared<gl::PerspectiveCamera>(
                     glm::vec3{},
                     glm::quat(),
-                    glm::vec2{1280, 720},
+                    glm::vec2{window_size.x, window_size.y},
                     0.1f, 1000.0f, 90.0f);
+
+    // Add borderless fullscreen control to F11
+    bool windowed = true;
+    input::connection borderless_toggle = input::connect_key([test_camera_ort, test_camera_per, window_size, &windowed]
+                                                                     (int k, int c, input::state s, int m){
+        if (k == GLFW_KEY_F11 && s == input::press) {
+            if (windowed) {
+                // Set borderless and update camera
+                window::make_borderless(glfwGetPrimaryMonitor());
+                test_camera_ort->setSize(glm::vec2{window::current_properties().fbWidth, window::current_properties().fbHeight});
+                test_camera_per->setSize(glm::vec2{window::current_properties().fbWidth, window::current_properties().fbHeight});
+                windowed = false;
+            } else {
+                // Set windowed and update camera
+                window::make_windowed(window_size.x, window_size.y);
+                test_camera_ort->setSize(glm::vec2{window::current_properties().fbWidth, window::current_properties().fbHeight});
+                test_camera_per->setSize(glm::vec2{window::current_properties().fbWidth, window::current_properties().fbHeight});
+                windowed = true;
+            }
+        }
+    });
 
     // Generate test entities
     unsigned N = 1024;
@@ -318,7 +337,7 @@ int main() {
             // Demo window
             if (show_demo) {
                 ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiCond_FirstUseEver);
-                ImGui::ShowDemoWindow(&show_demo_window);
+                ImGui::ShowDemoWindow(&show_demo);
             }
 
             //Render

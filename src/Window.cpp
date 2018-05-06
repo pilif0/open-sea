@@ -221,9 +221,6 @@ namespace open_sea::window {
     void update() {
         // Swap front and back buffers
         ::glfwSwapBuffers(window::window);
-
-        // Poll for and process events
-        ::glfwPollEvents();
     }
 
     /**

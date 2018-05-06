@@ -208,16 +208,23 @@ int main() {
     std::unique_ptr<ecs::CameraFollow> camera_follow = std::make_unique<ecs::CameraFollow>(trans_comp_manager, camera_comp_manager);
     
     // Prepare free controls for the camera guide
-    controls::FPSControls::Controls controls_config {
-            .forward = input::unified_input::keyboard(GLFW_KEY_W),
-            .backward = input::unified_input::keyboard(GLFW_KEY_S),
+    controls::TopDownControls::Controls controls_config {
+//            .forward = input::unified_input::keyboard(GLFW_KEY_W),
+//            .backward = input::unified_input::keyboard(GLFW_KEY_S),
             .left = input::unified_input::keyboard(GLFW_KEY_A),
             .right = input::unified_input::keyboard(GLFW_KEY_D),
+            .up = input::unified_input::keyboard(GLFW_KEY_LEFT_SHIFT),
+            .down = input::unified_input::keyboard(GLFW_KEY_LEFT_CONTROL),
+            .clockwise = input::unified_input::keyboard(GLFW_KEY_Q),
+            .counter_clockwise = input::unified_input::keyboard(GLFW_KEY_E),
+//            .turn = input::unified_input::mouse(GLFW_MOUSE_BUTTON_RIGHT),
             .speed_x = 150.0f,
-            .speed_z = 150.0f,
-            .turn_rate = 0.3f,
+//            .speed_z = 150.0f,
+            .speed_y = 150.0f,
+//            .turn_rate = 0.3f,
+            .roll_rate = 30.0f
     };
-    std::unique_ptr<controls::FPSControls> controls = std::make_unique<controls::FPSControls>(trans_comp_manager, camera_guide, controls_config);
+    std::unique_ptr<controls::TopDownControls> controls = std::make_unique<controls::TopDownControls>(trans_comp_manager, camera_guide, controls_config);
 
     // Set background to black
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);

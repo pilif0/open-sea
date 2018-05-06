@@ -362,4 +362,113 @@ namespace open_sea::controls {
         //TODO
     }
     //--- end TopDownControls implementation
+    //--- start FunctionFollowControls implementation
+    /**
+     * \brief Transform the subject according to input
+     */
+    void FunctionFollowControls::transform() {
+        // Update position
+        {
+            int index = transformMgr->lookup(subject);
+            glm::vec3 local{};
+
+            // Gather input
+            if (input::is_held(controls.left))
+                local.x += -1;
+            if (input::is_held(controls.right))
+                local.x += 1;
+            if (input::is_held(controls.backward))
+                local.z += 1;
+            if (input::is_held(controls.forward))
+                local.z += -1;
+
+            // Normalise
+            float l = glm::length(local);
+            if (l != 0.0f && l != 1.0f)
+                local /= l;
+
+            // Scale by speed and delta time
+            local.x *= controls.speed_x;
+            local.z *= controls.speed_z;
+            local *= time::get_delta();
+
+            // Move function origin
+            origin += local;
+
+            // Update parameter
+            parameter -= controls.parameter_rate * input::get_scroll().y;
+
+            // Compute new position
+            glm::vec3 position{parameter, function(parameter), 0.0f};
+
+            // Update orbit
+            if (input::is_held(controls.orbit_left))
+                orbit -= controls.orbit_rate * time::get_delta();
+            if (input::is_held(controls.orbit_right))
+                orbit += controls.orbit_rate * time::get_delta();
+            if (orbit > 360.0f) orbit -= 360.0f;
+
+            // Rotate position by orbit
+            position = glm::rotate(glm::angleAxis(glm::radians(orbit), yaw_axis), position);
+
+            // Move by the function origin
+            position += origin;
+
+            // Apply
+            transformMgr->setPosition(&index, &position, 1);
+        }
+
+        // Update rotation
+        glm::quat rotation{};
+        {
+            // Look up subject transformation
+            int index = transformMgr->lookup(subject);
+
+            // Compute target forward vector
+            float slope = this->slope(parameter);   // slope = tg (y / x)
+            double ratio = atan(slope); // y / x
+            glm::vec3 target{1, ratio, 0};
+            float l = glm::length(target);
+            if (l != 0 && l != 1)
+                target /= l;
+            target *= -1;
+            target = glm::rotate(glm::angleAxis(glm::radians(orbit), yaw_axis), target);
+
+            // Get the subject's forward vector
+            glm::quat orientation = transformMgr->data.orientation[index];
+            glm::vec3 forward = glm::rotate(orientation, glm::vec3{0.0f, 0.0f, -1.0f});
+
+            // Compute rotation from forward to target
+            rotation = glm::rotation(forward, target);
+
+            // Apply
+            transformMgr->rotate(&index, &rotation, 1);
+        }
+    }
+
+    /**
+     * \brief Set a new subject for this control
+     *
+     * \param newSubject New subject
+     */
+    void FunctionFollowControls::setSubject(ecs::Entity newSubject) {
+        subject = newSubject;
+    }
+
+    /**
+     * \brief Get current subject of this control
+     *
+     * \return Current subject
+     */
+    ecs::Entity FunctionFollowControls::getSubject() {
+        return subject;
+    }
+
+    /**
+     * \brief Show ImGui debug information for this control
+     */
+    void FunctionFollowControls::showDebug() {
+        //TODO
+    }
+    //--- end FunctionFollowControls implementation
 }

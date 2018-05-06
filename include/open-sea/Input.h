@@ -81,6 +81,8 @@ namespace open_sea::input {
     ::glm::dvec2 cursor_position();
     glm::dvec2 cursor_delta();
     void update_cursor_delta();
+    glm::dvec2 get_scroll();
+    void update();
     state key_state(int key);
     state mouse_state(int button);
     std::string key_name(int key, int scancode);

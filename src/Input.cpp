@@ -33,6 +33,14 @@ namespace open_sea::input {
     //! Set of held down unified inputs
     std::set<unified_input> unified_state;
 
+    // State for cursor delta and scroll
+    //! Latest cursor delta
+    glm::dvec2 cursor_d{};
+    //! Cursor position during last input update
+    glm::dvec2 last_cursor_pos{};
+    //! Cumulative scroll since last input update
+    glm::dvec2 cumulative_scroll{};
+
     // Callbacks
     /**
      * \brief Send signal about a key event
@@ -147,6 +155,10 @@ namespace open_sea::input {
         if (window != w::window)
             return;
 
+        // Add to cumulative scroll
+        cumulative_scroll.x += xoffset;
+        cumulative_scroll.y += yoffset;
+
         // Fire a signal
         if (ImGui::GetIO().WantCaptureMouse)
             open_sea::imgui::scroll_callback(xoffset, yoffset);
@@ -232,9 +244,6 @@ namespace open_sea::input {
         return glm::dvec2(x, y);
     }
 
-    //! Latest cursor delta
-    ::glm::dvec2 cursor_d{};
-
     /**
      * \brief Get latest cursor delta
      *
@@ -244,9 +253,6 @@ namespace open_sea::input {
         return cursor_d;
     }
 
-    //! Cursor position during last cursor delta update
-    ::glm::dvec2 last_cursor_pos{};
-
     /**
      * \brief Update cursor delta
      * Compute new cursor delta based on current and last cursor position
@@ -255,6 +261,30 @@ namespace open_sea::input {
         glm::dvec2 pos = cursor_position();
         cursor_d = pos - last_cursor_pos;
         last_cursor_pos = pos;
+    }
+
+    /**
+     * \brief Get the cumulative scroll since last input update
+     *
+     * \return Cumulative scroll
+     */
+    glm::dvec2 get_scroll() {
+        return cumulative_scroll;
+    }
+
+    /**
+     * \brief Update cursor delta and reset cumulative scroll
+     */
+    void update() {
+        // Reset scroll counter
+        cumulative_scroll.x = 0;
+        cumulative_scroll.y = 0;
+
+        // Poll for and process events
+        ::glfwPollEvents();
+
+        // Update cursor delta
+        update_cursor_delta();
     }
 
     /**
@@ -394,6 +424,7 @@ namespace open_sea::input {
         ImGui::Spacing();
 
         ImGui::Text("Cursor delta: %.2f, %.2f", cursor_d.x, cursor_d.y);
+        ImGui::Text("Cumulative scroll: %.2f, %.2f", cumulative_scroll.x, cumulative_scroll.y);
         ImGui::Spacing();
 
         ImGui::Text("ImGui wants mouse: %s", ImGui::GetIO().WantCaptureMouse ? "true" : "false");

@@ -208,23 +208,28 @@ int main() {
     std::unique_ptr<ecs::CameraFollow> camera_follow = std::make_unique<ecs::CameraFollow>(trans_comp_manager, camera_comp_manager);
     
     // Prepare free controls for the camera guide
-    controls::TopDownControls::Controls controls_config {
-//            .forward = input::unified_input::keyboard(GLFW_KEY_W),
-//            .backward = input::unified_input::keyboard(GLFW_KEY_S),
+    controls::FunctionFollowControls::Controls controls_config {
+            .forward = input::unified_input::keyboard(GLFW_KEY_W),
+            .backward = input::unified_input::keyboard(GLFW_KEY_S),
             .left = input::unified_input::keyboard(GLFW_KEY_A),
             .right = input::unified_input::keyboard(GLFW_KEY_D),
-            .up = input::unified_input::keyboard(GLFW_KEY_LEFT_SHIFT),
-            .down = input::unified_input::keyboard(GLFW_KEY_LEFT_CONTROL),
-            .clockwise = input::unified_input::keyboard(GLFW_KEY_Q),
-            .counter_clockwise = input::unified_input::keyboard(GLFW_KEY_E),
+            .orbit_left = input::unified_input::keyboard(GLFW_KEY_Q),
+            .orbit_right = input::unified_input::keyboard(GLFW_KEY_E),
+//            .up = input::unified_input::keyboard(GLFW_KEY_LEFT_SHIFT),
+//            .down = input::unified_input::keyboard(GLFW_KEY_LEFT_CONTROL),
+//            .clockwise = input::unified_input::keyboard(GLFW_KEY_Q),
+//            .counter_clockwise = input::unified_input::keyboard(GLFW_KEY_E),
 //            .turn = input::unified_input::mouse(GLFW_MOUSE_BUTTON_RIGHT),
             .speed_x = 150.0f,
-//            .speed_z = 150.0f,
-            .speed_y = 150.0f,
+            .speed_z = 150.0f,
+//            .speed_y = 150.0f,
 //            .turn_rate = 0.3f,
-            .roll_rate = 30.0f
+//            .roll_rate = 30.0f
+            .orbit_rate = 90.0f,
+            .parameter_rate = 1.0f,
     };
-    std::unique_ptr<controls::TopDownControls> controls = std::make_unique<controls::TopDownControls>(trans_comp_manager, camera_guide, controls_config);
+    std::unique_ptr<controls::FunctionFollowControls> controls = std::make_unique<controls::FunctionFollowControls>(
+            trans_comp_manager, camera_guide, controls_config, [](float p){ return p*p; }, [](float p){ return p;});
 
     // Set background to black
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -234,16 +239,13 @@ int main() {
     glDepthFunc(GL_LESS);
 
     // Update cursor delta once before main loop to avoid extreme first cursor delta
-    input::update_cursor_delta();
+//    input::update();
 
     // Loop until the user closes the window
     open_sea::time::start_delta();
     while (!window::should_close()) {
         // Clear
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // Update cursor delta
-        input::update_cursor_delta();
 
         // Update camera guide controls
         controls->transform();
@@ -286,6 +288,10 @@ int main() {
                 ImGui::Begin("Test controls");
 
                 ImGui::Checkbox("Use perspective camera", &use_per_cam);
+
+                ImGui::Text("Controls pos: %.3f, %.3f, %.3f", controls->origin.x, controls->origin.y, controls->origin.z);
+                ImGui::Text("Controls orbit: %.3f", controls->orbit);
+                ImGui::Text("Controls parameter: %.3f", controls->parameter);
 
 //                ImGui::Text("Camera want turn: %s", (camera_want_turn) ? "true" : "false");
 //                ImGui::Text("Cursor delta: %.3f, %.3f", cursor_delta.x, cursor_delta.y);
@@ -346,6 +352,9 @@ int main() {
             //Render
             imgui::render();
         }
+
+        // Update input
+        input::update();
 
         // Update the window
         window::update();

@@ -168,6 +168,76 @@ namespace open_sea::controls {
             void showDebug();
     };
 
+    /** \class FunctionFollowControls
+     * \brief Controls an entity using function following controls
+     * Controls an entity using function following controls.
+     * Exact subject position and orientation controlled by function and orbit.
+     * Subject position is (p, f(p), 0) rotated by orbit around Y axis.
+     * Subject orientation is down the function (\c -f'(p)).
+     * Parameter control using scroll input.
+     * Position control (of function origin) in XZ plane without restriction through unified input.
+     * Orbit (yaw) control through unified input.
+     * Initial orbit is -90 degrees (suitable to control camera guide with p increasing behind camera view).
+     * Only one entity should be controlled at one time.
+     */
+    //TODO: allow initialisation with other origin and parameter than 0s (read origin from subject?)
+    class FunctionFollowControls {
+        public:
+            //! Type of the function
+            typedef float (*function_t)(float);
+
+//        private:
+            //! Entity being controlled
+            ecs::Entity subject;
+            //! Function origin
+            glm::vec3 origin;
+            //! Function for Y calculation
+            function_t function;
+            //! First derivative of function
+            function_t slope;
+            //! Function parameter
+            float parameter;
+            //! Orbit in degrees
+            float orbit;
+
+        public:
+            //! Transformation component manager
+            std::shared_ptr<ecs::TransformationComponent> transformMgr{};
+            //! Key bindings and factors
+            struct Controls {
+                // Key bindings
+                input::unified_input forward;
+                input::unified_input backward;
+                input::unified_input left;
+                input::unified_input right;
+                input::unified_input orbit_right;   // Positive sense
+                input::unified_input orbit_left;    // Negative sense
+
+                // Factors
+                //! Left-right (strafing) speed in (units / second)
+                float speed_x;
+                //! Forward-backward speed (units / second)
+                float speed_z;
+                //! Degrees per second
+                float orbit_rate;
+                //! Parameter change rate (1 / scroll units)
+                float parameter_rate;
+            } controls;
+
+
+            //! Constuct the controls assigning it a pointer to the relevant transformation component manager, subject, controls, and functions.
+            FunctionFollowControls(std::shared_ptr<ecs::TransformationComponent> t, ecs::Entity s, Controls c,
+                                   function_t f, function_t d)
+                    : transformMgr(std::move(t)), subject(s), controls(c), function(f), slope(d), parameter(0.0f),
+                      orbit(90.0f), origin({0.0f, 0.0f, 0.0f}) {}
+
+            void transform();
+            void setSubject(ecs::Entity newSubject);
+            ecs::Entity getSubject();
+
+            void showDebug();
+    };
+
 };
 
 #endif //OPEN_SEA_CONTROLS_H

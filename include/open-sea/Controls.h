@@ -71,7 +71,6 @@ namespace open_sea::controls {
             void showDebug();
     };
 
-
     /** \class FPSControls
      * \brief Controls an entity using FPS controls
      * Controls an entity using FPS controls.
@@ -114,6 +113,53 @@ namespace open_sea::controls {
             //! Constuct the controls assigning it a pointer to the relevant transformation component manager, subject and controls.
             FPSControls(std::shared_ptr<ecs::TransformationComponent> t, ecs::Entity s, Controls c)
                     : transformMgr(std::move(t)), subject(s), controls(c), pitch(0.0f) { updatePitch(); }
+
+            void transform();
+            void setSubject(ecs::Entity newSubject);
+            ecs::Entity getSubject();
+
+            void showDebug();
+    };
+
+    /** \class TopDownControls
+     * \brief Controls an entity using top down controls
+     * Controls an entity using top down controls.
+     * Position control in XY plane without restriction through unified input.
+     * Rotation control of roll around global Z axis through unified input.
+     * No control over yaw, pitch and movement along the Z axis.
+     * Only one entity should be controlled at one time.
+     */
+    class TopDownControls {
+        private:
+            //! Entity being controlled
+            ecs::Entity subject;
+
+        public:
+            //! Transformation component manager
+            std::shared_ptr<ecs::TransformationComponent> transformMgr{};
+            //! Key bindings and factors
+            struct Controls {
+                // Key bindings
+                input::unified_input up;
+                input::unified_input down;
+                input::unified_input left;
+                input::unified_input right;
+                input::unified_input clockwise;
+                input::unified_input counter_clockwise;
+
+                // Factors
+                //! Left-right (strafing) speed in (units / second)
+                float speed_x;
+                //! Forward-backward speed (units / second)
+                float speed_y;
+                //! Degrees per second
+                float roll_rate;
+            } controls;
+
+
+            //! Constuct the controls assigning it a pointer to the relevant transformation component manager, subject and controls.
+            TopDownControls(std::shared_ptr<ecs::TransformationComponent> t, ecs::Entity s, Controls c)
+                    : transformMgr(std::move(t)), subject(s), controls(c) {}
 
             void transform();
             void setSubject(ecs::Entity newSubject);

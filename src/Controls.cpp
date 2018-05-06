@@ -267,5 +267,99 @@ namespace open_sea::controls {
         //TODO
     }
     //--- end FreeControls implementation
+    //--- start TopDownControls implementation
+    /**
+     * \brief Transform the subject according to input
+     */
+    void TopDownControls::transform() {
+        // Update position
+        glm::vec3 global_translate{};
+        {
+            int index = transformMgr->lookup(subject);
+            glm::vec3 local{};
 
+            // Gather input
+            if (input::is_held(controls.left))
+                local.x += -1;
+            if (input::is_held(controls.right))
+                local.x += 1;
+            if (input::is_held(controls.up))
+                local.y += 1;
+            if (input::is_held(controls.down))
+                local.y += -1;
+
+            // Transform
+            global_translate = glm::rotate(transformMgr->data.orientation[index], local);
+
+            // Lock to XY plane
+            global_translate.z = 0;
+
+            // Normalise
+            float l = glm::length(global_translate);
+            if (l != 0.0f && l != 1.0f)
+                global_translate /= l;
+
+            // Scale by speed and delta time
+            global_translate.x *= controls.speed_x;
+            global_translate.y *= controls.speed_y;
+            global_translate *= time::get_delta();
+
+            // Apply
+            transformMgr->translate(&index, &global_translate, 1);
+        }
+
+        // Update rotation
+        glm::quat rotation{};
+        {
+            // Look up subject transformation
+            int index = transformMgr->lookup(subject);
+
+            // Positive roll is counter clockwise
+            float roll = 0.0f;
+            if (input::is_held(controls.clockwise))
+                roll += controls.roll_rate;
+            if (input::is_held(controls.counter_clockwise))
+                roll -= controls.roll_rate;
+            roll *= time::get_delta();
+
+            // Compute transformation quaternion and transform
+            if (roll != 0) {
+                // Transform axes of rotation
+                glm::quat original = transformMgr->data.orientation[index];
+                glm::vec3 tr_roll_ax = glm::rotate(original, roll_axis);
+
+                // Compute transformation
+                glm::quat rollQ = glm::angleAxis(glm::radians(roll), tr_roll_ax);
+
+                // Apply
+                transformMgr->rotate(&index, &rollQ, 1);
+            }
+        }
+    }
+
+    /**
+     * \brief Set a new subject for this control
+     *
+     * \param newSubject New subject
+     */
+    void TopDownControls::setSubject(ecs::Entity newSubject) {
+        subject = newSubject;
+    }
+
+    /**
+     * \brief Get current subject of this control
+     *
+     * \return Current subject
+     */
+    ecs::Entity TopDownControls::getSubject() {
+        return subject;
+    }
+
+    /**
+     * \brief Show ImGui debug information for this control
+     */
+    void TopDownControls::showDebug() {
+        //TODO
+    }
+    //--- end TopDownControls implementation
 }

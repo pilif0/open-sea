@@ -63,6 +63,8 @@ namespace open_sea::input {
         static unified_input keyboard(int key) { return unified_input{.device = 0, .code = static_cast<unsigned int>(::glfwGetKeyScancode(key))}; }
         //! Create unified input from a GLFW mouse button
         static unified_input mouse(int button) { return unified_input{.device = 1, .code = static_cast<unsigned int>(button)}; }
+
+        std::string str() const;
     };
     //! Unified input signal
     typedef signals::signal<void (unified_input, state)> unified_signal;

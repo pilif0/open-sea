@@ -200,6 +200,30 @@ namespace open_sea::input {
     }
 
     /**
+     * \brief Get string representation of the unified input as "(device) code"
+     *
+     * \return String representation
+     */
+    std::string unified_input::str() const {
+        std::string deviceStr;
+        switch (device) {
+            case 0:
+                deviceStr = "Keyboard";
+                break;
+            case 1:
+                deviceStr = "Mouse";
+                break;
+            default:
+                deviceStr = "Unknown - ";
+                deviceStr.append(std::to_string(device));
+        }
+
+        std::ostringstream result;
+        result << "(" << deviceStr << ") " << code;
+        return result.str();
+    }
+
+    /**
      * \brief Initialize input
      * Instantiate the various signals and attach them to the current global window.
      */

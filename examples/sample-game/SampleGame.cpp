@@ -208,23 +208,23 @@ int main() {
     std::unique_ptr<ecs::CameraFollow> camera_follow = std::make_unique<ecs::CameraFollow>(trans_comp_manager, camera_comp_manager);
     
     // Prepare free controls for the camera guide
-    controls::TopDownControls::Controls controls_config {
-//            .forward = input::unified_input::keyboard(GLFW_KEY_W),
-//            .backward = input::unified_input::keyboard(GLFW_KEY_S),
+    controls::FreeControls::Controls controls_config {
+            .forward = input::unified_input::keyboard(GLFW_KEY_W),
+            .backward = input::unified_input::keyboard(GLFW_KEY_S),
             .left = input::unified_input::keyboard(GLFW_KEY_A),
             .right = input::unified_input::keyboard(GLFW_KEY_D),
             .up = input::unified_input::keyboard(GLFW_KEY_LEFT_SHIFT),
             .down = input::unified_input::keyboard(GLFW_KEY_LEFT_CONTROL),
             .clockwise = input::unified_input::keyboard(GLFW_KEY_Q),
             .counter_clockwise = input::unified_input::keyboard(GLFW_KEY_E),
-//            .turn = input::unified_input::mouse(GLFW_MOUSE_BUTTON_RIGHT),
+            .turn = input::unified_input::mouse(GLFW_MOUSE_BUTTON_RIGHT),
             .speed_x = 150.0f,
-//            .speed_z = 150.0f,
+            .speed_z = 150.0f,
             .speed_y = 150.0f,
-//            .turn_rate = 0.3f,
+            .turn_rate = 0.3f,
             .roll_rate = 30.0f
     };
-    std::unique_ptr<controls::TopDownControls> controls = std::make_unique<controls::TopDownControls>(trans_comp_manager, camera_guide, controls_config);
+    std::unique_ptr<controls::FreeControls> controls = std::make_unique<controls::FreeControls>(trans_comp_manager, camera_guide, controls_config);
 
     // Set background to black
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -281,16 +281,20 @@ int main() {
                 ImGui::End();
             }
 
-            // Test controls
+            // Test camera controls
             {
-                ImGui::Begin("Test controls");
+                ImGui::Begin("Test camera controls");
+
+                controls->showDebug();
+
+                ImGui::End();
+            }
+
+            // Test environment controls
+            {
+                ImGui::Begin("Test environment controls");
 
                 ImGui::Checkbox("Use perspective camera", &use_per_cam);
-
-//                ImGui::Text("Camera want turn: %s", (camera_want_turn) ? "true" : "false");
-//                ImGui::Text("Cursor delta: %.3f, %.3f", cursor_delta.x, cursor_delta.y);
-//                ImGui::Text("Camera control delta: %.3f, %.3f, %.3f", camera_global.x, camera_global.y, camera_global.z);
-//                ImGui::Text("Camera control rotation: %.3f, %.3f, %.3f, %.3f", camera_rot.x, camera_rot.y, camera_rot.z, camera_rot.w);
 
                 ImGui::Text("Test camera:");
                 if (use_per_cam)

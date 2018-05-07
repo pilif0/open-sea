@@ -6,6 +6,8 @@
 #include <open-sea/Delta.h>
 #include <open-sea/Window.h>
 
+#include <imgui.h>
+
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/vector_angle.hpp>
@@ -128,7 +130,27 @@ namespace open_sea::controls {
      * \brief Show ImGui debug information for this control
      */
     void FreeControls::showDebug() {
-        //TODO
+        ImGui::Text("Subject: %s", subject.str().c_str());
+
+        if (ImGui::CollapsingHeader("Bindings")) {
+            ImGui::Text("Forward: %s", controls.forward.str().c_str());
+            ImGui::Text("Backward: %s", controls.backward.str().c_str());
+            ImGui::Text("Left: %s", controls.left.str().c_str());
+            ImGui::Text("Right: %s", controls.right.str().c_str());
+            ImGui::Text("Up: %s", controls.up.str().c_str());
+            ImGui::Text("Down: %s", controls.down.str().c_str());
+            ImGui::Text("Clockwise roll: %s", controls.clockwise.str().c_str());
+            ImGui::Text("Counter-clockwise roll: %s", controls.counter_clockwise.str().c_str());
+            ImGui::Text("Turn: %s", controls.turn.str().c_str());
+        }
+
+        if (ImGui::CollapsingHeader("Factors")) {
+            ImGui::Text("Speed X: %.3f units / second", controls.speed_x);
+            ImGui::Text("Speed Y: %.3f units / second", controls.speed_y);
+            ImGui::Text("Speed Z: %.3f units / second", controls.speed_z);
+            ImGui::Text("Turn rate: %.3f degrees / screen unit", controls.turn_rate);
+            ImGui::Text("Roll rate: %.3f degrees / second", controls.roll_rate);
+        }
     }
     //--- end FreeControls implementation
     //--- start FPSControls implementation
@@ -264,7 +286,21 @@ namespace open_sea::controls {
      * \brief Show ImGui debug information for this control
      */
     void FPSControls::showDebug() {
-        //TODO
+        ImGui::Text("Subject: %s", subject.str().c_str());
+        ImGui::Text("Pitch: %.3f degrees", pitch);
+
+        if (ImGui::CollapsingHeader("Bindings")) {
+            ImGui::Text("Forward: %s", controls.forward.str().c_str());
+            ImGui::Text("Backward: %s", controls.backward.str().c_str());
+            ImGui::Text("Left: %s", controls.left.str().c_str());
+            ImGui::Text("Right: %s", controls.right.str().c_str());
+        }
+
+        if (ImGui::CollapsingHeader("Factors")) {
+            ImGui::Text("Speed X: %.3f units / second", controls.speed_x);
+            ImGui::Text("Speed Z: %.3f units / second", controls.speed_z);
+            ImGui::Text("Turn rate: %.3f degrees / screen unit", controls.turn_rate);
+        }
     }
     //--- end FreeControls implementation
     //--- start TopDownControls implementation
@@ -359,7 +395,22 @@ namespace open_sea::controls {
      * \brief Show ImGui debug information for this control
      */
     void TopDownControls::showDebug() {
-        //TODO
+        ImGui::Text("Subject: %s", subject.str().c_str());
+
+        if (ImGui::CollapsingHeader("Bindings")) {
+            ImGui::Text("Left: %s", controls.left.str().c_str());
+            ImGui::Text("Right: %s", controls.right.str().c_str());
+            ImGui::Text("Up: %s", controls.up.str().c_str());
+            ImGui::Text("Down: %s", controls.down.str().c_str());
+            ImGui::Text("Clockwise roll: %s", controls.clockwise.str().c_str());
+            ImGui::Text("Counter-clockwise roll: %s", controls.counter_clockwise.str().c_str());
+        }
+
+        if (ImGui::CollapsingHeader("Factors")) {
+            ImGui::Text("Speed X: %.3f units / second", controls.speed_x);
+            ImGui::Text("Speed Y: %.3f units / second", controls.speed_y);
+            ImGui::Text("Roll rate: %.3f degrees / second", controls.roll_rate);
+        }
     }
     //--- end TopDownControls implementation
 }

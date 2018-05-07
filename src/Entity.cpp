@@ -23,6 +23,18 @@ namespace open_sea::ecs {
         return Entity{.id = (generation << ENTITY_INDEX_BITS) + index};
     }
 
+    //--- start Entity implementation
+    /**
+     * \brief Get string representation of the entity as "index|generation"
+     *
+     * \return String representation
+     */
+    std::string Entity::str() const {
+        std::ostringstream result;
+        result << index() << "|" << generation();
+        return result.str();
+    }
+    //--- end Entity implementation
     //--- start EntityManager implementation
     /**
      * \brief Create a new entity

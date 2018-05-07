@@ -18,11 +18,37 @@ namespace open_sea::controls {
     constexpr glm::vec3 yaw_axis{0.0f, 1.0f, 0.0f};     // Positive y axis
     constexpr glm::vec3 roll_axis{0.0f, 0.0f, 1.0f};    // Positive z axis
 
-    //--- start FreeControls implementation
+    //--- start Controls implementation
+    /**
+     * \brief Set a new subject for this control
+     *
+     * \param newSubject New subject
+     */
+    void Controls::setSubject(ecs::Entity newSubject) {
+        subject = newSubject;
+    }
+
+    /**
+     * \brief Get current subject of this control
+     *
+     * \return Current subject
+     */
+    ecs::Entity Controls::getSubject() const {
+        return subject;
+    }
+
+    /**
+     * \brief Show ImGui debug information for this control
+     */
+    void Controls::showDebug() {
+        ImGui::Text("Subject: %s", subject.str().c_str());
+    }
+    //--- end Controls implementation
+    //--- start Free implementation
     /**
      * \brief Transform the subject according to input
      */
-    void FreeControls::transform() {
+    void Free::transform() {
         // Update position
         glm::vec3 global_translate{};
         {
@@ -30,17 +56,17 @@ namespace open_sea::controls {
             glm::vec3 local{};
 
             // Gather input
-            if (input::is_held(controls.left))
+            if (input::is_held(config.left))
                 local.x += -1;
-            if (input::is_held(controls.right))
+            if (input::is_held(config.right))
                 local.x += 1;
-            if (input::is_held(controls.forward))
+            if (input::is_held(config.forward))
                 local.z += -1;
-            if (input::is_held(controls.backward))
+            if (input::is_held(config.backward))
                 local.z += 1;
-            if (input::is_held(controls.up))
+            if (input::is_held(config.up))
                 local.y += 1;
-            if (input::is_held(controls.down))
+            if (input::is_held(config.down))
                 local.y += -1;
 
             // Normalise
@@ -50,16 +76,16 @@ namespace open_sea::controls {
 
             // Transform and apply
             global_translate = glm::rotate(transformMgr->data.orientation[index], local);
-            global_translate.x *= controls.speed_x;
-            global_translate.y *= controls.speed_y;
-            global_translate.z *= controls.speed_z;
+            global_translate.x *= config.speed_x;
+            global_translate.y *= config.speed_y;
+            global_translate.z *= config.speed_z;
             global_translate *= time::get_delta();
             transformMgr->translate(&index, &global_translate, 1);
         }
 
         // Update rotation
         glm::quat rotation{};
-        if (input::is_held(controls.turn)) {
+        if (input::is_held(config.turn)) {
             // Ensure cursor is disabled
             if (glfwGetInputMode(window::window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED)
                 glfwSetInputMode(window::window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -71,17 +97,17 @@ namespace open_sea::controls {
             glm::vec2 cursor_delta = input::cursor_delta();
 
             // Positive pitch is up
-            float pitch = cursor_delta.y * (- controls.turn_rate);
+            float pitch = cursor_delta.y * (- config.turn_rate);
 
             // Positive yaw is left
-            float yaw = cursor_delta.x * (- controls.turn_rate);
+            float yaw = cursor_delta.x * (- config.turn_rate);
 
             // Positive roll is counter clockwise
             float roll = 0.0f;
-            if (input::is_held(controls.clockwise))
-                roll += controls.roll_rate;
-            if (input::is_held(controls.counter_clockwise))
-                roll -= controls.roll_rate;
+            if (input::is_held(config.clockwise))
+                roll += config.roll_rate;
+            if (input::is_held(config.counter_clockwise))
+                roll -= config.roll_rate;
             roll *= time::get_delta();
 
             // Compute transformation quaternion and transform
@@ -109,55 +135,37 @@ namespace open_sea::controls {
     }
 
     /**
-     * \brief Set a new subject for this control
-     *
-     * \param newSubject New subject
-     */
-    void FreeControls::setSubject(ecs::Entity newSubject) {
-        subject = newSubject;
-    }
-
-    /**
-     * \brief Get current subject of this control
-     *
-     * \return Current subject
-     */
-    ecs::Entity FreeControls::getSubject() {
-        return subject;
-    }
-
-    /**
      * \brief Show ImGui debug information for this control
      */
-    void FreeControls::showDebug() {
-        ImGui::Text("Subject: %s", subject.str().c_str());
+    void Free::showDebug() {
+        Controls::showDebug();
 
         if (ImGui::CollapsingHeader("Bindings")) {
-            ImGui::Text("Forward: %s", controls.forward.str().c_str());
-            ImGui::Text("Backward: %s", controls.backward.str().c_str());
-            ImGui::Text("Left: %s", controls.left.str().c_str());
-            ImGui::Text("Right: %s", controls.right.str().c_str());
-            ImGui::Text("Up: %s", controls.up.str().c_str());
-            ImGui::Text("Down: %s", controls.down.str().c_str());
-            ImGui::Text("Clockwise roll: %s", controls.clockwise.str().c_str());
-            ImGui::Text("Counter-clockwise roll: %s", controls.counter_clockwise.str().c_str());
-            ImGui::Text("Turn: %s", controls.turn.str().c_str());
+            ImGui::Text("Forward: %s", config.forward.str().c_str());
+            ImGui::Text("Backward: %s", config.backward.str().c_str());
+            ImGui::Text("Left: %s", config.left.str().c_str());
+            ImGui::Text("Right: %s", config.right.str().c_str());
+            ImGui::Text("Up: %s", config.up.str().c_str());
+            ImGui::Text("Down: %s", config.down.str().c_str());
+            ImGui::Text("Clockwise roll: %s", config.clockwise.str().c_str());
+            ImGui::Text("Counter-clockwise roll: %s", config.counter_clockwise.str().c_str());
+            ImGui::Text("Turn: %s", config.turn.str().c_str());
         }
 
         if (ImGui::CollapsingHeader("Factors")) {
-            ImGui::Text("Speed X: %.3f units / second", controls.speed_x);
-            ImGui::Text("Speed Y: %.3f units / second", controls.speed_y);
-            ImGui::Text("Speed Z: %.3f units / second", controls.speed_z);
-            ImGui::Text("Turn rate: %.3f degrees / screen unit", controls.turn_rate);
-            ImGui::Text("Roll rate: %.3f degrees / second", controls.roll_rate);
+            ImGui::Text("Speed X: %.3f units / second", config.speed_x);
+            ImGui::Text("Speed Y: %.3f units / second", config.speed_y);
+            ImGui::Text("Speed Z: %.3f units / second", config.speed_z);
+            ImGui::Text("Turn rate: %.3f degrees / screen unit", config.turn_rate);
+            ImGui::Text("Roll rate: %.3f degrees / second", config.roll_rate);
         }
     }
-    //--- end FreeControls implementation
-    //--- start FPSControls implementation
+    //--- end Free implementation
+    //--- start FPS implementation
     /**
      * \brief Transform the subject according to input
      */
-    void FPSControls::transform() {
+    void FPS::transform() {
         // Update position
         glm::vec3 global_translate{};
         {
@@ -165,13 +173,13 @@ namespace open_sea::controls {
             glm::vec3 local{};
 
             // Gather input
-            if (input::is_held(controls.left))
+            if (input::is_held(config.left))
                 local.x += -1;
-            if (input::is_held(controls.right))
+            if (input::is_held(config.right))
                 local.x += 1;
-            if (input::is_held(controls.forward))
+            if (input::is_held(config.forward))
                 local.z += -1;
-            if (input::is_held(controls.backward))
+            if (input::is_held(config.backward))
                 local.z += 1;
 
             // Transform
@@ -186,8 +194,8 @@ namespace open_sea::controls {
                 global_translate /= l;
 
             // Scale by speed and delta time
-            global_translate.x *= controls.speed_x;
-            global_translate.z *= controls.speed_z;
+            global_translate.x *= config.speed_x;
+            global_translate.z *= config.speed_z;
             global_translate *= time::get_delta();
 
             // Apply
@@ -208,11 +216,11 @@ namespace open_sea::controls {
             glm::vec2 cursor_delta = input::cursor_delta();
 
             // Positive pitch is up
-            float pitch = cursor_delta.y * (- controls.turn_rate);
+            float pitch = cursor_delta.y * (- config.turn_rate);
             float newPitch = pitch + this->pitch;
 
             // Positive yaw is left
-            float yaw = cursor_delta.x * (/*-*/ controls.turn_rate);
+            float yaw = cursor_delta.x * (/*-*/ config.turn_rate);
 
             // Compute transformation quaternion and transform
             if (pitch != 0 || yaw != 0) {
@@ -245,15 +253,15 @@ namespace open_sea::controls {
      *
      * \param newSubject New subject
      */
-    void FPSControls::setSubject(ecs::Entity newSubject) {
-        subject = newSubject;
+    void FPS::setSubject(ecs::Entity newSubject) {
+        Controls::setSubject(newSubject);
         updatePitch();
     }
 
     /**
      * \brief Update pitch tracker with value from subject transformation
      */
-    void FPSControls::updatePitch() {
+    void FPS::updatePitch() {
         // Get the subject's forward vector
         int index = transformMgr->lookup(subject);
         glm::quat orientation = transformMgr->data.orientation[index];
@@ -274,40 +282,31 @@ namespace open_sea::controls {
     }
 
     /**
-     * \brief Get current subject of this control
-     *
-     * \return Current subject
-     */
-    ecs::Entity FPSControls::getSubject() {
-        return subject;
-    }
-
-    /**
      * \brief Show ImGui debug information for this control
      */
-    void FPSControls::showDebug() {
-        ImGui::Text("Subject: %s", subject.str().c_str());
+    void FPS::showDebug() {
+        Controls::showDebug();
         ImGui::Text("Pitch: %.3f degrees", pitch);
 
         if (ImGui::CollapsingHeader("Bindings")) {
-            ImGui::Text("Forward: %s", controls.forward.str().c_str());
-            ImGui::Text("Backward: %s", controls.backward.str().c_str());
-            ImGui::Text("Left: %s", controls.left.str().c_str());
-            ImGui::Text("Right: %s", controls.right.str().c_str());
+            ImGui::Text("Forward: %s", config.forward.str().c_str());
+            ImGui::Text("Backward: %s", config.backward.str().c_str());
+            ImGui::Text("Left: %s", config.left.str().c_str());
+            ImGui::Text("Right: %s", config.right.str().c_str());
         }
 
         if (ImGui::CollapsingHeader("Factors")) {
-            ImGui::Text("Speed X: %.3f units / second", controls.speed_x);
-            ImGui::Text("Speed Z: %.3f units / second", controls.speed_z);
-            ImGui::Text("Turn rate: %.3f degrees / screen unit", controls.turn_rate);
+            ImGui::Text("Speed X: %.3f units / second", config.speed_x);
+            ImGui::Text("Speed Z: %.3f units / second", config.speed_z);
+            ImGui::Text("Turn rate: %.3f degrees / screen unit", config.turn_rate);
         }
     }
-    //--- end FreeControls implementation
-    //--- start TopDownControls implementation
+    //--- end FPS implementation
+    //--- start TopDown implementation
     /**
      * \brief Transform the subject according to input
      */
-    void TopDownControls::transform() {
+    void TopDown::transform() {
         // Update position
         glm::vec3 global_translate{};
         {
@@ -315,13 +314,13 @@ namespace open_sea::controls {
             glm::vec3 local{};
 
             // Gather input
-            if (input::is_held(controls.left))
+            if (input::is_held(config.left))
                 local.x += -1;
-            if (input::is_held(controls.right))
+            if (input::is_held(config.right))
                 local.x += 1;
-            if (input::is_held(controls.up))
+            if (input::is_held(config.up))
                 local.y += 1;
-            if (input::is_held(controls.down))
+            if (input::is_held(config.down))
                 local.y += -1;
 
             // Transform
@@ -336,8 +335,8 @@ namespace open_sea::controls {
                 global_translate /= l;
 
             // Scale by speed and delta time
-            global_translate.x *= controls.speed_x;
-            global_translate.y *= controls.speed_y;
+            global_translate.x *= config.speed_x;
+            global_translate.y *= config.speed_y;
             global_translate *= time::get_delta();
 
             // Apply
@@ -352,10 +351,10 @@ namespace open_sea::controls {
 
             // Positive roll is counter clockwise
             float roll = 0.0f;
-            if (input::is_held(controls.clockwise))
-                roll += controls.roll_rate;
-            if (input::is_held(controls.counter_clockwise))
-                roll -= controls.roll_rate;
+            if (input::is_held(config.clockwise))
+                roll += config.roll_rate;
+            if (input::is_held(config.counter_clockwise))
+                roll -= config.roll_rate;
             roll *= time::get_delta();
 
             // Compute transformation quaternion and transform
@@ -374,43 +373,25 @@ namespace open_sea::controls {
     }
 
     /**
-     * \brief Set a new subject for this control
-     *
-     * \param newSubject New subject
-     */
-    void TopDownControls::setSubject(ecs::Entity newSubject) {
-        subject = newSubject;
-    }
-
-    /**
-     * \brief Get current subject of this control
-     *
-     * \return Current subject
-     */
-    ecs::Entity TopDownControls::getSubject() {
-        return subject;
-    }
-
-    /**
      * \brief Show ImGui debug information for this control
      */
-    void TopDownControls::showDebug() {
-        ImGui::Text("Subject: %s", subject.str().c_str());
+    void TopDown::showDebug() {
+        Controls::showDebug();
 
         if (ImGui::CollapsingHeader("Bindings")) {
-            ImGui::Text("Left: %s", controls.left.str().c_str());
-            ImGui::Text("Right: %s", controls.right.str().c_str());
-            ImGui::Text("Up: %s", controls.up.str().c_str());
-            ImGui::Text("Down: %s", controls.down.str().c_str());
-            ImGui::Text("Clockwise roll: %s", controls.clockwise.str().c_str());
-            ImGui::Text("Counter-clockwise roll: %s", controls.counter_clockwise.str().c_str());
+            ImGui::Text("Left: %s", config.left.str().c_str());
+            ImGui::Text("Right: %s", config.right.str().c_str());
+            ImGui::Text("Up: %s", config.up.str().c_str());
+            ImGui::Text("Down: %s", config.down.str().c_str());
+            ImGui::Text("Clockwise roll: %s", config.clockwise.str().c_str());
+            ImGui::Text("Counter-clockwise roll: %s", config.counter_clockwise.str().c_str());
         }
 
         if (ImGui::CollapsingHeader("Factors")) {
-            ImGui::Text("Speed X: %.3f units / second", controls.speed_x);
-            ImGui::Text("Speed Y: %.3f units / second", controls.speed_y);
-            ImGui::Text("Roll rate: %.3f degrees / second", controls.roll_rate);
+            ImGui::Text("Speed X: %.3f units / second", config.speed_x);
+            ImGui::Text("Speed Y: %.3f units / second", config.speed_y);
+            ImGui::Text("Roll rate: %.3f degrees / second", config.roll_rate);
         }
     }
-    //--- end TopDownControls implementation
+    //--- end TopDown implementation
 }

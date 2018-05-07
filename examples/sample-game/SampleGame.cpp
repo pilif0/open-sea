@@ -207,8 +207,8 @@ int main() {
     // Prepare camera follow system
     std::unique_ptr<ecs::CameraFollow> camera_follow = std::make_unique<ecs::CameraFollow>(trans_comp_manager, camera_comp_manager);
     
-    // Prepare free controls for the camera guide
-    controls::FreeControls::Controls controls_config {
+    // Prepare controls for the camera guide
+    controls::Free::Config controls_config {
             .forward = input::unified_input::keyboard(GLFW_KEY_W),
             .backward = input::unified_input::keyboard(GLFW_KEY_S),
             .left = input::unified_input::keyboard(GLFW_KEY_A),
@@ -224,7 +224,7 @@ int main() {
             .turn_rate = 0.3f,
             .roll_rate = 30.0f
     };
-    std::unique_ptr<controls::FreeControls> controls = std::make_unique<controls::FreeControls>(trans_comp_manager, camera_guide, controls_config);
+    std::unique_ptr<controls::Controls> controls = std::make_unique<controls::Free>(trans_comp_manager, camera_guide, controls_config);
 
     // Set background to black
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);

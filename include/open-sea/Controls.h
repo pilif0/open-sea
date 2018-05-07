@@ -14,6 +14,24 @@
 
 namespace open_sea::controls {
 
+    /** \class Controls
+     * \brief Abstract base class for all controls
+     */
+    class Controls {
+        protected:
+            ecs::Entity subject;
+
+        public:
+            Controls(ecs::Entity s) : subject(s) {}
+            virtual void transform() = 0;
+            virtual void setSubject(ecs::Entity newSubject);
+            virtual ecs::Entity getSubject() const;
+
+            virtual void showDebug();
+
+            virtual ~Controls() {}
+    };
+
     /** \class FreeControls
      * \brief Controls an entity using free controls
      * Controls an entity using free controls.
@@ -23,16 +41,12 @@ namespace open_sea::controls {
      * Orientation control enabled by a key (as it requires the cursor to be disabled) - this includes roll control.
      * Only one entity should be controlled at one time.
      */
-    class FreeControls {
-        private:
-            //! Entity being controlled
-            ecs::Entity subject;
-
+    class Free : public Controls {
         public:
             //! Transformation component manager
             std::shared_ptr<ecs::TransformationComponent> transformMgr{};
             //! Key bindings and factors
-            struct Controls {
+            struct Config {
                 // Key bindings
                 input::unified_input forward;
                 input::unified_input backward;
@@ -58,20 +72,18 @@ namespace open_sea::controls {
                 float turn_rate;    //TODO: should probably be independent of the screen size (deg per screen fraction?)
                 //! Degrees per second
                 float roll_rate;
-            } controls;
+            } config;
 
-            //! Constuct the controls assigning it a pointer to the relevant transformation component manager, subject and controls.
-            FreeControls(std::shared_ptr<ecs::TransformationComponent> t, ecs::Entity s, Controls c)
-                    : transformMgr(std::move(t)), subject(s), controls(c) {}
+            //! Constuct the controls assigning it a pointer to the relevant transformation component manager, subject and config.
+            Free(std::shared_ptr<ecs::TransformationComponent> t, ecs::Entity s, Config c)
+                    : transformMgr(std::move(t)), config(c), Controls(s) {}
 
-            void transform();
-            void setSubject(ecs::Entity newSubject);
-            ecs::Entity getSubject();
+            void transform() override;
 
-            void showDebug();
+            void showDebug() override;
     };
 
-    /** \class FPSControls
+    /** \class FPS
      * \brief Controls an entity using FPS controls
      * Controls an entity using FPS controls.
      * Position control in XZ plane without restriction through unified input.
@@ -81,19 +93,17 @@ namespace open_sea::controls {
      * Only one entity should be controlled at one time.
      */
     // Note: this still allows Y motion through external means, just not through this specific control
-    class FPSControls {
+    class FPS : public Controls {
         private:
             //! Current subject's pitch (in degrees)
             float pitch;
-            //! Entity being controlled
-            ecs::Entity subject;
             void updatePitch();
 
         public:
             //! Transformation component manager
             std::shared_ptr<ecs::TransformationComponent> transformMgr{};
             //! Key bindings and factors
-            struct Controls {
+            struct Config {
                 // Key bindings
                 input::unified_input forward;
                 input::unified_input backward;
@@ -107,21 +117,20 @@ namespace open_sea::controls {
                 float speed_z;
                 //! Degrees turned per screen unit of mouse movement
                 float turn_rate;    //TODO: should probably be independent of the screen size (deg per screen fraction?)
-            } controls;
+            } config;
 
 
-            //! Constuct the controls assigning it a pointer to the relevant transformation component manager, subject and controls.
-            FPSControls(std::shared_ptr<ecs::TransformationComponent> t, ecs::Entity s, Controls c)
-                    : transformMgr(std::move(t)), subject(s), controls(c), pitch(0.0f) { updatePitch(); }
+            //! Constuct the controls assigning it a pointer to the relevant transformation component manager, subject and config.
+            FPS(std::shared_ptr<ecs::TransformationComponent> t, ecs::Entity s, Config c)
+                    : transformMgr(std::move(t)), config(c), pitch(0.0f), Controls(s) { updatePitch(); }
 
-            void transform();
-            void setSubject(ecs::Entity newSubject);
-            ecs::Entity getSubject();
+            void transform() override;
+            void setSubject(ecs::Entity newSubject) override;
 
-            void showDebug();
+            void showDebug() override;
     };
 
-    /** \class TopDownControls
+    /** \class TopDown
      * \brief Controls an entity using top down controls
      * Controls an entity using top down controls.
      * Position control in XY plane without restriction through unified input.
@@ -129,16 +138,12 @@ namespace open_sea::controls {
      * No control over yaw, pitch and movement along the Z axis.
      * Only one entity should be controlled at one time.
      */
-    class TopDownControls {
-        private:
-            //! Entity being controlled
-            ecs::Entity subject;
-
+    class TopDown : public Controls {
         public:
             //! Transformation component manager
             std::shared_ptr<ecs::TransformationComponent> transformMgr{};
             //! Key bindings and factors
-            struct Controls {
+            struct Config {
                 // Key bindings
                 input::unified_input up;
                 input::unified_input down;
@@ -154,16 +159,14 @@ namespace open_sea::controls {
                 float speed_y;
                 //! Degrees per second
                 float roll_rate;
-            } controls;
+            } config;
 
 
-            //! Constuct the controls assigning it a pointer to the relevant transformation component manager, subject and controls.
-            TopDownControls(std::shared_ptr<ecs::TransformationComponent> t, ecs::Entity s, Controls c)
-                    : transformMgr(std::move(t)), subject(s), controls(c) {}
+            //! Constuct the controls assigning it a pointer to the relevant transformation component manager, subject and config.
+            TopDown(std::shared_ptr<ecs::TransformationComponent> t, ecs::Entity s, Config c)
+                    : transformMgr(std::move(t)), config(c), Controls(s) {}
 
             void transform();
-            void setSubject(ecs::Entity newSubject);
-            ecs::Entity getSubject();
 
             void showDebug();
     };

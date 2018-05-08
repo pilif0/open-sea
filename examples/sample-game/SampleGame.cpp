@@ -217,7 +217,6 @@ int main() {
             .down = input::unified_input::keyboard(GLFW_KEY_LEFT_CONTROL),
             .clockwise = input::unified_input::keyboard(GLFW_KEY_Q),
             .counter_clockwise = input::unified_input::keyboard(GLFW_KEY_E),
-            .turn = input::unified_input::mouse(GLFW_MOUSE_BUTTON_RIGHT),
             .speed_x = 150.0f,
             .speed_z = 150.0f,
             .speed_y = 150.0f,

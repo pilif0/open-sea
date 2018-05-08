@@ -38,7 +38,6 @@ namespace open_sea::controls {
      * No restrictions on orientation or position control.
      * Unified input control over X, Y, Z position and roll.
      * Mouse control over pitch and yaw.
-     * Orientation control enabled by a key (as it requires the cursor to be disabled) - this includes roll control.
      * Only one entity should be controlled at one time.
      */
     class Free : public Controls {
@@ -58,8 +57,6 @@ namespace open_sea::controls {
                 input::unified_input clockwise;
                 //! Counter clockwise roll key
                 input::unified_input counter_clockwise;
-                //! Key that turns orientation control on when held
-                input::unified_input turn;
 
                 // Factors
                 //! Left-right (strafing) speed in (units / second)
@@ -69,7 +66,7 @@ namespace open_sea::controls {
                 //! Up-down speed (units / second)
                 float speed_y;
                 //! Degrees turned per screen unit of mouse movement
-                float turn_rate;    //TODO: should probably be independent of the screen size (deg per screen fraction?)
+                float turn_rate;
                 //! Degrees per second
                 float roll_rate;
             } config;
@@ -116,7 +113,7 @@ namespace open_sea::controls {
                 //! Forward-backward speed (units / second)
                 float speed_z;
                 //! Degrees turned per screen unit of mouse movement
-                float turn_rate;    //TODO: should probably be independent of the screen size (deg per screen fraction?)
+                float turn_rate;
             } config;
 
 

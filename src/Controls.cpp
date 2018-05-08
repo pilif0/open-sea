@@ -85,7 +85,7 @@ namespace open_sea::controls {
 
         // Update rotation
         glm::quat rotation{};
-        if (input::is_held(config.turn)) {
+        {
             // Ensure cursor is disabled
             if (glfwGetInputMode(window::window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED)
                 glfwSetInputMode(window::window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -127,10 +127,6 @@ namespace open_sea::controls {
                 // Apply
                 transformMgr->rotate(&index, &rotation, 1);
             }
-        } else {
-            // Ensure cursor is not disabled
-            if (glfwGetInputMode(window::window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED)
-                glfwSetInputMode(window::window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         }
     }
 
@@ -149,7 +145,6 @@ namespace open_sea::controls {
             ImGui::Text("Down: %s", config.down.str().c_str());
             ImGui::Text("Clockwise roll: %s", config.clockwise.str().c_str());
             ImGui::Text("Counter-clockwise roll: %s", config.counter_clockwise.str().c_str());
-            ImGui::Text("Turn: %s", config.turn.str().c_str());
         }
 
         if (ImGui::CollapsingHeader("Factors")) {

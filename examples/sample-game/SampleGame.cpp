@@ -226,6 +226,15 @@ int main() {
     };
     std::unique_ptr<controls::Controls> controls = std::make_unique<controls::Free>(trans_comp_manager, camera_guide, controls_config);
 
+    // Add suspend controls button
+    bool suspend_controls = false;
+    const input::unified_input suspend_binding = input::unified_input::keyboard(GLFW_KEY_F1);
+    input::connect_unified([&suspend_controls, suspend_binding](input::unified_input i, input::state a){
+        if (i == suspend_binding && a == input::press) {
+            suspend_controls = !suspend_controls;
+        }
+    });
+
     // Set background to black
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -246,7 +255,10 @@ int main() {
         input::update_cursor_delta();
 
         // Update camera guide controls
-        controls->transform();
+        if (!suspend_controls)
+            controls->transform();
+        else
+            glfwSetInputMode(window::window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
         // Update cameras based on associated guides
         camera_follow->transform();
@@ -295,6 +307,7 @@ int main() {
                 ImGui::Begin("Test environment controls");
 
                 ImGui::Checkbox("Use perspective camera", &use_per_cam);
+                ImGui::Checkbox("Suspend controls", &suspend_controls);
 
                 ImGui::Text("Test camera:");
                 if (use_per_cam)

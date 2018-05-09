@@ -720,8 +720,15 @@ namespace open_sea::ecs {
      * \param i Index
      */
     void TransformationComponent::updateMatrix(int i) {
+        // Retreive parent matrix
+        glm::mat4 parent;
+        if (data.parent[i] == -1)
+            parent = glm::mat4(1.0f);
+        else
+            parent = data.matrix[data.parent[i]];
+
         // Update own matrix
-        data.matrix[i] = data.matrix[data.parent[i]] * transformation(data.position[i], data.orientation[i], data.scale[i]);
+        data.matrix[i] = parent * transformation(data.position[i], data.orientation[i], data.scale[i]);
 
         //Update the children
         int child = data.firstChild[i];

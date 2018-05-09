@@ -1047,22 +1047,21 @@ namespace open_sea::ecs {
     }
 
     /**
-     * \brief Look up index of the entity
+     * \brief Look up first index of the entity
      *
      * \param e Entity to look up
-     * \return Index of the entity in the data arrays, or \c -1 if the entity was not found
+     * \return First index of the entity in the data arrays, or \c -1 if the entity was not found
      */
     int CameraComponent::lookup(Entity e) const {
-        try {
-            return map.at(e);
-        } catch (std::out_of_range &e) {
-            return -1;
-        }
+        Entity *d = data.entity;
+        for (int i = 0; i < data.n; i++, d++)
+            if (e == *d) return i;
+        return -1;
     }
 
     /**
-     * \brief Look up indices of the entities
-     * Look up indices of the entities in the data arrays and write them into the destination.
+     * \brief Look up first indices of the entities
+     * Look up first indices of the entities in the data arrays and write them into the destination.
      * Indices are written in the same order as the entities.
      * Index of \c -1 means the entity was not found.
      *
@@ -1073,12 +1072,7 @@ namespace open_sea::ecs {
     void CameraComponent::lookup(Entity *e, int *dest, unsigned count) const {
         // For each entity retrieve its position from the map
         for (unsigned i = 0; i < count; i++, e++, dest++) {
-            try {
-                *dest = map.at(*e);
-            } catch (std::out_of_range &e) {
-                // If not found, set to -1
-                *dest = -1;
-            }
+            *dest = lookup(*e);
         }
     }
 
@@ -1106,11 +1100,9 @@ namespace open_sea::ecs {
             // Write the data into the buffer
             *destE = *e;
             new (destC) std::shared_ptr<gl::Camera>(*c);
-            // TODO: make sure the deleter is called properly when destroying manager or this record
 
-            // Increment data count and add map entry for the new record
+            // Increment data count
             data.n++;
-            map[*e] = data.n - 1;
         }
     }
 
@@ -1168,8 +1160,6 @@ namespace open_sea::ecs {
         data.camera[lastIdx].~shared_ptr<gl::Camera>();
 
         // Update data counts and index map
-        map.erase(e);
-        map[last] = i;
         data.n--;
     }
 

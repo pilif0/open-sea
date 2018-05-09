@@ -166,6 +166,7 @@ namespace open_sea::ecs {
      * Each camera should have at most one entity associated with it (otherwise following it might be unpredictable).
      * One entity can have multiple associated cameras.
      */
+    //TODO: maybe add a method to retrieve all indices of an entity instead of just first
     class CameraComponent {
         private:
             //! Logger for this manager
@@ -197,10 +198,8 @@ namespace open_sea::ecs {
             std::allocator<unsigned char> ALLOCATOR;
 
             // Access
-            //! Map of entities to data indices
-            std::unordered_map<Entity, int> map;
-            int lookup(Entity e) const;     // TODO handle multiple cameras
-            void lookup(Entity *e, int *dest, unsigned count) const;    //TODO handle multiple cameras
+            int lookup(Entity e) const;
+            void lookup(Entity *e, int *dest, unsigned count) const;
             void add(Entity *e, std::shared_ptr<gl::Camera> *c, unsigned count);
             void set(int *i, std::shared_ptr<gl::Camera> *c, unsigned count);
 

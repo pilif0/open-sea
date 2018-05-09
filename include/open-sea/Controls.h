@@ -38,6 +38,7 @@ namespace open_sea::controls {
      * No restrictions on orientation or position control.
      * Unified input control over X, Y, Z position and roll.
      * Mouse control over pitch and yaw.
+     * All control is from the perspective of the entity.
      * Only one entity should be controlled at one time.
      */
     class Free : public Controls {
@@ -47,31 +48,37 @@ namespace open_sea::controls {
             //! Key bindings and factors
             struct Config {
                 // Key bindings
+                //! Negative Z
                 input::unified_input forward;
+                //! Positive Z
                 input::unified_input backward;
+                //! Negative X
                 input::unified_input left;
+                //! Positive X
                 input::unified_input right;
+                //! Positive Y
                 input::unified_input up;
+                //! Negative Y
                 input::unified_input down;
-                //! Clockwise roll key
+                //! Negatvie around positive Z
                 input::unified_input clockwise;
-                //! Counter clockwise roll key
+                //! Positive around positive Z
                 input::unified_input counter_clockwise;
 
                 // Factors
-                //! Left-right (strafing) speed in (units / second)
+                //! Left-right (strafing) speed (units / second)
                 float speed_x;
                 //! Forward-backward speed (units / second)
                 float speed_z;
                 //! Up-down speed (units / second)
                 float speed_y;
-                //! Degrees turned per screen unit of mouse movement
+                //! Turn rate (degree / screen unit)
                 float turn_rate;
-                //! Degrees per second
+                //! Roll rate (degree / second)
                 float roll_rate;
             } config;
 
-            //! Constuct the controls assigning it a pointer to the relevant transformation component manager, subject and config.
+            //! Constuct the controls assigning it a pointer to the relevant transformation component manager, subject and config
             Free(std::shared_ptr<ecs::TransformationComponent> t, ecs::Entity s, Config c)
                     : transformMgr(std::move(t)), config(c), Controls(s) {}
 
@@ -83,8 +90,8 @@ namespace open_sea::controls {
     /** \class FPS
      * \brief Controls an entity using FPS controls
      * Controls an entity using FPS controls.
-     * Position control in XZ plane without restriction through unified input.
-     * Rotation control of yaw around global Y axis and of pitch within [+90,-90] degrees through mouse input.
+     * Position control in XZ plane (from the perspective of the entity) without restriction through unified input.
+     * Rotation control of yaw around parent's Y axis and of pitch within [+90,-90] degrees through mouse input.
      * No control over roll and movement along the Y axis.
      * Orientation control always on (disables cursor).
      * Only one entity should be controlled at one time.
@@ -102,22 +109,26 @@ namespace open_sea::controls {
             //! Key bindings and factors
             struct Config {
                 // Key bindings
+                //! Negative Z
                 input::unified_input forward;
+                //! Positive Z
                 input::unified_input backward;
+                //! Negative X
                 input::unified_input left;
+                //! Positive X
                 input::unified_input right;
 
                 // Factors
-                //! Left-right (strafing) speed in (units / second)
+                //! Left-right (strafing) speed (units / second)
                 float speed_x;
                 //! Forward-backward speed (units / second)
                 float speed_z;
-                //! Degrees turned per screen unit of mouse movement
+                //! Turn rate (degree / screen unit)
                 float turn_rate;
             } config;
 
 
-            //! Constuct the controls assigning it a pointer to the relevant transformation component manager, subject and config.
+            //! Constuct the controls assigning it a pointer to the relevant transformation component manager, subject and config
             FPS(std::shared_ptr<ecs::TransformationComponent> t, ecs::Entity s, Config c)
                     : transformMgr(std::move(t)), config(c), pitch(0.0f), Controls(s) { updatePitch(); }
 
@@ -130,8 +141,8 @@ namespace open_sea::controls {
     /** \class TopDown
      * \brief Controls an entity using top down controls
      * Controls an entity using top down controls.
-     * Position control in XY plane without restriction through unified input.
-     * Rotation control of roll around global Z axis through unified input.
+     * Position control in XY plane (from the perspective of the entity) without restriction through unified input.
+     * Rotation control of roll around entity's Z axis through unified input.
      * No control over yaw, pitch and movement along the Z axis.
      * Only one entity should be controlled at one time.
      */
@@ -142,30 +153,36 @@ namespace open_sea::controls {
             //! Key bindings and factors
             struct Config {
                 // Key bindings
+                //! Positive Y
                 input::unified_input up;
+                //! Negative Y
                 input::unified_input down;
+                //! Negative X
                 input::unified_input left;
+                //! Positive X
                 input::unified_input right;
+                //! Negative around positive Z
                 input::unified_input clockwise;
+                //! Positive around positive Z
                 input::unified_input counter_clockwise;
 
                 // Factors
-                //! Left-right (strafing) speed in (units / second)
+                //! Left-right (strafing) speed (units / second)
                 float speed_x;
                 //! Forward-backward speed (units / second)
                 float speed_y;
-                //! Degrees per second
+                //! Roll rate (degree / second)
                 float roll_rate;
             } config;
 
 
-            //! Constuct the controls assigning it a pointer to the relevant transformation component manager, subject and config.
+            //! Constuct the controls assigning it a pointer to the relevant transformation component manager, subject and config
             TopDown(std::shared_ptr<ecs::TransformationComponent> t, ecs::Entity s, Config c)
                     : transformMgr(std::move(t)), config(c), Controls(s) {}
 
-            void transform();
+            void transform() override;
 
-            void showDebug();
+            void showDebug() override;
     };
 
 };

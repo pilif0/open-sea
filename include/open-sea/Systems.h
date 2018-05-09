@@ -22,12 +22,6 @@ namespace open_sea::ecs {
             //! Camera component manager
             std::shared_ptr<ecs::CameraComponent> cameraMgr{};
 
-            //! Transformation from one entity
-            struct EntityData {
-                glm::vec3 position;
-                glm::quat orientation;
-            };
-
             //! Construct the system assigning it pointers to relevant component managers
             CameraFollow(std::shared_ptr<ecs::TransformationComponent> t, std::shared_ptr<ecs::CameraComponent> c)
                 : transformMgr(std::move(t)), cameraMgr(std::move(c)) {}

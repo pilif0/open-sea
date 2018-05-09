@@ -19,31 +19,15 @@ namespace open_sea::ecs {
         std::vector<int> indices(N);
         transformMgr->lookup(cameraMgr->data.entity, indices.data(), N);
 
-        // Construct transformation data for each entity
-        std::vector<EntityData> transformData(N);
-        int *i = indices.data();
-        EntityData *d = transformData.data();
-        for (int j = 0; j < N; j++, i++, d++) {
-            if (*i == -1) {
-                *d = EntityData{
-                        .position = glm::vec3{},
-                        .orientation = glm::quat()
-                };
-            } else {
-                *d = EntityData{
-                        .position = transformMgr->data.position[*i],
-                        .orientation = transformMgr->data.orientation[*i]
-                };
-            }
-        }
-
-        // Apply the transformations
+        // Apply transformation for each entity-camera pair
         std::shared_ptr<gl::Camera> *c = cameraMgr->data.camera;
-        d = transformData.data();
-        for (int j = 0; j < N; j++, c++, d++) {
-            //TODO: handle guide not being root
-            (*c)->setPosition(d->position);
-            (*c)->setRotation(d->orientation);
+        int *i = indices.data();
+        for (int j = 0; j < N; j++, i++, c++) {
+            if (*i == -1) {
+                (*c)->setTransformation(glm::mat4(1.0f));
+            } else {
+                (*c)->setTransformation(transformMgr->data.matrix[*i]);
+            }
         }
     }
 
@@ -69,31 +53,15 @@ namespace open_sea::ecs {
         std::vector<int> indices(count);
         transformMgr->lookup(entities.data(), indices.data(), count);
 
-        // Construct transformation data for each entity
-        std::vector<EntityData> transformData(count);
+        // Apply transformation for each entity-camera pair
+        std::shared_ptr<gl::Camera> *c = cameraMgr->data.camera;
         int *i = indices.data();
-        EntityData *d = transformData.data();
-        for (int j = 0; j < count; j++, i++, d++) {
+        for (int j = 0; j < count; j++, i++, c++) {
             if (*i == -1) {
-                *d = EntityData{
-                        .position = glm::vec3{},
-                        .orientation = glm::quat()
-                };
+                (*c)->setTransformation(glm::mat4(1.0f));
             } else {
-                *d = EntityData{
-                        .position = transformMgr->data.position[*i],
-                        .orientation = transformMgr->data.orientation[*i]
-                };
+                (*c)->setTransformation(transformMgr->data.matrix[*i]);
             }
-        }
-
-        // Apply the transformations
-        std::shared_ptr<gl::Camera> *c = cameras;
-        d = transformData.data();
-        for (int j = 0; j < count; j++, c++, d++) {
-            //TODO: handle guide not being root
-            (*c)->setPosition(d->position);
-            (*c)->setRotation(d->orientation);
         }
     }
     //--- endCameraFollow implementation

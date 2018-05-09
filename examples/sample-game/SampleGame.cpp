@@ -89,14 +89,12 @@ int main() {
     // Prepare test cameras
     std::shared_ptr<gl::Camera> test_camera_ort =
             std::make_shared<gl::OrthographicCamera>(
-                    glm::vec3{},
-                    glm::quat(),
+                    glm::mat4(1.0f),
                     glm::vec2{window_size.x, window_size.y},
                     0.1f, 1000.0f);
     std::shared_ptr<gl::Camera> test_camera_per =
             std::make_shared<gl::PerspectiveCamera>(
-                    glm::vec3{},
-                    glm::quat(),
+                    glm::mat4(1.0f),
                     glm::vec2{window_size.x, window_size.y},
                     0.1f, 1000.0f, 90.0f);
 

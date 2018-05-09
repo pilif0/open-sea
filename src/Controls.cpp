@@ -42,6 +42,8 @@ namespace open_sea::controls {
      */
     void Controls::showDebug() {
         ImGui::Text("Subject: %s", subject.str().c_str());
+        ImGui::Text("Last translate: %.3f, %.3f, %.3f", lastTranslate.x, lastTranslate.y, lastTranslate.z);
+        ImGui::Text("Last rotate: %.3f, %.3f, %.3f, %.3f", lastRotate.x, lastRotate.y, lastRotate.z, lastRotate.w);
     }
     //--- end Controls implementation
     //--- start Free implementation
@@ -50,12 +52,9 @@ namespace open_sea::controls {
      */
     void Free::transform() {
         // Update position
-        glm::vec3 global_translate{};
         {
-            int index = transformMgr->lookup(subject);
-            glm::vec3 local{};
-
             // Gather input
+            glm::vec3 local{};
             if (input::is_held(config.left))
                 local.x += -1;
             if (input::is_held(config.right))
@@ -69,22 +68,29 @@ namespace open_sea::controls {
             if (input::is_held(config.down))
                 local.y += -1;
 
-            // Normalise
+            // Only translate if needed
             float l = glm::length(local);
-            if (l != 0.0f && l != 1.0f)
-                local /= l;
+            if (l != 0) {
+                int index = transformMgr->lookup(subject);
 
-            // Transform and apply
-            global_translate = glm::rotate(transformMgr->data.orientation[index], local);
-            global_translate.x *= config.speed_x;
-            global_translate.y *= config.speed_y;
-            global_translate.z *= config.speed_z;
-            global_translate *= time::get_delta();
-            transformMgr->translate(&index, &global_translate, 1);
+                // Normalise
+                if (l != 0.0f && l != 1.0f)
+                    local /= l;
+
+                // Transform and apply
+                glm::vec3 global_translate = glm::rotate(transformMgr->data.orientation[index], local);
+                global_translate.x *= config.speed_x;
+                global_translate.y *= config.speed_y;
+                global_translate.z *= config.speed_z;
+                global_translate *= time::get_delta();
+                transformMgr->translate(&index, &global_translate, 1);
+                lastTranslate = global_translate;
+            } else {
+                lastTranslate = {};
+            }
         }
 
         // Update rotation
-        glm::quat rotation{};
         {
             // Ensure cursor is disabled
             if (glfwGetInputMode(window::window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED)
@@ -122,10 +128,13 @@ namespace open_sea::controls {
                 glm::quat pitchQ = glm::angleAxis(glm::radians(pitch), tr_pitch_ax);
                 glm::quat yawQ = glm::angleAxis(glm::radians(yaw), tr_yaw_ax);
                 glm::quat rollQ = glm::angleAxis(glm::radians(roll), tr_roll_ax);
-                rotation = rollQ * yawQ * pitchQ;
+                glm::quat rotation = rollQ * yawQ * pitchQ;
 
                 // Apply
                 transformMgr->rotate(&index, &rotation, 1);
+                lastRotate = rotation;
+            } else {
+                lastRotate = glm::quat();
             }
         }
     }
@@ -162,12 +171,9 @@ namespace open_sea::controls {
      */
     void FPS::transform() {
         // Update position
-        glm::vec3 global_translate{};
         {
-            int index = transformMgr->lookup(subject);
-            glm::vec3 local{};
-
             // Gather input
+            glm::vec3 local{};
             if (input::is_held(config.left))
                 local.x += -1;
             if (input::is_held(config.right))
@@ -177,28 +183,38 @@ namespace open_sea::controls {
             if (input::is_held(config.backward))
                 local.z += 1;
 
-            // Transform
-            global_translate = glm::rotate(transformMgr->data.orientation[index], local);
+            // Only translate if actually needed
+            if (glm::length(local) != 0) {
+                int index = transformMgr->lookup(subject);
 
-            // Lock to XZ plane
-            global_translate.y = 0;
+                // Transform
+                glm::vec3 global_translate = glm::rotate(transformMgr->data.orientation[index], local);
 
-            // Normalise
-            float l = glm::length(global_translate);
-            if (l != 0.0f && l != 1.0f)
-                global_translate /= l;
+                // Lock to XZ plane
+                global_translate.y = 0;
 
-            // Scale by speed and delta time
-            global_translate.x *= config.speed_x;
-            global_translate.z *= config.speed_z;
-            global_translate *= time::get_delta();
+                // Only translate if needed
+                float l = glm::length(global_translate);
+                if (l != 0) {
+                    // Normalise
+                    if (l != 1.0f)
+                        global_translate /= l;
 
-            // Apply
-            transformMgr->translate(&index, &global_translate, 1);
+                    // Scale by speed and delta time
+                    global_translate.x *= config.speed_x;
+                    global_translate.z *= config.speed_z;
+                    global_translate *= time::get_delta();
+
+                    // Apply
+                    transformMgr->translate(&index, &global_translate, 1);
+                    lastTranslate = global_translate;
+                }
+            } else {
+                lastTranslate = {};
+            }
         }
 
         // Update rotation
-        glm::quat rotation{};
         {
             // Ensure cursor is disabled
             if (glfwGetInputMode(window::window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED)
@@ -232,13 +248,17 @@ namespace open_sea::controls {
                 // Compute transformation
                 glm::quat pitchQ = glm::angleAxis(glm::radians(pitch), tr_pitch_ax);
                 glm::quat yawQ = glm::angleAxis(glm::radians(yaw), yaw_axis);
-                rotation = yawQ * pitchQ;
+                glm::quat rotation = yawQ * pitchQ;
 
                 // Apply
                 transformMgr->rotate(&index, &rotation, 1);
 
                 // Update stored pitch
                 this->pitch += pitch;
+
+                lastRotate = rotation;
+            } else {
+                lastRotate = glm::quat();
             }
         }
     }
@@ -303,12 +323,9 @@ namespace open_sea::controls {
      */
     void TopDown::transform() {
         // Update position
-        glm::vec3 global_translate{};
         {
-            int index = transformMgr->lookup(subject);
-            glm::vec3 local{};
-
             // Gather input
+            glm::vec3 local{};
             if (input::is_held(config.left))
                 local.x += -1;
             if (input::is_held(config.right))
@@ -318,24 +335,37 @@ namespace open_sea::controls {
             if (input::is_held(config.down))
                 local.y += -1;
 
-            // Transform
-            global_translate = glm::rotate(transformMgr->data.orientation[index], local);
+            // Translate only if needed
+            if (glm::length(local) != 0) {
+                int index = transformMgr->lookup(subject);
 
-            // Lock to XY plane
-            global_translate.z = 0;
+                // Transform
+                glm::vec3 global_translate = glm::rotate(transformMgr->data.orientation[index], local);
 
-            // Normalise
-            float l = glm::length(global_translate);
-            if (l != 0.0f && l != 1.0f)
-                global_translate /= l;
+                // Lock to XY plane
+                global_translate.z = 0;
 
-            // Scale by speed and delta time
-            global_translate.x *= config.speed_x;
-            global_translate.y *= config.speed_y;
-            global_translate *= time::get_delta();
+                // Translate only if needed
+                float l = glm::length(global_translate);
+                if (l != 0) {
+                    // Normalise
+                    if (l != 1.0f)
+                        global_translate /= l;
 
-            // Apply
-            transformMgr->translate(&index, &global_translate, 1);
+                    // Scale by speed and delta time
+                    global_translate.x *= config.speed_x;
+                    global_translate.y *= config.speed_y;
+                    global_translate *= time::get_delta();
+
+                    // Apply
+                    transformMgr->translate(&index, &global_translate, 1);
+                    lastTranslate = global_translate;
+                } else {
+                    lastTranslate = {};
+                }
+            } else {
+                lastTranslate = {};
+            }
         }
 
         // Update rotation
@@ -363,6 +393,9 @@ namespace open_sea::controls {
 
                 // Apply
                 transformMgr->rotate(&index, &rollQ, 1);
+                lastRotate = rotation;
+            } else {
+                lastRotate = glm::quat();
             }
         }
     }

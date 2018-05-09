@@ -19,10 +19,15 @@ namespace open_sea::controls {
      */
     class Controls {
         protected:
+            //! Entity being controlled
             ecs::Entity subject;
+            //! Last applied translation
+            glm::vec3 lastTranslate{};
+            //! Last applied rotation
+            glm::quat lastRotate;
 
         public:
-            Controls(ecs::Entity s) : subject(s) {}
+            Controls(ecs::Entity s) : subject(s), lastRotate(glm::quat()) {}
             virtual void transform() = 0;
             virtual void setSubject(ecs::Entity newSubject);
             virtual ecs::Entity getSubject() const;

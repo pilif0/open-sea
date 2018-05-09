@@ -26,6 +26,12 @@ namespace open_sea::input {
     std::unique_ptr<scroll_signal> scroll;
     //! Character signal
     std::unique_ptr<character_signal> character;
+    //! Unified input signal
+    std::unique_ptr<unified_signal> unified;
+
+    // Unified input
+    //! Set of held down unified inputs
+    std::set<unified_input> unified_state;
 
     // Callbacks
     /**
@@ -44,6 +50,18 @@ namespace open_sea::input {
 
         // Transform values
         state state = (action == GLFW_PRESS) ? press : (action == GLFW_REPEAT) ? repeat : release;
+
+        // Update unified input state
+        unified_input ui{.device = 0, .code = static_cast<unsigned int>(scancode)};
+        if (action == GLFW_PRESS) {
+            // Press -> insert
+            unified_state.insert(ui);
+            (*unified)(ui, press);
+        } else if(action == GLFW_RELEASE) {
+            // Release -> remove
+            unified_state.erase(ui);
+            (*unified)(ui, release);
+        }
 
         // Fire a signal
         static bool imgui_waits_esc = false;        // Fixes #12: True when ImGui is waiting for ESC release signal
@@ -98,6 +116,18 @@ namespace open_sea::input {
         // Transform values
         state state = (action == GLFW_PRESS) ? press : (action == GLFW_REPEAT) ? repeat : release;
 
+        // Update unified input state
+        unified_input ui{.device = 1, .code = static_cast<unsigned int>(button)};
+        if (action == GLFW_PRESS) {
+            // Press -> insert
+            unified_state.insert(ui);
+            (*unified)(ui, press);
+        } else if(action == GLFW_RELEASE) {
+            // Release -> remove
+            unified_state.erase(ui);
+            (*unified)(ui, release);
+        }
+
         // Fire a signal
         if (ImGui::GetIO().WantCaptureMouse)
             open_sea::imgui::mouse_callback(button, state, mods);
@@ -143,6 +173,16 @@ namespace open_sea::input {
     }
 
     /**
+     * \brief Whether the unified input is held down
+     *
+     * \param input Unified input to check
+     * \return Whether the input is held down
+     */
+    bool is_held(unified_input input) {
+        return unified_state.count(input) != 0;
+    }
+
+    /**
      * \brief Reattach the signals to the current global window
      */
     void reattach() {
@@ -160,6 +200,30 @@ namespace open_sea::input {
     }
 
     /**
+     * \brief Get string representation of the unified input as "(device) code"
+     *
+     * \return String representation
+     */
+    std::string unified_input::str() const {
+        std::string deviceStr;
+        switch (device) {
+            case 0:
+                deviceStr = "Keyboard";
+                break;
+            case 1:
+                deviceStr = "Mouse";
+                break;
+            default:
+                deviceStr = "Unknown - ";
+                deviceStr.append(std::to_string(device));
+        }
+
+        std::ostringstream result;
+        result << "(" << deviceStr << ") " << code;
+        return result.str();
+    }
+
+    /**
      * \brief Initialize input
      * Instantiate the various signals and attach them to the current global window.
      */
@@ -172,6 +236,7 @@ namespace open_sea::input {
         mouse = std::make_unique<mouse_signal>();
         scroll = std::make_unique<scroll_signal>();
         character = std::make_unique<character_signal>();
+        unified = std::make_unique<unified_signal>();
 
         // Attach the callbacks
         reattach();
@@ -189,6 +254,31 @@ namespace open_sea::input {
         double x, y;
         ::glfwGetCursorPos(w::window, &x, &y);
         return glm::dvec2(x, y);
+    }
+
+    //! Latest cursor delta
+    ::glm::dvec2 cursor_d{};
+
+    /**
+     * \brief Get latest cursor delta
+     *
+     * \return Latest cursor delta
+     */
+    ::glm::dvec2 cursor_delta() {
+        return cursor_d;
+    }
+
+    //! Cursor position during last cursor delta update
+    ::glm::dvec2 last_cursor_pos{};
+
+    /**
+     * \brief Update cursor delta
+     * Compute new cursor delta based on current and last cursor position
+     */
+    void update_cursor_delta() {
+        glm::dvec2 pos = cursor_position();
+        cursor_d = pos - last_cursor_pos;
+        last_cursor_pos = pos;
     }
 
     /**
@@ -302,18 +392,32 @@ namespace open_sea::input {
     }
 
     /**
+     * \brief Connect a slot to the unified input signal
+     *
+     * \param slot Slot to connect
+     * \return Connection
+     */
+    connection connect_unified(const unified_signal::slot_type &slot) {
+        return unified->connect(slot);
+    }
+
+    /**
      * \brief Show the ImGui debug window
      */
     void show_debug() {
         ImGui::Begin("Input");
 
         glm::dvec2 cur_pos = cursor_position();
-        ImGui::Text("Cursor position: (%.2f,%.2f)", cur_pos.x, cur_pos.y);
+        ImGui::Text("Cursor position: %.2f, %.2f", cur_pos.x, cur_pos.y);
         ImGui::Text("Number of key slots: %d", keyboard->num_slots());
         ImGui::Text("Number of enter slots: %d", enter->num_slots());
         ImGui::Text("Number of mouse slots: %d", mouse->num_slots());
         ImGui::Text("Number of scroll slots: %d", scroll->num_slots());
         ImGui::Text("Number of character slots: %d", character->num_slots());
+        ImGui::Text("Number of unified input slots: %d", unified->num_slots());
+        ImGui::Spacing();
+
+        ImGui::Text("Cursor delta: %.2f, %.2f", cursor_d.x, cursor_d.y);
         ImGui::Spacing();
 
         ImGui::Text("ImGui wants mouse: %s", ImGui::GetIO().WantCaptureMouse ? "true" : "false");

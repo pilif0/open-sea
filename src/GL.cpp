@@ -604,54 +604,25 @@ namespace open_sea::gl {
 
 //--- start Camera implementation
 
-    Camera::Camera(const glm::vec3 &position, const glm::quat &orientation, const glm::vec2 &size, float near,
-                   float far) : near(near), far(far) {
-        this->position = glm::vec3(position);
-        this->orientation = glm::quat(orientation);
+    Camera::Camera(const glm::mat4 &transformation, const glm::vec2 &size, float near, float far) : near(near), far(far) {
+        this->setTransformation(transformation);
         this->size = glm::vec2(size);
 
-        viewMatrix = glm::mat4();
         projMatrix = glm::mat4();
         projViewMatrix = glm::mat4();
 
-        recalculateView = true;
         recalculateProj = true;
-    }
-
-    void Camera::setPosition(const glm::vec3& newValue) {
-        position = newValue;
-        recalculateView = true;
-    }
-
-    glm::vec3 Camera::getPosition() const {
-        return glm::vec3(position);
-    }
-
-    void Camera::setRotation(const glm::quat& newValue) {
-        orientation = newValue;
-        recalculateView = true;
-    }
-
-    glm::quat Camera::getRotation() const {
-        return glm::quat(orientation);
+        recalculatePV = true;
     }
 
     /**
-     * \brief Translate the camera
+     * \brief Set view matrix to inverse of the transformation
      *
-     * \param d Translation vector
+     * \param transformation Transformation to use
      */
-    void Camera::translate(const glm::vec3& d) {
-        position += d;
-    }
-
-    /**
-     * \brief Rotate the camera
-     *
-     * \param d Rotation quaternion
-     */
-    void Camera::rotate(const glm::quat& d) {
-        orientation *= d;
+    void Camera::setTransformation(const glm::mat4 &transformation) {
+        viewMatrix = glm::inverse(transformation);
+        recalculatePV = true;
     }
 
     void Camera::setSize(const glm::vec2& newValue) {
@@ -685,13 +656,10 @@ namespace open_sea::gl {
      * \brief Show ImGui widget to control camera state
      */
     void Camera::showDebugControls() {
-        ImGui::InputFloat3("Position", &position[0]);
-        ImGui::InputFloat4("Orientation (quat.)", &orientation[0]);
         ImGui::InputFloat2("Size", &size[0]);
         ImGui::InputFloat("Near", &near);
         ImGui::InputFloat("Far", &far);
         if (ImGui::Button("Recalculate")) {
-            recalculateView = true;
             recalculateProj = true;
             getProjViewMatrix();
         }
@@ -717,30 +685,29 @@ namespace open_sea::gl {
      * \param near Near clipping plane
      * \param far Far clipping plane
      */
-    OrthographicCamera::OrthographicCamera(const glm::vec3& position, const glm::quat& orientation, const glm::vec2& size,
-                                           float near, float far) : Camera(position, orientation, size, near, far) {}
+    OrthographicCamera::OrthographicCamera(const glm::mat4 &transformation, const glm::vec2& size,float near, float far)
+            : Camera(transformation, size, near, far) {}
 
     glm::mat4 OrthographicCamera::getProjViewMatrix() {
-        if (recalculateView) {
-            viewMatrix = glm::inverse(glm::translate(glm::toMat4(orientation), position));
-        }
-
         if (recalculateProj) {
-            // Projection assumes origin in bottom left
+            // Projection assumes origin in centre
             projMatrix = glm::ortho(
-                    0.0f, size.x,
-                    0.0f, size.y,
+                    -size.x / 2, size.x / 2,
+                    -size.y / 2, size.y / 2,
                     near, far);
+
+            // Update flag
+            recalculateProj = false;
+            recalculatePV = true;
         }
 
-        if (recalculateView || recalculateProj) {
+        if (recalculatePV) {
             projViewMatrix = projMatrix;
             projViewMatrix *= viewMatrix;
-        }
 
-        // Reset flags
-        recalculateView = false;
-        recalculateProj = false;
+            // Reset flag
+            recalculatePV = false;
+        }
 
         return projViewMatrix;
     }
@@ -759,30 +726,31 @@ namespace open_sea::gl {
      * \param far Far clipping plane
      * \param fov Field of view
      */
-    PerspectiveCamera::PerspectiveCamera(const glm::vec3 &position, const glm::quat &orientation, const glm::vec2 &size,
-                                         float near, float far, float fov) : Camera(position, orientation, size, near, far),
-                                                                             fov(fov) {}
+    PerspectiveCamera::PerspectiveCamera(const glm::mat4 &transformation, const glm::vec2 &size,float near, float far, float fov)
+            : Camera(transformation, size, near, far), fov(fov) {}
 
     glm::mat4 PerspectiveCamera::getProjViewMatrix() {
-        if (recalculateView) {
-            viewMatrix = glm::inverse(glm::translate(glm::toMat4(orientation), position));
-        }
-
         if (recalculateProj) {
             projMatrix = glm::perspectiveFov(
                     glm::radians(fov),
                     size.x, size.y,
                     near, far);
-        }
 
-        if (recalculateView || recalculateProj) {
             projViewMatrix = projMatrix;
             projViewMatrix *= viewMatrix;
+
+            // Update flag
+            recalculateProj = false;
+            recalculatePV = true;
         }
 
-        // Reset flags
-        recalculateProj = false;
-        recalculateView = false;
+        if (recalculatePV) {
+            projViewMatrix = projMatrix;
+            projViewMatrix *= viewMatrix;
+
+            // Reset flag
+            recalculatePV = false;
+        }
 
         return projViewMatrix;
     }

@@ -1,6 +1,6 @@
 # Link common libraries and include relevant directories
 link_libraries(glfw ${GLFW_LIBRARIES} open_sea glad ${Boost_LIBRARIES})
-include_directories("${GLFW_DIR}/include" "${GLAD_DIR}/include" ${GLM_DIR} ${ImGui_DIR})
+include_directories("${GLFW_DIR}/include" "${GLAD_DIR}/include" ${GLM_DIR} ${ImGui_DIR} ${Boost_INCLUDE_DIRS})
 
 # Add the sample game as executable
 add_executable(sample-game "SampleGame.cpp")

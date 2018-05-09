@@ -248,7 +248,7 @@ namespace open_sea::imgui {
         io.DeltaTime = static_cast<float>(open_sea::time::get_delta());
 
         // Setup inputs
-        if (glfwGetWindowAttrib(window::window, GLFW_FOCUSED)) {
+        if (glfwGetWindowAttrib(window::window, GLFW_FOCUSED) && glfwGetInputMode(window::window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED) {
             if (io.WantSetMousePos) {
                 // Set mouse position if requested by io.WantMoveMouse flag (used when io.NavMovesTrue is enabled by
                 // user and using directional navigation)
@@ -270,11 +270,15 @@ namespace open_sea::imgui {
 
         // Update OS/hardware mouse cursor if imgui isn't drawing a software cursor
         ImGuiMouseCursor cursor = ImGui::GetMouseCursor();
-        if (io.MouseDrawCursor || cursor == ImGuiMouseCursor_None) {
-            glfwSetInputMode(window::window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-        } else {
-            glfwSetCursor(window::window, cursors[cursor] ? cursors[cursor] : cursors[ImGuiMouseCursor_Arrow]);
-            glfwSetInputMode(window::window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        if (glfwGetInputMode(window::window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED) {
+            // Skip this when the cursor is disabled
+
+            if (io.MouseDrawCursor || cursor == ImGuiMouseCursor_None) {
+                glfwSetInputMode(window::window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+            } else {
+                glfwSetCursor(window::window, cursors[cursor] ? cursors[cursor] : cursors[ImGuiMouseCursor_Arrow]);
+                glfwSetInputMode(window::window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            }
         }
 
         // Start the frame. This call will update the io.WantCaptureMouse, io.WantCaptureKeyboard flag that you can use

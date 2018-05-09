@@ -99,18 +99,12 @@ namespace open_sea::gl {
     /** \class Camera
      * \brief General camera representation
      * General camera representation.
-     * All cameras are objects that produce a projection-view matrix based on some properties (position, orientation, resolution, ...).
+     * All cameras are objects that produce a projection-view matrix based on some properties (transformation, size, ...).
      */
     class Camera {
         protected:
-            //! Position in world space
-            glm::vec3 position;
-            //! Orientation in world space
-            glm::quat orientation;
-            //! View matrix (changes when camera position or orientation change)
+            //! View matrix (inverse of transformation)
             glm::mat4 viewMatrix;
-            //! \c true when view matrix needs to be recalculated before use
-            bool recalculateView;
 
             //! Width and height of the camera view
             glm::vec2 size;
@@ -125,8 +119,10 @@ namespace open_sea::gl {
 
             //! Projection-view matrix (changes when either component matrix changes)
             glm::mat4 projViewMatrix;
+            //! \c true when projection-view matrix needs to be recalculated
+            bool recalculatePV;
 
-            Camera(const glm::vec3& position, const glm::quat& orientation, const glm::vec2& size, float near, float far);
+            Camera(const glm::mat4& transformation, const glm::vec2& size, float near, float far);
         public:
             /**
              * \brief Get the current projection-view matrix
@@ -135,12 +131,7 @@ namespace open_sea::gl {
              */
             virtual glm::mat4 getProjViewMatrix() = 0;
 
-            void setPosition(const glm::vec3& newValue);
-            glm::vec3 getPosition() const;
-            void setRotation(const glm::quat& newValue);
-            glm::quat getRotation() const;
-            void translate(const glm::vec3& d);
-            void rotate(const glm::quat& d);
+            void setTransformation(const glm::mat4 &transformation);
 
             void setSize(const glm::vec2& newValue);
             glm::vec2 getSize() const;
@@ -159,8 +150,7 @@ namespace open_sea::gl {
      */
     class OrthographicCamera : public Camera {
         public:
-            OrthographicCamera(const glm::vec3& position, const glm::quat& orientation, const glm::vec2& size, float near,
-                               float far);
+            OrthographicCamera(const glm::mat4 &transformation, const glm::vec2 &size, float near, float far);
             glm::mat4 getProjViewMatrix() override;
     };
 
@@ -174,8 +164,7 @@ namespace open_sea::gl {
             //! Field of view in degrees
             float fov;
         public:
-            PerspectiveCamera(const glm::vec3& position, const glm::quat& orientation, const glm::vec2& size, float near,
-                              float far, float fov);
+            PerspectiveCamera(const glm::mat4 &transformation, const glm::vec2& size, float near, float far, float fov);
             glm::mat4 getProjViewMatrix() override;
             void showDebugControls() override;
 

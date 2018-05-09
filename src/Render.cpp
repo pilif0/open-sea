@@ -5,6 +5,8 @@
 #include <open-sea/Render.h>
 #include <open-sea/Model.h>
 
+#include <vector>
+
 namespace open_sea::render {
 
     //--- start UntexturedRenderer implementation
@@ -42,22 +44,22 @@ namespace open_sea::render {
         glUniformMatrix4fv(pMatLocation, 1, GL_FALSE, &camera->getProjViewMatrix()[0][0]);
 
         // Prepare info and index destination
-        RenderInfo infos[count]{};
-        int indices[count]{};
+        std::vector<RenderInfo> infos(count);
+        std::vector<int> indices(count);
 
         // Get world matrix pointers
-        transformMgr->lookup(e, indices, count);
-        int *i = indices;
-        RenderInfo *r = infos;
+        transformMgr->lookup(e, indices.data(), count);
+        int *i = indices.data();
+        RenderInfo *r = infos.data();
         for (int j = 0; j < count; j++, i++, r++) {
             if (*i != -1)
                 r->matrix = &transformMgr->data.matrix[*i][0][0];
         }
 
         // Get the model information
-        modelMgr->lookup(e, indices, count);
-        i = indices;
-        r = infos;
+        modelMgr->lookup(e, indices.data(), count);
+        i = indices.data();
+        r = infos.data();
         for (int j = 0; j < count; j++, i++, r++) {
             // Skip invalid indices
             if (*i != -1) {
@@ -68,7 +70,7 @@ namespace open_sea::render {
         }
 
         // Render the information
-        r = infos;
+        r = infos.data();
         for (int j = 0; j < count; j++, r++) {
             // Skip invalid entities
             if (r->matrix != nullptr) {

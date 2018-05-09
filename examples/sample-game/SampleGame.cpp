@@ -18,14 +18,18 @@
 #include <open-sea/Entity.h>
 #include <open-sea/Components.h>
 #include <open-sea/Render.h>
+#include <open-sea/Systems.h>
+#include <open-sea/Controls.h>
 namespace os_log = open_sea::log;
 namespace window = open_sea::window;
 namespace input = open_sea::input;
 namespace imgui = open_sea::imgui;
+namespace os_time = open_sea::time;
 namespace gl = open_sea::gl;
 namespace model = open_sea::model;
 namespace ecs = open_sea::ecs;
 namespace render = open_sea::render;
+namespace controls = open_sea::controls;
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
@@ -35,6 +39,7 @@ namespace render = open_sea::render;
 
 #include <sstream>
 #include <random>
+#include <vector>
 
 int main() {
     // Initialize logging
@@ -50,8 +55,9 @@ int main() {
         return -1;
 
     // Create window
+    constexpr glm::ivec2 window_size{1280, 720};
     window::set_title("Sample Game");
-    if (!window::make_windowed(1280, 720))
+    if (!window::make_windowed(window_size.x, window_size.y))
         return -1;
 
     // Initialize input
@@ -80,22 +86,38 @@ int main() {
         }
     });
 
-    // ImGui test data
-    bool show_demo_window = true;
-
     // Prepare test cameras
     std::shared_ptr<gl::Camera> test_camera_ort =
             std::make_shared<gl::OrthographicCamera>(
-                    glm::vec3{-640.0f, -360.0f, 1000.0f},
-                    glm::quat(),
-                    glm::vec2{1280, 720},
+                    glm::mat4(1.0f),
+                    glm::vec2{window_size.x, window_size.y},
                     0.1f, 1000.0f);
     std::shared_ptr<gl::Camera> test_camera_per =
             std::make_shared<gl::PerspectiveCamera>(
-                    glm::vec3{0.0f, 0.0f, 1000.0f},
-                    glm::quat(),
-                    glm::vec2{1280, 720},
+                    glm::mat4(1.0f),
+                    glm::vec2{window_size.x, window_size.y},
                     0.1f, 1000.0f, 90.0f);
+
+    // Add borderless fullscreen control to F11
+    bool windowed = true;
+    input::connection borderless_toggle = input::connect_key([test_camera_ort, test_camera_per, window_size, &windowed]
+                                                                     (int k, int c, input::state s, int m){
+        if (k == GLFW_KEY_F11 && s == input::press) {
+            if (windowed) {
+                // Set borderless and update camera
+                window::make_borderless(glfwGetPrimaryMonitor());
+                test_camera_ort->setSize(glm::vec2{window::current_properties().fbWidth, window::current_properties().fbHeight});
+                test_camera_per->setSize(glm::vec2{window::current_properties().fbWidth, window::current_properties().fbHeight});
+                windowed = false;
+            } else {
+                // Set windowed and update camera
+                window::make_windowed(window_size.x, window_size.y);
+                test_camera_ort->setSize(glm::vec2{window::current_properties().fbWidth, window::current_properties().fbHeight});
+                test_camera_per->setSize(glm::vec2{window::current_properties().fbWidth, window::current_properties().fbHeight});
+                windowed = true;
+            }
+        }
+    });
 
     // Generate test entities
     unsigned N = 1024;
@@ -110,9 +132,9 @@ int main() {
         if (!model)
             return -1;
         model_comp_manager->modelToIndex(model);
-        int models[N]{};   // modelIdx == 0, because it is the first model
+        std::vector<int> models(N);   // modelIdx == 0, because it is the first model
 
-        model_comp_manager->add(entities, models, N);
+        model_comp_manager->add(entities, models.data(), N);
     }
 
     // Prepare and assign random transformations
@@ -132,14 +154,14 @@ int main() {
         std::uniform_real_distribution<float> scale(1.0f, 20.0f);
 
         // Prepare data arrays
-        glm::vec3 positions[N]{};
-        glm::quat orientations[N]{};
-        glm::vec3 scales[N]{};
+        std::vector<glm::vec3> positions(N);
+        std::vector<glm::quat> orientations(N);
+        std::vector<glm::vec3> scales(N);
 
         // Randomise the data
-        glm::vec3 *p = positions;
-        glm::quat *o = orientations;
-        glm::vec3 *s = scales;
+        glm::vec3 *p = positions.data();
+        glm::quat *o = orientations.data();
+        glm::vec3 *s = scales.data();
         for (int i = 0; i < N; i++, p++, o++, s++) {
             *p = glm::vec3(posX(generator), posY(generator), posZ(generator));
             *o = glm::angleAxis(angle(generator), axis);
@@ -150,12 +172,65 @@ int main() {
         os_log::log(lg, os_log::info, "Transformations generated");
 
         // Add the components
-        trans_comp_manager->add(entities, positions, orientations, scales, N);
+        trans_comp_manager->add(entities, positions.data(), orientations.data(), scales.data(), N);
         os_log::log(lg, os_log::info, "Transformations set");
     }
 
     // Prepare renderer
     std::unique_ptr<render::UntexturedRenderer> renderer = std::make_unique<render::UntexturedRenderer>(model_comp_manager, trans_comp_manager);
+
+    // Create camera guide entity
+    ecs::Entity camera_guide = test_manager.create();
+    glm::vec3 camera_guide_pos{0.0f, 0.0f, 1000.0f};
+    glm::quat camera_guide_ori{0.0f, 0.0f, 0.0f, 1.0f};
+    glm::vec3 camera_guide_sca(1.0f, 1.0f, 1.0f);
+    trans_comp_manager->add(&camera_guide, &camera_guide_pos, &camera_guide_ori, &camera_guide_sca, 1);
+
+    // Prepare camera component
+    std::shared_ptr<ecs::CameraComponent> camera_comp_manager = std::make_shared<ecs::CameraComponent>();
+    {
+        std::shared_ptr<gl::Camera> cameras[]{
+                std::shared_ptr(test_camera_per),
+                std::shared_ptr(test_camera_ort)
+        };
+
+        ecs::Entity es[]{
+                camera_guide,
+                camera_guide
+        };
+
+        camera_comp_manager->add(es, cameras, 2);
+    }
+
+    // Prepare camera follow system
+    std::unique_ptr<ecs::CameraFollow> camera_follow = std::make_unique<ecs::CameraFollow>(trans_comp_manager, camera_comp_manager);
+    
+    // Prepare controls for the camera guide
+    controls::Free::Config controls_config {
+            .forward = input::unified_input::keyboard(GLFW_KEY_W),
+            .backward = input::unified_input::keyboard(GLFW_KEY_S),
+            .left = input::unified_input::keyboard(GLFW_KEY_A),
+            .right = input::unified_input::keyboard(GLFW_KEY_D),
+            .up = input::unified_input::keyboard(GLFW_KEY_LEFT_SHIFT),
+            .down = input::unified_input::keyboard(GLFW_KEY_LEFT_CONTROL),
+            .clockwise = input::unified_input::keyboard(GLFW_KEY_Q),
+            .counter_clockwise = input::unified_input::keyboard(GLFW_KEY_E),
+            .speed_x = 150.0f,
+            .speed_z = 150.0f,
+            .speed_y = 150.0f,
+            .turn_rate = 0.3f,
+            .roll_rate = 30.0f
+    };
+    std::unique_ptr<controls::Controls> controls = std::make_unique<controls::Free>(trans_comp_manager, camera_guide, controls_config);
+
+    // Add suspend controls button
+    bool suspend_controls = false;
+    const input::unified_input suspend_binding = input::unified_input::keyboard(GLFW_KEY_F1);
+    input::connect_unified([&suspend_controls, suspend_binding](input::unified_input i, input::state a){
+        if (i == suspend_binding && a == input::press) {
+            suspend_controls = !suspend_controls;
+        }
+    });
 
     // Set background to black
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -164,11 +239,26 @@ int main() {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
 
+    // Update cursor delta once before main loop to avoid extreme first cursor delta
+    input::update_cursor_delta();
+
     // Loop until the user closes the window
     open_sea::time::start_delta();
     while (!window::should_close()) {
         // Clear
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // Update cursor delta
+        input::update_cursor_delta();
+
+        // Update camera guide controls
+        if (!suspend_controls)
+            controls->transform();
+        else
+            glfwSetInputMode(window::window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
+        // Update cameras based on associated guides
+        camera_follow->transform();
 
         // Draw the entities
         static bool use_per_cam = true;
@@ -177,6 +267,7 @@ int main() {
         // Maintain components
         model_comp_manager->gc(test_manager);
         trans_comp_manager->gc(test_manager);
+        camera_comp_manager->gc(test_manager);
 
         // ImGui debug GUI
         if (show_imgui) {
@@ -199,11 +290,21 @@ int main() {
                 ImGui::End();
             }
 
-            // Test controls
+            // Test camera controls
             {
-                ImGui::Begin("Test controls");
+                ImGui::Begin("Test camera controls");
+
+                controls->showDebug();
+
+                ImGui::End();
+            }
+
+            // Test environment controls
+            {
+                ImGui::Begin("Test environment controls");
 
                 ImGui::Checkbox("Use perspective camera", &use_per_cam);
+                ImGui::Checkbox("Suspend controls", &suspend_controls);
 
                 ImGui::Text("Test camera:");
                 if (use_per_cam)
@@ -253,7 +354,7 @@ int main() {
             // Demo window
             if (show_demo) {
                 ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiCond_FirstUseEver);
-                ImGui::ShowDemoWindow(&show_demo_window);
+                ImGui::ShowDemoWindow(&show_demo);
             }
 
             //Render

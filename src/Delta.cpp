@@ -7,7 +7,6 @@
 
 #include <open-sea/Delta.h>
 #include <open-sea/Log.h>
-namespace log = open_sea::log;
 
 #include <boost/circular_buffer.hpp>
 

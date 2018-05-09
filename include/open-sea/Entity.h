@@ -44,6 +44,8 @@ namespace open_sea::ecs {
 
         bool operator==(const Entity &rhs) const { return id == rhs.id; }
         bool operator!=(const Entity &rhs) const { return !(rhs == *this); }
+
+        std::string str() const;
     };
 
     class EntityManager {

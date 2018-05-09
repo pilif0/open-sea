@@ -6,7 +6,6 @@
 #include <open-sea/Window.h>
 #include <open-sea/config.h>
 #include <open-sea/Log.h>
-namespace log = open_sea::log;
 
 #include <sstream>
 
@@ -264,6 +263,10 @@ namespace open_sea::window {
         // Skip if not the global window
         if (w != window)
             return;
+
+        // Update properties
+        ::glfwGetWindowSize(window, &current->width, &current->height);
+        ::glfwGetFramebufferSize(window, &current->fbWidth, &current->fbHeight);
 
         // Fire the signal
         (*size)(width, height);

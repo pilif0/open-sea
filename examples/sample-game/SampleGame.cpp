@@ -274,40 +274,7 @@ int main() {
             imgui::new_frame();
 
             // Main menu
-            static bool time = false;
-            static bool window = false;
-            static bool input = false;
-            static bool opengl = false;
-            static bool imgui_demo = false;
-            if (ImGui::BeginMainMenuBar()) {
-                // System menu
-                if (ImGui::BeginMenu("System")) {
-                    if (ImGui::MenuItem("Time", nullptr, &time)) {}
-                    if (ImGui::MenuItem("Window", nullptr, &window)) {}
-                    if (ImGui::MenuItem("Input", nullptr, &input)) {}
-                    if (ImGui::MenuItem("OpenGL", nullptr, &opengl)) {}
-
-                    ImGui::EndMenu();
-                }
-
-                // Demos
-                if (ImGui::BeginMenu("Demos")) {
-                    if (ImGui::MenuItem("Dear ImGui", nullptr, &imgui_demo)) {}
-
-                    ImGui::EndMenu();
-                }
-
-                ImGui::EndMainMenuBar();
-            }
-
-            // System windows
-            if (time) os_time::debug_window(&time);
-            if (window) window::debug_window(&window);
-            if (input) input::debug_window(&input);
-            if (opengl) gl::debug_window(&opengl);
-
-            // Demo windows
-            if (imgui_demo) ImGui::ShowDemoWindow(&imgui_demo);
+            imgui::main_menu();
 
             // Entity test
             {

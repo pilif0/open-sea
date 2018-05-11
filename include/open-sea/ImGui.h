@@ -23,6 +23,7 @@ namespace open_sea::imgui {
     // This is to provide some sort of unified appearance and easy arrangement into columns
     constexpr float STANDARD_WIDTH = 350.0f;
     void set_standard_width();
+    void main_menu();
 }
 
 #endif //OPEN_SEA_IMGUI_H

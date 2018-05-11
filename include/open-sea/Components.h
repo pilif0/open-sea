@@ -10,6 +10,7 @@
 #include <open-sea/Model.h>
 #include <open-sea/Log.h>
 #include <open-sea/GL.h>
+#include <open-sea/ImGui.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -29,7 +30,7 @@ namespace open_sea::ecs {
     /** \class ModelComponent
      * \brief Associates an entity with a model
      */
-    class ModelComponent {
+    class ModelComponent : public imgui::Debuggable{
         private:
             //! Logger for this manager
             log::severity_logger lg = log::get_logger("Model Component Mgr");
@@ -78,7 +79,7 @@ namespace open_sea::ecs {
             void gc(const EntityManager &manager);
             ~ModelComponent();
 
-            void showDebug();
+            void showDebug() override;
     };
 
     /** \class TransformationComponent
@@ -87,7 +88,7 @@ namespace open_sea::ecs {
      * If the entity has no parent (index -1) then it is considered a root and its transformation is relative to identity.
      * Multiple root entities are not considered siblings.
      */
-    class TransformationComponent {
+    class TransformationComponent : public imgui::Debuggable {
         private:
             //! Logger for this manager
             log::severity_logger lg = log::get_logger("Transformation Component Mgr");
@@ -157,7 +158,7 @@ namespace open_sea::ecs {
             void setOrientation(int *i, glm::quat *orientation, unsigned count);
             void setScale(int *i, glm::vec3 *scale, unsigned count);
 
-            void showDebug();
+            void showDebug() override;
     };
 
     /** \class CameraComponent
@@ -167,7 +168,7 @@ namespace open_sea::ecs {
      * One entity can have multiple associated cameras.
      */
     //TODO: maybe add a method to retrieve all indices of an entity instead of just first
-    class CameraComponent {
+    class CameraComponent : public imgui::Debuggable {
         private:
             //! Logger for this manager
             log::severity_logger lg = log::get_logger("Camera Component Mgr");
@@ -208,7 +209,7 @@ namespace open_sea::ecs {
             void gc(const EntityManager &manager);
             ~CameraComponent();
 
-            void showDebug();
+            void showDebug() override;
     };
 }
 

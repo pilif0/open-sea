@@ -4,8 +4,6 @@
 
 #include <open-sea/Entity.h>
 
-#include <imgui.h>
-
 #include <stdexcept>
 
 namespace open_sea::ecs {
@@ -119,7 +117,7 @@ namespace open_sea::ecs {
     /**
      * \brief Show ImGui debug information
      */
-    void EntityManager::showDebug() const {
+    void EntityManager::showDebug() {
         ImGui::Text("Living entities: %i", livingEntities);
         ImGui::Text("Maximum generation: %i", maxGeneration);
         ImGui::Text("Maximum index: %i", maxIndex);

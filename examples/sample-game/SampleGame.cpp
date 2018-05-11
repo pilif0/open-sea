@@ -120,9 +120,10 @@ int main() {
 
     // Generate test entities
     unsigned N = 1024;
-    ecs::EntityManager test_manager;
+    std::shared_ptr<ecs::EntityManager> test_manager = std::make_shared<ecs::EntityManager>();
     ecs::Entity entities[N];
-    test_manager.create(entities, N);
+    test_manager->create(entities, N);
+    imgui::add_entity_manager(test_manager, "Test Manager");
 
     // Prepare and assign model
     std::shared_ptr<ecs::ModelComponent> model_comp_manager = std::make_shared<ecs::ModelComponent>();
@@ -135,6 +136,7 @@ int main() {
 
         model_comp_manager->add(entities, models.data(), N);
     }
+    imgui::add_component_manager(model_comp_manager, "Model");
 
     // Prepare and assign random transformations
     std::shared_ptr<ecs::TransformationComponent> trans_comp_manager = std::make_shared<ecs::TransformationComponent>();
@@ -174,12 +176,14 @@ int main() {
         trans_comp_manager->add(entities, positions.data(), orientations.data(), scales.data(), N);
         os_log::log(lg, os_log::info, "Transformations set");
     }
+    imgui::add_component_manager(trans_comp_manager, "Transformation");
 
     // Prepare renderer
-    std::unique_ptr<render::UntexturedRenderer> renderer = std::make_unique<render::UntexturedRenderer>(model_comp_manager, trans_comp_manager);
+    std::shared_ptr<render::UntexturedRenderer> renderer = std::make_shared<render::UntexturedRenderer>(model_comp_manager, trans_comp_manager);
+    imgui::add_system(renderer, "Untextured Renderer");
 
     // Create camera guide entity
-    ecs::Entity camera_guide = test_manager.create();
+    ecs::Entity camera_guide = test_manager->create();
     glm::vec3 camera_guide_pos{0.0f, 0.0f, 1000.0f};
     glm::quat camera_guide_ori{0.0f, 0.0f, 0.0f, 1.0f};
     glm::vec3 camera_guide_sca(1.0f, 1.0f, 1.0f);
@@ -200,6 +204,7 @@ int main() {
 
         camera_comp_manager->add(es, cameras, 2);
     }
+    imgui::add_component_manager(camera_comp_manager, "Camera");
 
     // Prepare camera follow system
     std::unique_ptr<ecs::CameraFollow> camera_follow = std::make_unique<ecs::CameraFollow>(trans_comp_manager, camera_comp_manager);
@@ -264,9 +269,9 @@ int main() {
         renderer->render((use_per_cam) ? test_camera_per : test_camera_ort, entities, N);
 
         // Maintain components
-        model_comp_manager->gc(test_manager);
-        trans_comp_manager->gc(test_manager);
-        camera_comp_manager->gc(test_manager);
+        model_comp_manager->gc(*test_manager);
+        trans_comp_manager->gc(*test_manager);
+        camera_comp_manager->gc(*test_manager);
 
         // ImGui debug GUI
         if (show_imgui) {
@@ -275,22 +280,6 @@ int main() {
 
             // Main menu
             imgui::main_menu();
-
-            // Entity test
-            {
-                ImGui::Begin("Entity test");
-
-                test_manager.showDebug();
-
-                if (ImGui::CollapsingHeader("Model Component Manager")) {
-                    model_comp_manager->showDebug();
-                }
-                if (ImGui::CollapsingHeader("Transformation Component Manager")) {
-                    trans_comp_manager->showDebug();
-                }
-
-                ImGui::End();
-            }
 
             // Test camera controls
             {

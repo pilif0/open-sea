@@ -84,5 +84,13 @@ namespace open_sea::render {
         glBindVertexArray(0);
         shader->unset();
     }
+
+    /**
+     * \brief Show ImGui debug information
+     */
+    void UntexturedRenderer::showDebug() {
+        ImGui::Text("WIP");
+        //TODO
+    }
     //--- end UntexturedRenderer implementation
 }

@@ -9,6 +9,7 @@
 #include <open-sea/Entity.h>
 #include <open-sea/Components.h>
 #include <open-sea/GL.h>
+#include <open-sea/ImGui.h>
 
 #include <memory>
 #include <utility>
@@ -17,9 +18,8 @@ namespace open_sea::render {
 
     /** \class UntexturedRenderer
      * \brief Renderer using untextured models
-     * Renderer that uses untextured models
      */
-    class UntexturedRenderer {
+    class UntexturedRenderer : public imgui::Debuggable {
         public:
             //! Model component manager
             std::shared_ptr<ecs::ModelComponent> modelMgr{};
@@ -43,6 +43,8 @@ namespace open_sea::render {
                 unsigned vertexCount = 0;
             };
             void render(std::shared_ptr<gl::Camera> camera, ecs::Entity* e, unsigned count);
+
+            void showDebug() override;
     };
 }
 

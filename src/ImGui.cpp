@@ -4,8 +4,6 @@
  * Based on the ImGui example at https://github.com/ocornut/imgui/tree/master/examples/opengl3_example
  */
 
-#include <imgui.h>
-
 #include <open-sea/ImGui.h>
 #include <open-sea/Window.h>
 #include <open-sea/Input.h>
@@ -434,5 +432,12 @@ namespace open_sea::imgui {
         }
 
         log::log(lg, log::info, "Cleaned up");
+    }
+
+    /**
+     * \brief Set next window width to the standard width
+     */
+    void set_standard_width() {
+        ImGui::SetNextWindowSize(ImVec2(STANDARD_WIDTH, 0.0f), ImGuiCond_Once);
     }
 }

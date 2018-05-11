@@ -3,8 +3,8 @@
  */
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <imgui.h>
 
+#include <open-sea/ImGui.h>
 #include <open-sea/Delta.h>
 #include <open-sea/Log.h>
 
@@ -128,7 +128,7 @@ namespace open_sea::time {
      * \param open Pointer to window's open flag for the close widget
      */
     void debug_window(bool *open) {
-        ImGui::SetNextWindowSize(ImVec2(350, 0), ImGuiCond_Once);
+        imgui::set_standard_width();
 
         if (ImGui::Begin("Time", open)) {
             // Plot the delta time

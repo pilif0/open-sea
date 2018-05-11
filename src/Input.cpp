@@ -1,8 +1,6 @@
 /*
  * Input implementation
  */
-#include <imgui.h>
-
 #include <open-sea/Input.h>
 #include <open-sea/Log.h>
 #include <open-sea/Window.h>
@@ -407,7 +405,7 @@ namespace open_sea::input {
      * \param open Pointer to window's open flag for the close widget
      */
     void debug_window(bool *open) {
-        ImGui::SetNextWindowSize(ImVec2(350, 0), ImGuiCond_Once);
+        imgui::set_standard_width();
 
         if (ImGui::Begin("Input", open)) {
             glm::dvec2 cur_pos = cursor_position();

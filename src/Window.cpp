@@ -1,8 +1,7 @@
 /*
  * Window implementation
  */
-#include <imgui.h>
-
+#include <open-sea/ImGui.h>
 #include <open-sea/Window.h>
 #include <open-sea/config.h>
 #include <open-sea/Log.h>
@@ -619,7 +618,7 @@ namespace open_sea::window {
      * \param open Pointer to window's open flag for the close widget
      */
     void debug_window(bool *open) {
-        ImGui::SetNextWindowSize(ImVec2(350, 0), ImGuiCond_Once);
+        imgui::set_standard_width();
 
         if (ImGui::Begin("Window", open)) {
             ImGui::Text("Window size: %d x %d", current->width, current->height);

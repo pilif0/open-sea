@@ -6,7 +6,6 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <imgui.h>
 
 #include <open-sea/Log.h>
 #include <open-sea/Window.h>

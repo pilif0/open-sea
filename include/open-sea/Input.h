@@ -90,7 +90,7 @@ namespace open_sea::input {
     const char* get_clipboard();
     void set_clipboard(const char* in);
 
-    void show_debug();
+    void debug_window(bool *open);
 }
 
 #endif //OPEN_SEA_INPUT_H

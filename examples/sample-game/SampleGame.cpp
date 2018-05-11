@@ -274,6 +274,42 @@ int main() {
             // Prepare new frame
             imgui::new_frame();
 
+            // Main menu
+            static bool time = false;
+            static bool window = false;
+            static bool input = false;
+            static bool opengl = false;
+            static bool imgui_demo = false;
+            if (ImGui::BeginMainMenuBar()) {
+                // System menu
+                if (ImGui::BeginMenu("System")) {
+                    if (ImGui::MenuItem("Time", nullptr, &time)) {}
+                    if (ImGui::MenuItem("Window", nullptr, &window)) {}
+                    if (ImGui::MenuItem("Input", nullptr, &input)) {}
+                    if (ImGui::MenuItem("OpenGL", nullptr, &opengl)) {}
+
+                    ImGui::EndMenu();
+                }
+
+                // Demos
+                if (ImGui::BeginMenu("Demos")) {
+                    if (ImGui::MenuItem("Dear ImGui", nullptr, &imgui_demo)) {}
+
+                    ImGui::EndMenu();
+                }
+
+                ImGui::EndMainMenuBar();
+            }
+
+            // System windows
+            if (time) os_time::debug_window(&time);
+            if (window) window::debug_window(&window);
+            if (input) input::debug_window(&input);
+            if (opengl) gl::debug_window(&opengl);
+
+            // Demo windows
+            if (imgui_demo) ImGui::ShowDemoWindow(&imgui_demo);
+
             // Entity test
             {
                 ImGui::Begin("Entity test");
@@ -314,47 +350,6 @@ int main() {
                 ImGui::Spacing();
 
                 ImGui::End();
-            }
-
-            // Additional window open flags
-            static bool show_window_debug = false;
-            static bool show_input_debug = false;
-            static bool show_opengl_debug = false;
-            static bool show_demo = false;
-
-            // System stats
-            {
-                ImGui::Begin("System Statistics");
-
-                open_sea::time::debug_widget();
-
-                if (ImGui::CollapsingHeader("Additional windows")) {
-                    ImGui::Checkbox("Window info", &show_window_debug);
-                    ImGui::Checkbox("Input info", &show_input_debug);
-                    ImGui::Checkbox("OpenGL info", &show_opengl_debug);
-                    ImGui::Checkbox("ImGui demo", &show_demo);
-                }
-
-
-                ImGui::End();
-            }
-
-            // Window info
-            if (show_window_debug)
-                window::show_debug();
-
-            // Input info
-            if (show_input_debug)
-                input::show_debug();
-
-            // OpenGL info
-            if (show_opengl_debug)
-                gl::debug_window();
-
-            // Demo window
-            if (show_demo) {
-                ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiCond_FirstUseEver);
-                ImGui::ShowDemoWindow(&show_demo);
             }
 
             //Render

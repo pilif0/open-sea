@@ -14,7 +14,7 @@ namespace open_sea::time {
     double get_FPS_immediate();
     double get_FPS_average();
 
-    void debug_widget();
+    void debug_window(bool *open);
 }
 
 #endif //OPEN_SEA_DELTA_H

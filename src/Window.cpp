@@ -615,32 +615,36 @@ namespace open_sea::window {
 
     /**
      * \brief Show the ImGui debug window
+     *
+     * \param open Pointer to window's open flag for the close widget
      */
-    void show_debug() {
-        ImGui::Begin("Window");
+    void debug_window(bool *open) {
+        ImGui::SetNextWindowSize(ImVec2(350, 0), ImGuiCond_Once);
 
-        ImGui::Text("Window size: %d x %d", current->width, current->height);
-        ImGui::Text("Frame buffer size: %d x %d", current->fbWidth, current->fbHeight);
-        ImGui::Text("Window title: %s", current->title.c_str());
-        ImGui::Text("Processed title: %s", process_title().c_str());
-        const char* state;
-        switch (current->state) {
-            case windowed:
-                state = "windowed";
-                break;
-            case fullscreen:
-                state = "fullscreen";
-                break;
-            case borderless:
-                state = "borderless";
-                break;
-            default:
-                state = "invalid";
+        if (ImGui::Begin("Window", open)) {
+            ImGui::Text("Window size: %d x %d", current->width, current->height);
+            ImGui::Text("Frame buffer size: %d x %d", current->fbWidth, current->fbHeight);
+            ImGui::Text("Window title: %s", current->title.c_str());
+            ImGui::Text("Processed title: %s", process_title().c_str());
+            const char *state;
+            switch (current->state) {
+                case windowed:
+                    state = "windowed";
+                    break;
+                case fullscreen:
+                    state = "fullscreen";
+                    break;
+                case borderless:
+                    state = "borderless";
+                    break;
+                default:
+                    state = "invalid";
+            }
+            ImGui::Text("Window state: %s", state);
+            ImGui::Text("Window monitor: %s",
+                        (current->monitor == nullptr) ? "none" : ::glfwGetMonitorName(current->monitor));
+            ImGui::Text("Vsync: %s", current->vSync ? "enabled" : "disabled");
         }
-        ImGui::Text("Window state: %s", state);
-        ImGui::Text("Window monitor: %s", (current->monitor == nullptr) ? "none" : ::glfwGetMonitorName(current->monitor));
-        ImGui::Text("Vsync: %s", current->vSync ? "enabled" : "disabled");
-
         ImGui::End();
     }
 }

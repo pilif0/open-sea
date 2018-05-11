@@ -82,7 +82,7 @@ namespace open_sea::imgui {
      */
     void scroll_callback(double xoffset, double yoffset) {
         ImGuiIO& io = ImGui::GetIO();
-        io.MouseWheel -= (float) yoffset;
+        io.MouseWheel = (float) yoffset;
     }
 
     /**

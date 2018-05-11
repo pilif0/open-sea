@@ -174,7 +174,7 @@ namespace open_sea::gl {
 
     void log_errors();
 
-    void debug_window();
+    void debug_window(bool *open);
 }
 
 #endif //OPEN_SEA_GL_H

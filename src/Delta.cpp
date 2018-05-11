@@ -123,15 +123,22 @@ namespace open_sea::time {
     }
 
     /**
-     * \brief Show the ImGui debug widget
+     * \brief Show the ImGui debug window
+     *
+     * \param open Pointer to window's open flag for the close widget
      */
-    void debug_widget() {
-        // Plot the delta time
-        ImGui::PlotLines("##plot", debug_history_get, nullptr, history_length);
-        ImGui::SameLine();
-        ImGui::Text("Delta time\n(%.3f ms)", get_delta() * 1000);
+    void debug_window(bool *open) {
+        ImGui::SetNextWindowSize(ImVec2(350, 0), ImGuiCond_Once);
 
-        // Plot the FPS
-        ImGui::Text("FPS: %.1f (%.1f avg)", get_FPS_immediate(), get_FPS_average());
+        if (ImGui::Begin("Time", open)) {
+            // Plot the delta time
+            ImGui::PlotLines("##plot", debug_history_get, nullptr, history_length);
+            ImGui::SameLine();
+            ImGui::Text("Delta time\n(%.3f ms)", get_delta() * 1000);
+
+            // Plot the FPS
+            ImGui::Text("FPS: %.1f (%.1f avg)", get_FPS_immediate(), get_FPS_average());
+        }
+        ImGui::End();
     }
 }

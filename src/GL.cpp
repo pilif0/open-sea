@@ -774,14 +774,19 @@ namespace open_sea::gl {
 
     /**
      * \brief Show the ImGui debug window
+     *
+     * \param open Pointer to window's open flag for the close widget
      */
-    void debug_window() {
-        ImGui::Begin("OpenGL");
+    void debug_window(bool *open) {
+        ImGui::SetNextWindowSize(ImVec2(350, 0), ImGuiCond_Once);
 
-        if (ImGui::CollapsingHeader("Shaders")) {
-            ShaderProgram::debugWidget();
+        if (ImGui::Begin("OpenGL", open)) {
+            if (ImGui::CollapsingHeader("Shaders", ImGuiTreeNodeFlags_DefaultOpen)) {
+                ImGui::Indent();
+                ShaderProgram::debugWidget();
+                ImGui::Unindent();
+            }
         }
-
         ImGui::End();
     }
 

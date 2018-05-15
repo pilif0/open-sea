@@ -653,22 +653,24 @@ namespace open_sea::gl {
     }
 
     /**
-     * \brief Show ImGui widget to control camera state
+     * \brief Show camera information
      */
-    void Camera::showDebugControls() {
-        ImGui::InputFloat2("Size", &size[0]);
-        ImGui::InputFloat("Near", &near);
-        ImGui::InputFloat("Far", &far);
+    void Camera::showDebug() {
+        ImGui::InputFloat2("size", &size[0], 0);
+        ImGui::InputFloat("near", &near, 0, 0, 3);
+        ImGui::InputFloat("far", &far, 0, 0, 3);
         if (ImGui::Button("Recalculate")) {
             recalculateProj = true;
             getProjViewMatrix();
         }
         ImGui::Spacing();
-        ImGui::Text("Projection-view matrix");
-        ImGui::InputFloat4("", &projViewMatrix[0][0]);
-        ImGui::InputFloat4("", &projViewMatrix[1][0]);
-        ImGui::InputFloat4("", &projViewMatrix[2][0]);
-        ImGui::InputFloat4("", &projViewMatrix[3][0]);
+
+        ImGui::TextUnformatted("Projection-view Matrix");
+        debug::show_matrix(projViewMatrix);
+        ImGui::Spacing();
+
+        ImGui::TextUnformatted("View Matrix");
+        debug::show_matrix(viewMatrix);
     }
 
 //--- end Camera implementation
@@ -764,8 +766,8 @@ namespace open_sea::gl {
         return fov;
     }
 
-    void PerspectiveCamera::showDebugControls() {
-        Camera::showDebugControls();
+    void PerspectiveCamera::showDebug() {
+        Camera::showDebug();
         ImGui::NewLine();
         ImGui::InputFloat("FOV", &fov);
     }

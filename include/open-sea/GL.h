@@ -6,6 +6,8 @@
 #ifndef OPEN_SEA_GL_H
 #define OPEN_SEA_GL_H
 
+#include <open-sea/Debug.h>
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -93,15 +95,12 @@ namespace open_sea::gl {
             bool operator!=(const ShaderProgram &rhs) const;
     };
 
-    //--- Cameras
-    // Note: The system assumes origin in bottom-left corner with x to right, y up and z backward.
-
     /** \class Camera
      * \brief General camera representation
      * General camera representation.
      * All cameras are objects that produce a projection-view matrix based on some properties (transformation, size, ...).
      */
-    class Camera {
+    class Camera : public debug::Debuggable {
         protected:
             //! View matrix (inverse of transformation)
             glm::mat4 viewMatrix;
@@ -140,7 +139,7 @@ namespace open_sea::gl {
             void setFar(float newValue);
             float getFar() const;
 
-            virtual void showDebugControls();
+            virtual void showDebug();
     };
 
     /** \class OrthographicCamera
@@ -166,7 +165,7 @@ namespace open_sea::gl {
         public:
             PerspectiveCamera(const glm::mat4 &transformation, const glm::vec2& size, float near, float far, float fov);
             glm::mat4 getProjViewMatrix() override;
-            void showDebugControls() override;
+            void showDebug() override;
 
             void setFOV(float newValue);
             float getFOV() const;

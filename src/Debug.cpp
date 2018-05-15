@@ -308,6 +308,18 @@ namespace open_sea::debug {
     }
 
     /**
+     * \brief Shows a 4x4 matrix using ImGui text fields
+     *
+     * \param m Matrix
+     */
+    void show_matrix(const glm::mat4 &m) {
+        ImGui::Text("%8.3f %8.3f %8.3f %8.3f", m[0][0], m[1][0], m[2][0], m[3][0]);
+        ImGui::Text("%8.3f %8.3f %8.3f %8.3f", m[0][1], m[1][1], m[2][1], m[3][1]);
+        ImGui::Text("%8.3f %8.3f %8.3f %8.3f", m[0][2], m[1][2], m[2][2], m[3][2]);
+        ImGui::Text("%8.3f %8.3f %8.3f %8.3f", m[0][3], m[1][3], m[2][3], m[3][3]);
+    }
+
+    /**
      * \brief Clean up after the debug GUI (clear menu item lists)
      */
     void clean_up() {

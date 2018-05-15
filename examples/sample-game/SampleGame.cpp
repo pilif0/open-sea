@@ -342,7 +342,7 @@ int main() {
             // Camera info window
             if (camera_info) {
                 if (ImGui::Begin("Active Camera")) {
-                    camera->showDebugControls();
+                    camera->showDebug();
                 }
                 ImGui::End();
             }

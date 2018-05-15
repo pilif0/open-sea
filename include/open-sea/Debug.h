@@ -7,6 +7,7 @@
 #define OPEN_SEA_DEBUG_H
 
 #include <open-sea/ImGui.h>
+#include <glm/glm.hpp>
 
 #include <functional>
 
@@ -47,6 +48,8 @@ namespace open_sea::debug {
 
     unsigned add_menu(const menu_func &f, const std::string &label);
     void remove_menu(unsigned id);
+
+    void show_matrix(const glm::mat4 &m);
 
     void clean_up();
 }

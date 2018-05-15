@@ -15,7 +15,7 @@ namespace open_sea::ecs {
      * \brief System that makes GL cameras follow entities they have assigned
      */
     //Note: if the assigned entity doesn't have the transformation component, identity transformation will be assumed
-    class CameraFollow {
+    class CameraFollow : public debug::Debuggable {
         public:
             //! Transformation component manager
             std::shared_ptr<ecs::TransformationComponent> transformMgr{};
@@ -28,6 +28,8 @@ namespace open_sea::ecs {
 
             void transform();
             void transform(std::shared_ptr<gl::Camera> *cameras, unsigned count);
+
+            void showDebug() override;
     };
 }
 

@@ -9,7 +9,7 @@
 #include <open-sea/Entity.h>
 #include <open-sea/Components.h>
 #include <open-sea/GL.h>
-#include <open-sea/ImGui.h>
+#include <open-sea/Debug.h>
 
 #include <memory>
 #include <utility>
@@ -19,7 +19,7 @@ namespace open_sea::render {
     /** \class UntexturedRenderer
      * \brief Renderer using untextured models
      */
-    class UntexturedRenderer : public imgui::Debuggable {
+    class UntexturedRenderer : public debug::Debuggable {
         public:
             //! Model component manager
             std::shared_ptr<ecs::ModelComponent> modelMgr{};

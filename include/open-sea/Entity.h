@@ -8,7 +8,7 @@
 #define OPEN_SEA_ENTITY_H
 
 #include <open-sea/Log.h>
-#include <open-sea/ImGui.h>
+#include <open-sea/Debug.h>
 
 #include <vector>
 #include <cstdint>
@@ -49,7 +49,7 @@ namespace open_sea::ecs {
         std::string str() const;
     };
 
-    class EntityManager : public imgui::Debuggable {
+    class EntityManager : public debug::Debuggable {
         private:
             //! Record of currently living (or the next one to live if none alive) generation in an index
             std::vector<uint16_t> generation;

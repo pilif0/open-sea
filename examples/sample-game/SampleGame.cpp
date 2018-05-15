@@ -19,6 +19,7 @@
 #include <open-sea/Render.h>
 #include <open-sea/Systems.h>
 #include <open-sea/Controls.h>
+#include <open-sea/Debug.h>
 namespace os_log = open_sea::log;
 namespace window = open_sea::window;
 namespace input = open_sea::input;
@@ -29,6 +30,7 @@ namespace model = open_sea::model;
 namespace ecs = open_sea::ecs;
 namespace render = open_sea::render;
 namespace controls = open_sea::controls;
+namespace debug = open_sea::debug;
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
@@ -123,7 +125,7 @@ int main() {
     std::shared_ptr<ecs::EntityManager> test_manager = std::make_shared<ecs::EntityManager>();
     ecs::Entity entities[N];
     test_manager->create(entities, N);
-    imgui::add_entity_manager(test_manager, "Test Manager");
+    debug::add_entity_manager(test_manager, "Test Manager");
 
     // Prepare and assign model
     std::shared_ptr<ecs::ModelComponent> model_comp_manager = std::make_shared<ecs::ModelComponent>();
@@ -136,7 +138,7 @@ int main() {
 
         model_comp_manager->add(entities, models.data(), N);
     }
-    imgui::add_component_manager(model_comp_manager, "Model");
+    debug::add_component_manager(model_comp_manager, "Model");
 
     // Prepare and assign random transformations
     std::shared_ptr<ecs::TransformationComponent> trans_comp_manager = std::make_shared<ecs::TransformationComponent>();
@@ -176,11 +178,11 @@ int main() {
         trans_comp_manager->add(entities, positions.data(), orientations.data(), scales.data(), N);
         os_log::log(lg, os_log::info, "Transformations set");
     }
-    imgui::add_component_manager(trans_comp_manager, "Transformation");
+    debug::add_component_manager(trans_comp_manager, "Transformation");
 
     // Prepare renderer
     std::shared_ptr<render::UntexturedRenderer> renderer = std::make_shared<render::UntexturedRenderer>(model_comp_manager, trans_comp_manager);
-    imgui::add_system(renderer, "Untextured Renderer");
+    debug::add_system(renderer, "Untextured Renderer");
 
     // Create camera guide entity
     ecs::Entity camera_guide = test_manager->create();
@@ -204,10 +206,11 @@ int main() {
 
         camera_comp_manager->add(es, cameras, 2);
     }
-    imgui::add_component_manager(camera_comp_manager, "Camera");
+    debug::add_component_manager(camera_comp_manager, "Camera");
 
     // Prepare camera follow system
-    std::unique_ptr<ecs::CameraFollow> camera_follow = std::make_unique<ecs::CameraFollow>(trans_comp_manager, camera_comp_manager);
+    std::shared_ptr<ecs::CameraFollow> camera_follow = std::make_shared<ecs::CameraFollow>(trans_comp_manager, camera_comp_manager);
+    debug::add_system(camera_follow, "Camera Follow");
     
     // Prepare controls for the camera guide
     controls::Free::Config controls_config {
@@ -279,7 +282,7 @@ int main() {
             imgui::new_frame();
 
             // Main menu
-            imgui::main_menu();
+            debug::main_menu();
 
             // Test camera controls
             {

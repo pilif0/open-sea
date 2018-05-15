@@ -4,7 +4,7 @@
 
 #include <open-sea/GL.h>
 #include <open-sea/Log.h>
-#include <open-sea/ImGui.h>
+#include <open-sea/Debug.h>
 
 #if not(defined(GLM_ENABLE_EXPERIMENTAL))
 #define GLM_ENABLE_EXPERIMENTAL
@@ -778,7 +778,7 @@ namespace open_sea::gl {
      * \param open Pointer to window's open flag for the close widget
      */
     void debug_window(bool *open) {
-        imgui::set_standard_width();
+        debug::set_standard_width();
 
         if (ImGui::Begin("OpenGL", open)) {
             if (ImGui::CollapsingHeader("Shaders", ImGuiTreeNodeFlags_DefaultOpen)) {

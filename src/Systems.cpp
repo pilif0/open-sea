@@ -64,5 +64,13 @@ namespace open_sea::ecs {
             }
         }
     }
+
+    /**
+     * \brief Show ImGui debug information
+     */
+    void CameraFollow::showDebug() {
+        ImGui::Text("WIP");
+        //TODO
+    }
     //--- endCameraFollow implementation
 }

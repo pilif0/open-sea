@@ -10,7 +10,7 @@
 #include <open-sea/Model.h>
 #include <open-sea/Log.h>
 #include <open-sea/GL.h>
-#include <open-sea/ImGui.h>
+#include <open-sea/Debug.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -30,7 +30,7 @@ namespace open_sea::ecs {
     /** \class ModelComponent
      * \brief Associates an entity with a model
      */
-    class ModelComponent : public imgui::Debuggable{
+    class ModelComponent : public debug::Debuggable{
         private:
             //! Logger for this manager
             log::severity_logger lg = log::get_logger("Model Component Mgr");
@@ -88,7 +88,7 @@ namespace open_sea::ecs {
      * If the entity has no parent (index -1) then it is considered a root and its transformation is relative to identity.
      * Multiple root entities are not considered siblings.
      */
-    class TransformationComponent : public imgui::Debuggable {
+    class TransformationComponent : public debug::Debuggable {
         private:
             //! Logger for this manager
             log::severity_logger lg = log::get_logger("Transformation Component Mgr");
@@ -168,7 +168,7 @@ namespace open_sea::ecs {
      * One entity can have multiple associated cameras.
      */
     //TODO: maybe add a method to retrieve all indices of an entity instead of just first
-    class CameraComponent : public imgui::Debuggable {
+    class CameraComponent : public debug::Debuggable {
         private:
             //! Logger for this manager
             log::severity_logger lg = log::get_logger("Camera Component Mgr");

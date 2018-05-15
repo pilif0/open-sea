@@ -8,6 +8,8 @@
 
 #include <open-sea/ImGui.h>
 
+#include <functional>
+
 namespace open_sea::debug {
     //! Standard width for debug windows
     // This is to provide some unified appearance and easy arrangement into columns
@@ -23,7 +25,8 @@ namespace open_sea::debug {
             //! Show debug information (called within an ImGui window)
             virtual void showDebug() = 0;
     };
-    typedef std::tuple<std::shared_ptr<Debuggable>, std::string, bool> menu_record;
+    //! Type of menu items that toggle display of a window for the debuggable
+    typedef std::tuple<std::shared_ptr<Debuggable>, std::string, bool> menu_item;
 
     void add_entity_manager(std::shared_ptr<Debuggable> em, std::string label);
     void remove_entity_manager(std::shared_ptr<Debuggable> em);
@@ -33,6 +36,14 @@ namespace open_sea::debug {
 
     void add_system(std::shared_ptr<Debuggable> sys, std::string label);
     void remove_system(std::shared_ptr<Debuggable> sys);
+
+    //! Function that defines the contents of a menu (called between \c ImGui::BeginMenu and \c ImGui::EndMenu)
+    typedef std::function<void()> menu_func;
+    //! Type of menus (contents defined in the function)
+    typedef std::tuple<menu_func, std::string> menu;
+
+    unsigned add_menu(menu_func f, std::string label);
+    void remove_menu(unsigned id);
 }
 
 #endif //OPEN_SEA_DEBUG_H

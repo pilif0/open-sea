@@ -239,6 +239,14 @@ int main() {
         }
     });
 
+    // Add test debug menu
+    debug::menu_func test_menu = [](){
+        static bool toggle;
+        if (ImGui::MenuItem("Test Item", nullptr, false)) {}
+        if (ImGui::MenuItem("Test toggle", nullptr, &toggle)) {}
+    };
+    debug::add_menu(test_menu, "Test Menu");
+
     // Set background to black
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 

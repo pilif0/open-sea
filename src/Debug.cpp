@@ -8,13 +8,17 @@
 #include <open-sea/Input.h>
 #include <open-sea/GL.h>
 
+#include <unordered_map>
+
 namespace open_sea::debug {
     //! List of registered entity managers
-    std::vector<menu_record> em_list{};
+    std::vector<menu_item> em_list{};
     //! List of registered component managers
-    std::vector<menu_record> com_list{};
+    std::vector<menu_item> com_list{};
     //! List of registered systems
-    std::vector<menu_record> sys_list{};
+    std::vector<menu_item> sys_list{};
+    //! List of registered menus
+    std::unordered_map<unsigned, menu> menu_map{};
 
     /**
      * \brief Set next window width to the standard width
@@ -90,6 +94,31 @@ namespace open_sea::debug {
     }
 
     /**
+     * \brief Add a main menu bar menu
+     *
+     * \param f Content function
+     * \param label Label
+     * \return Identifier of the menu (for removal)
+     */
+    // Identifier is required for removal because std::function cannot be compared
+    unsigned add_menu(menu_func f, std::string label) {
+        static unsigned last = 0;
+        unsigned i = last++;
+        menu_map[i] = {f, label};
+        return i;
+    }
+
+    /**
+     * \brief Remove the menu with the specified identifier
+     *
+     * \param id Identifier
+     */
+    void remove_menu(unsigned id) {
+        menu_map.erase(id);
+    }
+
+
+    /**
      * \brief Show the main menu and all windows controlled by it
      */
     void main_menu() {
@@ -152,6 +181,15 @@ namespace open_sea::debug {
                 if (ImGui::MenuItem("Dear ImGui", nullptr, &imgui_demo)) {}
 
                 ImGui::EndMenu();
+            }
+
+            // Registered menus
+            for (auto i : menu_map) {
+                if (ImGui::BeginMenu(std::get<1>(i.second).c_str())) {
+                    std::get<0>(i.second)();
+
+                    ImGui::EndMenu();
+                }
             }
 
             ImGui::EndMainMenuBar();

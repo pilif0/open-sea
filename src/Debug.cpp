@@ -7,11 +7,15 @@
 #include <open-sea/Delta.h>
 #include <open-sea/Input.h>
 #include <open-sea/GL.h>
+#include <open-sea/Log.h>
 
 #include <unordered_map>
 #include <utility>
+#include <sstream>
 
 namespace open_sea::debug {
+    log::severity_logger lg = log::get_logger("Debug");
+
     //! List of registered entity managers
     std::vector<menu_item> em_list{};
     //! List of registered component managers
@@ -38,6 +42,9 @@ namespace open_sea::debug {
      */
     void add_entity_manager(const std::shared_ptr<Debuggable> &em, const std::string &label) {
         em_list.emplace_back(em, label, false);
+        std::ostringstream message;
+        message << "Added entity manager entry '" << label << "'";
+        log::log(lg, log::info, message.str());
     }
 
     /**
@@ -60,6 +67,9 @@ namespace open_sea::debug {
      */
     void add_component_manager(const std::shared_ptr<Debuggable> &com, const std::string &label) {
         com_list.emplace_back(com, label, false);
+        std::ostringstream message;
+        message << "Added component manager entry '" << label << "'";
+        log::log(lg, log::info, message.str());
     }
 
     /**
@@ -82,6 +92,9 @@ namespace open_sea::debug {
      */
     void add_system(const std::shared_ptr<Debuggable> &sys, const std::string &label) {
         sys_list.emplace_back(sys, label, false);
+        std::ostringstream message;
+        message << "Added system entry '" << label << "'";
+        log::log(lg, log::info, message.str());
     }
 
     /**
@@ -104,6 +117,9 @@ namespace open_sea::debug {
      */
     void add_controls(const std::shared_ptr<Debuggable> &con, const std::string &label) {
         con_list.emplace_back(con, label, false);
+        std::ostringstream message;
+        message << "Added controls entry '" << label << "'";
+        log::log(lg, log::info, message.str());
     }
 
     /**
@@ -130,6 +146,9 @@ namespace open_sea::debug {
         static unsigned last = 0;
         unsigned i = last++;
         menu_map.emplace(std::make_pair(i, std::make_tuple(f, label)));
+        std::ostringstream message;
+        message << "Added menu '" << label << "'";
+        log::log(lg, log::info, message.str());
         return i;
     }
 

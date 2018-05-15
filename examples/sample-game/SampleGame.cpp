@@ -213,7 +213,8 @@ int main() {
     debug::add_system(camera_follow, "Camera Follow");
     
     // Prepare controls for the camera guide
-    controls::Free::Config controls_config {
+    int controls_no = 0;
+    controls::Free::Config controls_free_config {
             .forward = input::unified_input::keyboard(GLFW_KEY_W),
             .backward = input::unified_input::keyboard(GLFW_KEY_S),
             .left = input::unified_input::keyboard(GLFW_KEY_A),
@@ -228,8 +229,32 @@ int main() {
             .turn_rate = 0.3f,
             .roll_rate = 30.0f
     };
-    std::shared_ptr<controls::Controls> controls = std::make_shared<controls::Free>(trans_comp_manager, camera_guide, controls_config);
-    debug::add_controls(controls, "Free Controls");
+    std::shared_ptr<controls::Controls> controls_free = std::make_shared<controls::Free>(trans_comp_manager, camera_guide, controls_free_config);
+    debug::add_controls(controls_free, "Free Controls");
+    controls::FPS::Config controls_fps_config {
+            .forward = input::unified_input::keyboard(GLFW_KEY_W),
+            .backward = input::unified_input::keyboard(GLFW_KEY_S),
+            .left = input::unified_input::keyboard(GLFW_KEY_A),
+            .right = input::unified_input::keyboard(GLFW_KEY_D),
+            .speed_x = 150.0f,
+            .speed_z = 150.0f,
+            .turn_rate = 0.3f
+    };
+    std::shared_ptr<controls::Controls> controls_fps = std::make_shared<controls::FPS>(trans_comp_manager, camera_guide, controls_fps_config);
+    debug::add_controls(controls_fps, "FPS Controls");
+    controls::TopDown::Config controls_td_config {
+            .left = input::unified_input::keyboard(GLFW_KEY_A),
+            .right = input::unified_input::keyboard(GLFW_KEY_D),
+            .up = input::unified_input::keyboard(GLFW_KEY_LEFT_SHIFT),
+            .down = input::unified_input::keyboard(GLFW_KEY_LEFT_CONTROL),
+            .clockwise = input::unified_input::keyboard(GLFW_KEY_Q),
+            .counter_clockwise = input::unified_input::keyboard(GLFW_KEY_E),
+            .speed_x = 150.0f,
+            .speed_y = 150.0f,
+            .roll_rate = 30.0f
+    };
+    std::shared_ptr<controls::Controls> controls_td = std::make_shared<controls::TopDown>(trans_comp_manager, camera_guide, controls_td_config);
+    debug::add_controls(controls_td, "Top Down Controls");
 
     // Add suspend controls button
     bool suspend_controls = false;
@@ -268,9 +293,14 @@ int main() {
         input::update_cursor_delta();
 
         // Update camera guide controls
-        if (!suspend_controls)
-            controls->transform();
-        else
+        if (!suspend_controls) {
+            switch (controls_no) {
+                case 0: controls_free->transform(); break;
+                case 1: controls_fps->transform(); break;
+                case 2: controls_td->transform(); break;
+                default: return -1;
+            }
+        } else
             glfwSetInputMode(window::window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
         // Update cameras based on associated guides
@@ -299,6 +329,7 @@ int main() {
 
                 ImGui::Checkbox("Use perspective camera", &use_per_cam);
                 ImGui::Checkbox("Suspend controls", &suspend_controls);
+                ImGui::DragInt("Controls", &controls_no, 1.0f, 0, 2);
 
                 ImGui::Text("Test camera:");
                 if (use_per_cam)

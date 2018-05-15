@@ -18,6 +18,8 @@ namespace open_sea::debug {
     std::vector<menu_item> com_list{};
     //! List of registered systems
     std::vector<menu_item> sys_list{};
+    //! List of registered controls
+    std::vector<menu_item> con_list{};
     //! List of registered menus
     std::unordered_map<unsigned, menu> menu_map{};
 
@@ -91,6 +93,28 @@ namespace open_sea::debug {
         for (auto i = sys_list.begin(); i < sys_list.end(); i++){
             if (std::get<0>(*i) == sys)
                 sys_list.erase(i);
+        }
+    }
+
+    /**
+     * \brief Add a main menu bar item for the controls
+     *
+     * \param con Controls
+     * \param label Label
+     */
+    void add_controls(const std::shared_ptr<Debuggable> &con, const std::string &label) {
+        con_list.emplace_back(con, label, false);
+    }
+
+    /**
+     * \brief Remove all main menu bar items for the controls
+     *
+     * \param con Controls
+     */
+    void remove_controls(const std::shared_ptr<Debuggable> &con) {
+        for (auto i = con_list.begin(); i < con_list.end(); i++){
+            if (std::get<0>(*i) == con)
+                con_list.erase(i);
         }
     }
 
@@ -177,6 +201,16 @@ namespace open_sea::debug {
                 ImGui::EndMenu();
             }
 
+            // Controls
+            if (ImGui::BeginMenu("Controls")) {
+                // Print a menu item for each registered system
+                for (auto i = con_list.begin(); i < con_list.end(); i++) {
+                    if (ImGui::MenuItem(std::get<1>(*i).c_str(), nullptr, &std::get<2>(*i))) {}
+                }
+
+                ImGui::EndMenu();
+            }
+
             // Demos
             if (ImGui::BeginMenu("Demos")) {
                 if (ImGui::MenuItem("Dear ImGui", nullptr, &imgui_demo)) {}
@@ -217,7 +251,7 @@ namespace open_sea::debug {
             }
         }
 
-        // Entity managers
+        // Component managers
         for (auto i : com_list) {
             if (std::get<2>(i)) {
                 set_standard_width();
@@ -229,12 +263,24 @@ namespace open_sea::debug {
             }
         }
 
-        // Entity managers
+        // Systems
         for (auto i : sys_list) {
             if (std::get<2>(i)) {
                 set_standard_width();
 
                 if (ImGui::Begin(std::string("System - ").append(std::get<1>(i)).c_str(), &std::get<2>(i))) {
+                    (std::get<0>(i))->showDebug();
+                }
+                ImGui::End();
+            }
+        }
+
+        // Controls
+        for (auto i : con_list) {
+            if (std::get<2>(i)) {
+                set_standard_width();
+
+                if (ImGui::Begin(std::string("Controls - ").append(std::get<1>(i)).c_str(), &std::get<2>(i))) {
                     (std::get<0>(i))->showDebug();
                 }
                 ImGui::End();

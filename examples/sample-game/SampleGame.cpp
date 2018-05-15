@@ -228,7 +228,8 @@ int main() {
             .turn_rate = 0.3f,
             .roll_rate = 30.0f
     };
-    std::unique_ptr<controls::Controls> controls = std::make_unique<controls::Free>(trans_comp_manager, camera_guide, controls_config);
+    std::shared_ptr<controls::Controls> controls = std::make_shared<controls::Free>(trans_comp_manager, camera_guide, controls_config);
+    debug::add_controls(controls, "Free Controls");
 
     // Add suspend controls button
     bool suspend_controls = false;
@@ -291,15 +292,6 @@ int main() {
 
             // Main menu
             debug::main_menu();
-
-            // Test camera controls
-            {
-                ImGui::Begin("Test camera controls");
-
-                controls->showDebug();
-
-                ImGui::End();
-            }
 
             // Test environment controls
             {

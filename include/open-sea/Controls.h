@@ -11,13 +11,14 @@
 #include <open-sea/Entity.h>
 #include <open-sea/Components.h>
 #include <open-sea/Input.h>
+#include <open-sea/Debug.h>
 
 namespace open_sea::controls {
 
     /** \class Controls
      * \brief Abstract base class for all controls
      */
-    class Controls {
+    class Controls : public debug::Debuggable {
         protected:
             //! Entity being controlled
             ecs::Entity subject;
@@ -32,7 +33,7 @@ namespace open_sea::controls {
             virtual void setSubject(ecs::Entity newSubject);
             virtual ecs::Entity getSubject() const;
 
-            virtual void showDebug();
+            void showDebug() override;
 
             virtual ~Controls() {}
     };

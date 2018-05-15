@@ -37,6 +37,9 @@ namespace open_sea::debug {
     void add_system(const std::shared_ptr<Debuggable> &sys, const std::string &label);
     void remove_system(const std::shared_ptr<Debuggable> &sys);
 
+    void add_controls(const std::shared_ptr<Debuggable> &con, const std::string &label);
+    void remove_controls(const std::shared_ptr<Debuggable> &con);
+
     //! Function that defines the contents of a menu (called between \c ImGui::BeginMenu and \c ImGui::EndMenu)
     typedef std::function<void()> menu_func;
     //! Type of menus (contents defined in the function)

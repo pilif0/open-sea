@@ -9,6 +9,7 @@
 #include <open-sea/GL.h>
 
 #include <unordered_map>
+#include <utility>
 
 namespace open_sea::debug {
     //! List of registered entity managers
@@ -33,8 +34,8 @@ namespace open_sea::debug {
      * \param em Entity Manager
      * \param label Label
      */
-    void add_entity_manager(std::shared_ptr<Debuggable> em, std::string label) {
-        em_list.push_back({em, label, false});
+    void add_entity_manager(const std::shared_ptr<Debuggable> &em, const std::string &label) {
+        em_list.emplace_back(em, label, false);
     }
 
     /**
@@ -42,7 +43,7 @@ namespace open_sea::debug {
      *
      * \param em Entity Manager
      */
-    void remove_entity_manager(std::shared_ptr<Debuggable> em) {
+    void remove_entity_manager(const std::shared_ptr<Debuggable> &em) {
         for (auto i = em_list.begin(); i < em_list.end(); i++){
             if (std::get<0>(*i) == em)
                 em_list.erase(i);
@@ -55,8 +56,8 @@ namespace open_sea::debug {
      * \param com Component Manager
      * \param label Label
      */
-    void add_component_manager(std::shared_ptr<Debuggable> com, std::string label) {
-        com_list.push_back({com, label, false});
+    void add_component_manager(const std::shared_ptr<Debuggable> &com, const std::string &label) {
+        com_list.emplace_back(com, label, false);
     }
 
     /**
@@ -64,7 +65,7 @@ namespace open_sea::debug {
      *
      * \param com Component Manager
      */
-    void remove_component_manager(std::shared_ptr<Debuggable> com) {
+    void remove_component_manager(const std::shared_ptr<Debuggable> &com) {
         for (auto i = com_list.begin(); i < com_list.end(); i++){
             if (std::get<0>(*i) == com)
                 com_list.erase(i);
@@ -77,8 +78,8 @@ namespace open_sea::debug {
      * \param sys System
      * \param label Label
      */
-    void add_system(std::shared_ptr<Debuggable> sys, std::string label) {
-        sys_list.push_back({sys, label, false});
+    void add_system(const std::shared_ptr<Debuggable> &sys, const std::string &label) {
+        sys_list.emplace_back(sys, label, false);
     }
 
     /**
@@ -86,7 +87,7 @@ namespace open_sea::debug {
      *
      * \param sys System
      */
-    void remove_system(std::shared_ptr<Debuggable> sys) {
+    void remove_system(const std::shared_ptr<Debuggable> &sys) {
         for (auto i = sys_list.begin(); i < sys_list.end(); i++){
             if (std::get<0>(*i) == sys)
                 sys_list.erase(i);
@@ -101,10 +102,10 @@ namespace open_sea::debug {
      * \return Identifier of the menu (for removal)
      */
     // Identifier is required for removal because std::function cannot be compared
-    unsigned add_menu(menu_func f, std::string label) {
+    unsigned add_menu(const menu_func &f, const std::string &label) {
         static unsigned last = 0;
         unsigned i = last++;
-        menu_map[i] = {f, label};
+        menu_map.emplace(std::make_pair(i, std::make_tuple(f, label)));
         return i;
     }
 
@@ -113,7 +114,7 @@ namespace open_sea::debug {
      *
      * \param id Identifier
      */
-    void remove_menu(unsigned id) {
+    void remove_menu(const unsigned id) {
         menu_map.erase(id);
     }
 
@@ -205,36 +206,36 @@ namespace open_sea::debug {
         if (imgui_demo) ImGui::ShowDemoWindow(&imgui_demo);
 
         // Entity managers
-        for (auto i = em_list.begin(); i < em_list.end(); i++) {
-            if (std::get<2>(*i)) {
+        for (auto i : em_list) {
+            if (std::get<2>(i)) {
                 set_standard_width();
 
-                if (ImGui::Begin(std::string("Entity Manager - ").append(std::get<1>(*i)).c_str(), &std::get<2>(*i))) {
-                    (std::get<0>(*i))->showDebug();
+                if (ImGui::Begin(std::string("Entity Manager - ").append(std::get<1>(i)).c_str(), &std::get<2>(i))) {
+                    (std::get<0>(i))->showDebug();
                 }
                 ImGui::End();
             }
         }
 
         // Entity managers
-        for (auto i = com_list.begin(); i < com_list.end(); i++) {
-            if (std::get<2>(*i)) {
+        for (auto i : com_list) {
+            if (std::get<2>(i)) {
                 set_standard_width();
 
-                if (ImGui::Begin(std::string("Component Manager - ").append(std::get<1>(*i)).c_str(), &std::get<2>(*i))) {
-                    (std::get<0>(*i))->showDebug();
+                if (ImGui::Begin(std::string("Component Manager - ").append(std::get<1>(i)).c_str(), &std::get<2>(i))) {
+                    (std::get<0>(i))->showDebug();
                 }
                 ImGui::End();
             }
         }
 
         // Entity managers
-        for (auto i = sys_list.begin(); i < sys_list.end(); i++) {
-            if (std::get<2>(*i)) {
+        for (auto i : sys_list) {
+            if (std::get<2>(i)) {
                 set_standard_width();
 
-                if (ImGui::Begin(std::string("System - ").append(std::get<1>(*i)).c_str(), &std::get<2>(*i))) {
-                    (std::get<0>(*i))->showDebug();
+                if (ImGui::Begin(std::string("System - ").append(std::get<1>(i)).c_str(), &std::get<2>(i))) {
+                    (std::get<0>(i))->showDebug();
                 }
                 ImGui::End();
             }

@@ -28,21 +28,21 @@ namespace open_sea::debug {
     //! Type of menu items that toggle display of a window for the debuggable
     typedef std::tuple<std::shared_ptr<Debuggable>, std::string, bool> menu_item;
 
-    void add_entity_manager(std::shared_ptr<Debuggable> em, std::string label);
-    void remove_entity_manager(std::shared_ptr<Debuggable> em);
+    void add_entity_manager(const std::shared_ptr<Debuggable> &em, const std::string &label);
+    void remove_entity_manager(const std::shared_ptr<Debuggable> &em);
 
-    void add_component_manager(std::shared_ptr<Debuggable> com, std::string label);
-    void remove_component_manager(std::shared_ptr<Debuggable> com);
+    void add_component_manager(const std::shared_ptr<Debuggable> &com, const std::string &label);
+    void remove_component_manager(const std::shared_ptr<Debuggable> &com);
 
-    void add_system(std::shared_ptr<Debuggable> sys, std::string label);
-    void remove_system(std::shared_ptr<Debuggable> sys);
+    void add_system(const std::shared_ptr<Debuggable> &sys, const std::string &label);
+    void remove_system(const std::shared_ptr<Debuggable> &sys);
 
     //! Function that defines the contents of a menu (called between \c ImGui::BeginMenu and \c ImGui::EndMenu)
     typedef std::function<void()> menu_func;
     //! Type of menus (contents defined in the function)
     typedef std::tuple<menu_func, std::string> menu;
 
-    unsigned add_menu(menu_func f, std::string label);
+    unsigned add_menu(const menu_func &f, const std::string &label);
     void remove_menu(unsigned id);
 }
 

@@ -265,13 +265,27 @@ int main() {
         }
     });
 
-    // Add test debug menu
-    debug::menu_func test_menu = [](){
-        static bool toggle;
-        if (ImGui::MenuItem("Test Item", nullptr, false)) {}
-        if (ImGui::MenuItem("Test toggle", nullptr, &toggle)) {}
+    // Add test environment menu
+    bool use_per_camera = true;
+    bool camera_info = false;
+    debug::menu_func environment_menu = [&use_per_camera, &controls_no, &suspend_controls, &camera_info](){
+        if (ImGui::MenuItem("Suspend Controls", nullptr, &suspend_controls)) {}
+        if (ImGui::BeginMenu("Active Camera:")) {
+            if (ImGui::MenuItem("Perspective", nullptr, use_per_camera)) { use_per_camera = true; }
+            if (ImGui::MenuItem("Orthographic", nullptr, !use_per_camera)) { use_per_camera = false; }
+
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Active Controls:")) {
+            if (ImGui::MenuItem("Free", nullptr, (controls_no == 0))) { controls_no = 0; }
+            if (ImGui::MenuItem("FPS", nullptr, (controls_no == 1))) { controls_no = 1; }
+            if (ImGui::MenuItem("Top Down", nullptr, (controls_no == 2))) { controls_no = 2; }
+
+            ImGui::EndMenu();
+        }
+        if (ImGui::MenuItem("Camera Info", nullptr, &camera_info)) {}
     };
-    debug::add_menu(test_menu, "Test Menu");
+    debug::add_menu(environment_menu, "Test Environment");
 
     // Set background to black
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -306,9 +320,11 @@ int main() {
         // Update cameras based on associated guides
         camera_follow->transform();
 
+        // Decide what camera to use
+        std::shared_ptr<gl::Camera> camera = (use_per_camera) ? test_camera_per : test_camera_ort;
+
         // Draw the entities
-        static bool use_per_cam = true;
-        renderer->render((use_per_cam) ? test_camera_per : test_camera_ort, entities, N);
+        renderer->render(camera, entities, N);
 
         // Maintain components
         model_comp_manager->gc(*test_manager);
@@ -323,21 +339,11 @@ int main() {
             // Main menu
             debug::main_menu();
 
-            // Test environment controls
-            {
-                ImGui::Begin("Test environment controls");
-
-                ImGui::Checkbox("Use perspective camera", &use_per_cam);
-                ImGui::Checkbox("Suspend controls", &suspend_controls);
-                ImGui::DragInt("Controls", &controls_no, 1.0f, 0, 2);
-
-                ImGui::Text("Test camera:");
-                if (use_per_cam)
-                    test_camera_per->showDebugControls();
-                else
-                    test_camera_ort->showDebugControls();
-                ImGui::Spacing();
-
+            // Camera info window
+            if (camera_info) {
+                if (ImGui::Begin("Active Camera")) {
+                    camera->showDebugControls();
+                }
                 ImGui::End();
             }
 

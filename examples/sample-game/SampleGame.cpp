@@ -65,7 +65,7 @@ int main() {
     input::init();
 
     // Add close action to ESC
-    input::connection c = input::connect_key([](int k, int c, input::state s, int m) {
+    input::connect_key([](int k, int c, input::state s, int m) {
         if (s == input::press && k == GLFW_KEY_ESCAPE)
             window::close();
     });
@@ -80,7 +80,7 @@ int main() {
 
     // Add ImGui display toggle to F3
     bool show_imgui = false;
-    input::connection imgui_toggle = input::connect_key([&show_imgui](int k, int c, input::state s, int m) {
+    input::connect_key([&show_imgui](int k, int c, input::state s, int m) {
         if (s == input::press && k == GLFW_KEY_F3) {
             // Toggle the display flag
             show_imgui = !show_imgui;
@@ -356,10 +356,10 @@ int main() {
     // Clean up OpenGL objects before termination of the context
     model_comp_manager.reset();
     renderer.reset();
-
-    c.disconnect();
-    imgui_toggle.disconnect();
+    debug::clean_up();
     imgui::clean_up();
+
+    // Terminate OpenGL context and clean up window and logging modules
     window::clean_up();
     window::terminate();
     os_log::clean_up();

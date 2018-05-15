@@ -47,6 +47,8 @@ namespace open_sea::debug {
 
     unsigned add_menu(const menu_func &f, const std::string &label);
     void remove_menu(unsigned id);
+
+    void clean_up();
 }
 
 #endif //OPEN_SEA_DEBUG_H

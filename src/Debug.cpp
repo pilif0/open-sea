@@ -306,4 +306,17 @@ namespace open_sea::debug {
             }
         }
     }
+
+    /**
+     * \brief Clean up after the debug GUI (clear menu item lists)
+     */
+    void clean_up() {
+        log::log(lg, log::info, "Cleaning up...");
+        em_list.clear();
+        com_list.clear();
+        sys_list.clear();
+        con_list.clear();
+        menu_map.clear();
+        log::log(lg, log::info, "Cleaned up");
+    }
 }

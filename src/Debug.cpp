@@ -269,7 +269,7 @@ namespace open_sea::debug {
         if (imgui_demo) ImGui::ShowDemoWindow(&imgui_demo);
 
         // Entity managers
-        for (auto i : em_list) {
+        for (auto &i : em_list) {
             if (std::get<2>(i)) {
                 set_standard_width();
 
@@ -281,7 +281,7 @@ namespace open_sea::debug {
         }
 
         // Component managers
-        for (auto i : com_list) {
+        for (auto &i : com_list) {
             if (std::get<2>(i)) {
                 set_standard_width();
 
@@ -293,7 +293,7 @@ namespace open_sea::debug {
         }
 
         // Systems
-        for (auto i : sys_list) {
+        for (auto &i : sys_list) {
             if (std::get<2>(i)) {
                 set_standard_width();
 
@@ -305,7 +305,7 @@ namespace open_sea::debug {
         }
 
         // Controls
-        for (auto i : con_list) {
+        for (auto &i : con_list) {
             if (std::get<2>(i)) {
                 set_standard_width();
 

@@ -347,27 +347,20 @@ namespace open_sea::ecs {
     void ModelComponent::showQuery() {
         ImGui::TextUnformatted("Entity:");
         ImGui::InputInt2("index - generation", queryIdxGen);
-        if (ImGui::Button("Query")) {
+        if (ImGui::Button("Refresh")) {
             if (queryIdxGen[0] >= 0 && queryIdxGen[1] >= 0) {
                 int i = lookup(ecs::Entity(static_cast<unsigned>(queryIdxGen[0]), static_cast<unsigned>(queryIdxGen[1])));
-                if (i != -1) {
-                    queryModelId = data.model[i];
-                    queryModel = getModel(queryModelId);
-                } else {
-                    queryModelId = -1;
-                    queryModel.reset();
-                }
+                queryIdx = i;
             } else {
-                queryModelId = -1;
-                queryModel.reset();
+                queryIdx = -1;
             }
         }
         ImGui::Separator();
-        if (queryModelId != -1) {
-            ImGui::Text("Model index: %i", queryModelId);
+        if (queryIdx != -1) {
+            ImGui::Text("Model index: %i", data.model[queryIdx]);
             ImGui::TextUnformatted("Model information:");
             ImGui::Indent();
-            queryModel->showDebug();
+            getModel(data.model[queryIdx])->showDebug();
             ImGui::Unindent();
         } else {
             ImGui::TextUnformatted("No record found");
@@ -1062,36 +1055,24 @@ namespace open_sea::ecs {
     void TransformationComponent::showQuery() {
         ImGui::TextUnformatted("Entity:");
         ImGui::InputInt2("index - generation", queryIdxGen);
-        if (ImGui::Button("Query")) {
+        if (ImGui::Button("Refresh")) {
             if (queryIdxGen[0] >= 0 && queryIdxGen[1] >= 0) {
                 int i = lookup(ecs::Entity(static_cast<unsigned>(queryIdxGen[0]), static_cast<unsigned>(queryIdxGen[1])));
-                if (i != -1) {
-                    queryFound = true;
-                    queryPos = data.position[i];
-                    queryOri = data.orientation[i];
-                    queryScale = data.scale[i];
-                    queryMat = data.matrix[i];
-                    queryParent = data.parent[i];
-                    queryFirstCh = data.firstChild[i];
-                    queryNextSib = data.nextSibling[i];
-                    queryPrevSib = data.prevSibling[i];
-                } else {
-                    queryFound = false;
-                }
+                queryIdx = i;
             } else {
-                queryFound = false;
+                queryIdx = -1;
             }
         }
         ImGui::Separator();
-        if (queryFound) {
-            ImGui::Text("Position: %.3f, %.3f, %.3f", queryPos.x, queryPos.y, queryPos.z);
-            ImGui::Text("Orientation: %.3f, %.3f, %.3f, %.3f", queryOri.x, queryOri.y, queryOri.z, queryOri.w);
-            ImGui::Text("Scale: %.3f, %.3f, %.3f", queryScale.x, queryScale.y, queryScale.z);
-            debug::show_matrix(queryMat);
-            ImGui::Text("Parent: %s", (queryParent == -1) ? "none" : data.entity[queryParent].str().c_str());
-            ImGui::Text("First child: %s", (queryFirstCh == -1) ? "none" : data.entity[queryFirstCh].str().c_str());
-            ImGui::Text("Next sibling: %s", (queryNextSib == -1) ? "none" : data.entity[queryNextSib].str().c_str());
-            ImGui::Text("Previous sibling: %s", (queryPrevSib == -1) ? "none" : data.entity[queryPrevSib].str().c_str());
+        if (queryIdx != -1) {
+            ImGui::Text("Position: %.3f, %.3f, %.3f", data.position[queryIdx].x, data.position[queryIdx].y, data.position[queryIdx].z);
+            ImGui::Text("Orientation: %.3f, %.3f, %.3f, %.3f", data.orientation[queryIdx].x, data.orientation[queryIdx].y, data.orientation[queryIdx].z, data.orientation[queryIdx].w);
+            ImGui::Text("Scale: %.3f, %.3f, %.3f", data.scale[queryIdx].x, data.scale[queryIdx].y, data.scale[queryIdx].z);
+            debug::show_matrix(data.matrix[queryIdx]);
+            ImGui::Text("Parent: %s", (data.parent[queryIdx] == -1) ? "none" : data.entity[data.parent[queryIdx]].str().c_str());
+            ImGui::Text("First child: %s", (data.firstChild[queryIdx] == -1) ? "none" : data.entity[data.firstChild[queryIdx]].str().c_str());
+            ImGui::Text("Next sibling: %s", (data.nextSibling[queryIdx] == -1) ? "none" : data.entity[data.nextSibling[queryIdx]].str().c_str());
+            ImGui::Text("Previous sibling: %s", (data.prevSibling[queryIdx] == -1) ? "none" : data.entity[data.prevSibling[queryIdx]].str().c_str());
         } else {
             ImGui::TextUnformatted("No record found");
         }
@@ -1328,7 +1309,7 @@ namespace open_sea::ecs {
     void CameraComponent::showQuery() {
         ImGui::TextUnformatted("Entity:");
         ImGui::InputInt2("index - generation", queryIdxGen);
-        if (ImGui::Button("Query")) {
+        if (ImGui::Button("Refresh")) {
             queryCameras.clear();
             if (queryIdxGen[0] >= 0 && queryIdxGen[1] >= 0) {
                 ecs::Entity q(static_cast<unsigned>(queryIdxGen[0]), static_cast<unsigned>(queryIdxGen[1]));

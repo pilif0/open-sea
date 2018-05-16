@@ -342,8 +342,6 @@ namespace open_sea::ecs {
 
     /**
      * \brief Show ImGui form for querying data from a manager of this component
-     *
-     * \param mgr Manager
      */
     void ModelComponent::showQuery() {
         ImGui::TextUnformatted("Entity:");
@@ -1262,6 +1260,45 @@ namespace open_sea::ecs {
         ImGui::Text("Record size: %i bytes", RECORD_SIZE);
         ImGui::Text("Records (allocated): %i (%i)", data.n, data.allocated);
         ImGui::Text("Size data arrays (allocated): %i (%i) bytes", RECORD_SIZE * data.n, RECORD_SIZE * data.allocated);
+        if (ImGui::Button("Query")) {
+            ImGui::OpenPopup("Component Manager Query");
+        }
+        if (ImGui::BeginPopupModal("Component Manager Query", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            showQuery();
+
+            if (ImGui::Button("Close")) { ImGui::CloseCurrentPopup(); }
+            ImGui::EndPopup();
+        }
+    }
+
+    /**
+     * \brief Show ImGui form for querying data from a manager of this component
+     */
+    void CameraComponent::showQuery() {
+        ImGui::TextUnformatted("Entity:");
+        ImGui::InputInt2("index - generation", queryIdxGen);
+        if (ImGui::Button("Query")) {
+            queryCameras.clear();
+            if (queryIdxGen[0] >= 0 && queryIdxGen[1] >= 0) {
+                ecs::Entity q(static_cast<unsigned>(queryIdxGen[0]), static_cast<unsigned>(queryIdxGen[1]));
+                ecs::Entity *e = data.entity;
+                for (unsigned i = 0; i < data.n; i++, e++) {
+                    if (*e == q) queryCameras.emplace_back(data.camera[i]);
+                }
+            }
+        }
+        ImGui::Separator();
+        if (queryCameras.empty()) {
+            ImGui::TextUnformatted("No record found");
+        } else {
+            ImGui::Text("Camera count: %i", queryCameras.size());
+            for (unsigned i = 0; i < queryCameras.size(); i++) {
+                std::ostringstream label;
+                label << "Camera #" << i+1;
+                if (ImGui::CollapsingHeader(label.str().c_str()))
+                    queryCameras[i]->showDebug();
+            }
+        }
     }
     //--- end CameraComponent implementation
 }

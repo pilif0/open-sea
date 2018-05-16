@@ -214,6 +214,9 @@ namespace open_sea::ecs {
             ~CameraComponent();
 
             void showDebug() override;
+            int queryIdxGen[2] {0, 0};
+            std::vector<std::shared_ptr<gl::Camera>> queryCameras;
+            void showQuery();
     };
 }
 

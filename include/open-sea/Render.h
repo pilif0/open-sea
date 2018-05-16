@@ -9,7 +9,7 @@
 #include <open-sea/Entity.h>
 #include <open-sea/Components.h>
 #include <open-sea/GL.h>
-#include <open-sea/Debug.h>
+#include <open-sea/Debuggable.h>
 
 #include <memory>
 #include <utility>

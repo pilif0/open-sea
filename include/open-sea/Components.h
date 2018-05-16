@@ -10,7 +10,7 @@
 #include <open-sea/Model.h>
 #include <open-sea/Log.h>
 #include <open-sea/GL.h>
-#include <open-sea/Debug.h>
+#include <open-sea/Debuggable.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -30,7 +30,7 @@ namespace open_sea::ecs {
     /** \class ModelComponent
      * \brief Associates an entity with a model
      */
-    class ModelComponent : public debug::Debuggable{
+    class ModelComponent : public debug::Debuggable {
         private:
             //! Logger for this manager
             log::severity_logger lg = log::get_logger("Model Component Mgr");

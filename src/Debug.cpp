@@ -8,6 +8,7 @@
 #include <open-sea/Input.h>
 #include <open-sea/GL.h>
 #include <open-sea/Log.h>
+#include <open-sea/ImGui.h>
 
 #include <unordered_map>
 #include <utility>
@@ -250,9 +251,18 @@ namespace open_sea::debug {
         }
 
         // System windows
-        if (time) time::debug_window(&time);
-        if (window) window::debug_window(&window);
-        if (input) input::debug_window(&input);
+        if (time) {
+            set_standard_width();
+            time::debug_window(&time);
+        }
+        if (window) {
+            set_standard_width();
+            window::debug_window(&window);
+        }
+        if (input) {
+            set_standard_width();
+            input::debug_window(&input);
+        }
         if (opengl) gl::debug_window(&opengl);
 
         // Demo windows

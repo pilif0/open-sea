@@ -4,6 +4,7 @@
 
 #include <open-sea/Render.h>
 #include <open-sea/Model.h>
+#include <open-sea/ImGui.h>
 
 #include <vector>
 

@@ -6,7 +6,7 @@
 #ifndef OPEN_SEA_GL_H
 #define OPEN_SEA_GL_H
 
-#include <open-sea/Debug.h>
+#include <open-sea/Debuggable.h>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>

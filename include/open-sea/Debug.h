@@ -6,10 +6,11 @@
 #ifndef OPEN_SEA_DEBUG_H
 #define OPEN_SEA_DEBUG_H
 
-#include <open-sea/ImGui.h>
+#include <open-sea/Debuggable.h>
 #include <glm/glm.hpp>
 
 #include <functional>
+#include <memory>
 
 namespace open_sea::debug {
     //! Standard width for debug windows
@@ -18,14 +19,6 @@ namespace open_sea::debug {
     void set_standard_width();
     void main_menu();
 
-    /**
-     * \brief Interface for any object that has a debug window
-     */
-    class Debuggable {
-        public:
-            //! Show debug information (called within an ImGui window)
-            virtual void showDebug() = 0;
-    };
     //! Type of menu items that toggle display of a window for the debuggable
     typedef std::tuple<std::shared_ptr<Debuggable>, std::string, bool> menu_item;
 

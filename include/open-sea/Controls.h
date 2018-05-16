@@ -11,7 +11,7 @@
 #include <open-sea/Entity.h>
 #include <open-sea/Components.h>
 #include <open-sea/Input.h>
-#include <open-sea/Debug.h>
+#include <open-sea/Debuggable.h>
 
 namespace open_sea::controls {
 

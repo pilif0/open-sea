@@ -8,6 +8,7 @@
 
 #include <open-sea/Components.h>
 #include <open-sea/GL.h>
+#include <open-sea/Debuggable.h>
 
 namespace open_sea::ecs {
 

@@ -3,6 +3,7 @@
  */
 
 #include <open-sea/Systems.h>
+#include <open-sea/ImGui.h>
 
 #include <vector>
 

@@ -3,6 +3,7 @@
  */
 
 #include <open-sea/Entity.h>
+#include <open-sea/ImGui.h>
 
 #include <stdexcept>
 

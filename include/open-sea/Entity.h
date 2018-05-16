@@ -8,7 +8,7 @@
 #define OPEN_SEA_ENTITY_H
 
 #include <open-sea/Log.h>
-#include <open-sea/Debug.h>
+#include <open-sea/Debuggable.h>
 
 #include <vector>
 #include <cstdint>

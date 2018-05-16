@@ -4,9 +4,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include <open-sea/Debug.h>
 #include <open-sea/Delta.h>
 #include <open-sea/Log.h>
+#include <open-sea/ImGui.h>
 
 #include <boost/circular_buffer.hpp>
 
@@ -128,8 +128,6 @@ namespace open_sea::time {
      * \param open Pointer to window's open flag for the close widget
      */
     void debug_window(bool *open) {
-        debug::set_standard_width();
-
         if (ImGui::Begin("Time", open)) {
             // Plot the delta time
             ImGui::PlotLines("##plot", debug_history_get, nullptr, history_length);

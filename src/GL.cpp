@@ -5,6 +5,7 @@
 #include <open-sea/GL.h>
 #include <open-sea/Log.h>
 #include <open-sea/Debug.h>
+#include <open-sea/ImGui.h>
 
 #if not(defined(GLM_ENABLE_EXPERIMENTAL))
 #define GLM_ENABLE_EXPERIMENTAL

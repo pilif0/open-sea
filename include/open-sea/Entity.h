@@ -38,6 +38,11 @@ namespace open_sea::ecs {
         //! ID of this entity
         handle id;
 
+        Entity() {}
+
+        //! Construct an entity from index and generation
+        Entity(unsigned index, unsigned generation) { id = (generation << ENTITY_INDEX_BITS) + index; }
+
         //! Get index of this entity
         unsigned index() const { return id & ENTITY_INDEX_MASK; }
         //! Get generation of this entity

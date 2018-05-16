@@ -80,6 +80,10 @@ namespace open_sea::ecs {
             ~ModelComponent();
 
             void showDebug() override;
+            int queryIdxGen[2] {0, 0};
+            int queryModelId = -1;
+            std::shared_ptr<model::Model> queryModel{};
+            void showQuery();
     };
 
     /** \class TransformationComponent

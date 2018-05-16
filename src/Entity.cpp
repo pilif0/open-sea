@@ -9,19 +9,6 @@
 
 namespace open_sea::ecs {
 
-    /**
-     * \brief Make an entity
-     * Make an entity out of its index and generation.
-     * Assumes both values are within the valid range.
-     *
-     * \param index Entity index
-     * \param generation Entity generation
-     * \return Resulting entity
-     */
-    Entity make_entity(unsigned index, unsigned generation) {
-        return Entity{.id = (generation << ENTITY_INDEX_BITS) + index};
-    }
-
     //--- start Entity implementation
     /**
      * \brief Get string representation of the entity as "index|generation"
@@ -75,7 +62,7 @@ namespace open_sea::ecs {
         auto gen = generation[index];
         maxGeneration = (gen > maxGeneration) ? gen : maxGeneration;
 
-        return make_entity(index, gen);
+        return Entity(index, gen);
     }
 
     /**

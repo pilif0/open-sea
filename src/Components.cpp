@@ -329,6 +329,50 @@ namespace open_sea::ecs {
         ImGui::Text("Records (allocated): %i (%i)", data.n, data.allocated);
         ImGui::Text("Stored models: %i", models.size());
         ImGui::Text("Size data arrays (allocated): %i (%i) bytes", RECORD_SIZE * data.n, RECORD_SIZE * data.allocated);
+        if (ImGui::Button("Query")) {
+            ImGui::OpenPopup("Component Manager Query");
+        }
+        if (ImGui::BeginPopupModal("Component Manager Query", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            showQuery();
+
+            if (ImGui::Button("Close")) { ImGui::CloseCurrentPopup(); }
+            ImGui::EndPopup();
+        }
+    }
+
+    /**
+     * \brief Show ImGui form for querying data from a manager of this component
+     *
+     * \param mgr Manager
+     */
+    void ModelComponent::showQuery() {
+        ImGui::TextUnformatted("Entity:");
+        ImGui::InputInt2("index - generation", queryIdxGen);
+        if (ImGui::Button("Query")) {
+            if (queryIdxGen[0] >= 0 && queryIdxGen[1] >= 0) {
+                int i = lookup(ecs::Entity(static_cast<unsigned>(queryIdxGen[0]), static_cast<unsigned>(queryIdxGen[1])));
+                if (i != -1) {
+                    queryModelId = data.model[i];
+                    queryModel = getModel(queryModelId);
+                } else {
+                    queryModelId = -1;
+                    queryModel.reset();
+                }
+            } else {
+                queryModelId = -1;
+                queryModel.reset();
+            }
+        }
+        ImGui::Separator();
+        if (queryModelId != -1) {
+            ImGui::Text("Model index: %i", queryModelId);
+            ImGui::TextUnformatted("Model information:");
+            ImGui::Indent();
+            queryModel->showDebug();
+            ImGui::Unindent();
+        } else {
+            ImGui::TextUnformatted("No record found");
+        }
     }
     //--- end ModelComponent implementation
 

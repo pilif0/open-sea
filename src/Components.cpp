@@ -3,6 +3,7 @@
  */
 
 #include <open-sea/Components.h>
+#include <open-sea/Debug.h>
 
 #include <imgui.h>
 
@@ -1044,6 +1045,56 @@ namespace open_sea::ecs {
         ImGui::Text("Record size: %i bytes", RECORD_SIZE);
         ImGui::Text("Records (allocated): %i (%i)", data.n, data.allocated);
         ImGui::Text("Size data arrays (allocated): %i (%i) bytes", RECORD_SIZE * data.n, RECORD_SIZE * data.allocated);
+        if (ImGui::Button("Query")) {
+            ImGui::OpenPopup("Component Manager Query");
+        }
+        if (ImGui::BeginPopupModal("Component Manager Query", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            showQuery();
+
+            if (ImGui::Button("Close")) { ImGui::CloseCurrentPopup(); }
+            ImGui::EndPopup();
+        }
+    }
+
+    /**
+     * \brief Show ImGui form for querying data from a manager of this component
+     */
+    void TransformationComponent::showQuery() {
+        ImGui::TextUnformatted("Entity:");
+        ImGui::InputInt2("index - generation", queryIdxGen);
+        if (ImGui::Button("Query")) {
+            if (queryIdxGen[0] >= 0 && queryIdxGen[1] >= 0) {
+                int i = lookup(ecs::Entity(static_cast<unsigned>(queryIdxGen[0]), static_cast<unsigned>(queryIdxGen[1])));
+                if (i != -1) {
+                    queryFound = true;
+                    queryPos = data.position[i];
+                    queryOri = data.orientation[i];
+                    queryScale = data.scale[i];
+                    queryMat = data.matrix[i];
+                    queryParent = data.parent[i];
+                    queryFirstCh = data.firstChild[i];
+                    queryNextSib = data.nextSibling[i];
+                    queryPrevSib = data.prevSibling[i];
+                } else {
+                    queryFound = false;
+                }
+            } else {
+                queryFound = false;
+            }
+        }
+        ImGui::Separator();
+        if (queryFound) {
+            ImGui::Text("Position: %.3f, %.3f, %.3f", queryPos.x, queryPos.y, queryPos.z);
+            ImGui::Text("Orientation: %.3f, %.3f, %.3f, %.3f", queryOri.x, queryOri.y, queryOri.z, queryOri.w);
+            ImGui::Text("Scale: %.3f, %.3f, %.3f", queryScale.x, queryScale.y, queryScale.z);
+            debug::show_matrix(queryMat);
+            ImGui::Text("Parent: %s", (queryParent == -1) ? "none" : data.entity[queryParent].str().c_str());
+            ImGui::Text("First child: %s", (queryFirstCh == -1) ? "none" : data.entity[queryFirstCh].str().c_str());
+            ImGui::Text("Next sibling: %s", (queryNextSib == -1) ? "none" : data.entity[queryNextSib].str().c_str());
+            ImGui::Text("Previous sibling: %s", (queryPrevSib == -1) ? "none" : data.entity[queryPrevSib].str().c_str());
+        } else {
+            ImGui::TextUnformatted("No record found");
+        }
     }
     //--- end TransformationComponent implementation
 

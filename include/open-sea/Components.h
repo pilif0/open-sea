@@ -163,6 +163,17 @@ namespace open_sea::ecs {
             void setScale(int *i, glm::vec3 *scale, unsigned count);
 
             void showDebug() override;
+            int queryIdxGen[2] {0, 0};
+            bool queryFound = false;
+            glm::vec3 queryPos{};
+            glm::quat queryOri;
+            glm::vec3 queryScale{};
+            glm::mat4 queryMat{};
+            int queryParent = -1;
+            int queryFirstCh = -1;
+            int queryNextSib = -1;
+            int queryPrevSib = -1;
+            void showQuery();
     };
 
     /** \class CameraComponent

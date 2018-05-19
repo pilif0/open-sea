@@ -5,6 +5,7 @@
 #include <open-sea/Controls.h>
 #include <open-sea/Delta.h>
 #include <open-sea/Window.h>
+#include <open-sea/Debug.h>
 
 #include <imgui.h>
 
@@ -43,7 +44,9 @@ namespace open_sea::controls {
     void Controls::showDebug() {
         ImGui::Text("Subject: %s", subject.str().c_str());
         ImGui::Text("Last translate: %.3f, %.3f, %.3f", lastTranslate.x, lastTranslate.y, lastTranslate.z);
-        ImGui::Text("Last rotate: %.3f, %.3f, %.3f, %.3f", lastRotate.x, lastRotate.y, lastRotate.z, lastRotate.w);
+        ImGui::TextUnformatted("Last rotate:");
+        ImGui::SameLine();
+        debug::show_quat(lastRotate);
     }
     //--- end Controls implementation
     //--- start Free implementation

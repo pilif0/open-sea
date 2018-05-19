@@ -43,6 +43,7 @@ namespace open_sea::debug {
     void remove_menu(unsigned id);
 
     void show_matrix(const glm::mat4 &m);
+    void show_quat(const glm::quat &q);
 
     void clean_up();
 }

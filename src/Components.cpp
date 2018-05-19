@@ -1066,7 +1066,9 @@ namespace open_sea::ecs {
         ImGui::Separator();
         if (queryIdx != -1) {
             ImGui::Text("Position: %.3f, %.3f, %.3f", data.position[queryIdx].x, data.position[queryIdx].y, data.position[queryIdx].z);
-            ImGui::Text("Orientation: %.3f, %.3f, %.3f, %.3f", data.orientation[queryIdx].x, data.orientation[queryIdx].y, data.orientation[queryIdx].z, data.orientation[queryIdx].w);
+            ImGui::TextUnformatted("Orientation:");
+            ImGui::SameLine();
+            debug::show_quat(data.orientation[queryIdx]);
             ImGui::Text("Scale: %.3f, %.3f, %.3f", data.scale[queryIdx].x, data.scale[queryIdx].y, data.scale[queryIdx].z);
             debug::show_matrix(data.matrix[queryIdx]);
             ImGui::Text("Parent: %s", (data.parent[queryIdx] == -1) ? "none" : data.entity[data.parent[queryIdx]].str().c_str());

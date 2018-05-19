@@ -330,6 +330,15 @@ namespace open_sea::debug {
     }
 
     /**
+     * \brief Shows a quaternion using ImGui text field
+     *
+     * \param q Quaternion
+     */
+    void show_quat(const glm::quat &q) {
+        ImGui::Text("%+6.3f %+6.3f %+6.3f %+6.3f", q.x, q.y, q.z, q.w);
+    }
+
+    /**
      * \brief Clean up after the debug GUI (clear menu item lists)
      */
     void clean_up() {

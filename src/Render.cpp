@@ -90,7 +90,9 @@ namespace open_sea::render {
      * \brief Show ImGui debug information
      */
     void UntexturedRenderer::showDebug() {
-        ImGui::Text("WIP");
+        if (ImGui::CollapsingHeader("Shader Program", ImGuiTreeNodeFlags_DefaultOpen)) {
+            shader->showDebug();
+        }
         //TODO
     }
     //--- end UntexturedRenderer implementation

@@ -17,6 +17,7 @@
 #include <glm/gtc/quaternion.hpp>
 
 #include <string>
+#include <memory>
 
 namespace open_sea::gl {
 
@@ -26,7 +27,7 @@ namespace open_sea::gl {
      * The supported shaders are: vertex, geometry, fragment, tessellation
      * If the context version is less than 4.0, attempts to attach tessellation shaders are ignored.
      */
-    class ShaderProgram {
+    class ShaderProgram : public debug::Debuggable {
         private:
             //! Vertex shader reference
             GLuint vertexShader   = 0;
@@ -56,6 +57,9 @@ namespace open_sea::gl {
             static uint programCount;
 
         public:
+            //! Supported shader types
+            enum class type {vertex, geometry, fragment, tessellation_control, tessellation_evaluation};
+
             //! Shader program reference
             GLuint programID = 0;
 
@@ -73,6 +77,12 @@ namespace open_sea::gl {
             bool attachTessConSource(const std::string& src);
             bool attachTessEvalSource(const std::string& src);
 
+            int getVertexSource(char *dest, unsigned size);
+            int getGeometrySource(char *dest, unsigned size);
+            int getFragmentSource(char *dest, unsigned size);
+            int getTessConSource(char *dest, unsigned size);
+            int getTessEvalSource(char *dest, unsigned size);
+
             void detachVertex();
             void detachGeometry();
             void detachFragment();
@@ -89,6 +99,20 @@ namespace open_sea::gl {
             GLint getAttributeLocation(const std::string& name);
 
             ~ShaderProgram();
+            //! Size of the buffer for shader source modification
+            static constexpr unsigned SOURCE_BUFFER_SIZE = 1 << 16;
+            //! Pointer to the buffer for shader source modification
+            std::unique_ptr<char[]> modifySource{};
+            //! Type of the shader being modified
+            type modifyType;
+            //! Whether modified shader was successfully attached
+            bool modifyAttached = true;
+            //! Whether modified shader was successfully linked
+            bool modifyLinked = true;
+            //! Whether modified shader was successfully validated
+            bool modifyValidated = true;
+            void modifyPopup();
+            void showDebug() override;
             static void debugWidget();
 
             bool operator==(const ShaderProgram &rhs) const;
@@ -139,7 +163,7 @@ namespace open_sea::gl {
             void setFar(float newValue);
             float getFar() const;
 
-            virtual void showDebug();
+            void showDebug() override;
     };
 
     /** \class OrthographicCamera

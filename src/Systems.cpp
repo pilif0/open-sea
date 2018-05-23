@@ -70,8 +70,17 @@ namespace open_sea::ecs {
      * \brief Show ImGui debug information
      */
     void CameraFollow::showDebug() {
-        ImGui::Text("WIP");
-        //TODO
+        if (ImGui::CollapsingHeader("Transformation Component Manager")) {
+            ImGui::PushID("transformMgr");
+            transformMgr->showDebug();
+            ImGui::PopID();
+        }
+
+        if (ImGui::CollapsingHeader("Camera Component Manager")) {
+            ImGui::PushID("cameraMgr");
+            cameraMgr->showDebug();
+            ImGui::PopID();
+        }
     }
     //--- endCameraFollow implementation
 }

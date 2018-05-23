@@ -1066,9 +1066,8 @@ namespace open_sea::gl {
     }
 
     void PerspectiveCamera::showDebug() {
-        Camera::showDebug();
-        ImGui::NewLine();
         ImGui::InputFloat("FOV", &fov);
+        Camera::showDebug();
     }
 
 //--- end PerspectiveCamera implementation

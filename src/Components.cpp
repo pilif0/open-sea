@@ -1044,6 +1044,7 @@ namespace open_sea::ecs {
         if (ImGui::BeginPopupModal("Component Manager Query", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
             showQuery();
 
+            ImGui::Separator();
             if (ImGui::Button("Close")) { ImGui::CloseCurrentPopup(); }
             ImGui::EndPopup();
         }
@@ -1075,8 +1076,106 @@ namespace open_sea::ecs {
             ImGui::Text("First child: %s", (data.firstChild[queryIdx] == -1) ? "none" : data.entity[data.firstChild[queryIdx]].str().c_str());
             ImGui::Text("Next sibling: %s", (data.nextSibling[queryIdx] == -1) ? "none" : data.entity[data.nextSibling[queryIdx]].str().c_str());
             ImGui::Text("Previous sibling: %s", (data.prevSibling[queryIdx] == -1) ? "none" : data.entity[data.prevSibling[queryIdx]].str().c_str());
+            ImGui::Spacing();
+            if (ImGui::Button("Set Position")) {
+                queryPos = data.position[queryIdx];
+                ImGui::OpenPopup("set position");
+            } ImGui::SameLine();
+            if (ImGui::Button("Set Orientation")) {
+                queryOri = data.orientation[queryIdx];
+                ImGui::OpenPopup("set orientation");
+            } ImGui::SameLine();
+            if (ImGui::Button("Set Scale")) {
+                querySca = data.scale[queryIdx];
+                ImGui::OpenPopup("set scale");
+            }
+            ImGui::Spacing();
+            if (ImGui::Button("Translate")) {
+                queryPosDelta = {};
+                ImGui::OpenPopup("translate");
+            } ImGui::SameLine();
+            if (ImGui::Button("Rotate")) {
+                queryOriDelta = glm::quat();
+                ImGui::OpenPopup("rotate");
+            } ImGui::SameLine();
+            if (ImGui::Button("Scale")) {
+                queryScaFac = {};
+                ImGui::OpenPopup("scale");
+            }
         } else {
             ImGui::TextUnformatted("No record found");
+        }
+
+        // Set position dialog
+        if (ImGui::BeginPopupModal("set position", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::InputFloat3("position", &queryPos.x, 3);
+            ImGui::Separator();
+            if (ImGui::Button("Cancel")) { ImGui::CloseCurrentPopup(); }
+            if (ImGui::Button("Set")) {
+                setPosition(&queryIdx, &queryPos, 1);
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
+
+        // Set orientation dialog
+        if (ImGui::BeginPopupModal("set orientation", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::InputFloat4("orientation", &queryOri.x, 3);
+            ImGui::Separator();
+            if (ImGui::Button("Cancel")) { ImGui::CloseCurrentPopup(); }
+            if (ImGui::Button("Set")) {
+                setOrientation(&queryIdx, &queryOri, 1);
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
+
+        // Set scale dialog
+        if (ImGui::BeginPopupModal("set scale", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::InputFloat3("scale", &querySca.x, 3);
+            ImGui::Separator();
+            if (ImGui::Button("Cancel")) { ImGui::CloseCurrentPopup(); }
+            if (ImGui::Button("Set")) {
+                setScale(&queryIdx, &querySca, 1);
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
+
+        // Translate dialog
+        if (ImGui::BeginPopupModal("translate", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::InputFloat3("delta", &queryPosDelta.x, 3);
+            ImGui::Separator();
+            if (ImGui::Button("Cancel")) { ImGui::CloseCurrentPopup(); } ImGui::SameLine();
+            if (ImGui::Button("Translate")) {
+                translate(&queryIdx, &queryPosDelta, 1);
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
+
+        // Rotate dialog
+        if (ImGui::BeginPopupModal("rotate", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::InputFloat4("delta", &queryOriDelta.x, 3);
+            ImGui::Separator();
+            if (ImGui::Button("Cancel")) { ImGui::CloseCurrentPopup(); } ImGui::SameLine();
+            if (ImGui::Button("Rotate")) {
+                rotate(&queryIdx, &queryOriDelta, 1);
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
+
+        // Scale dialog
+        if (ImGui::BeginPopupModal("scale", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::InputFloat3("factor", &queryScaFac.x, 3);
+            ImGui::Separator();
+            if (ImGui::Button("Cancel")) { ImGui::CloseCurrentPopup(); } ImGui::SameLine();
+            if (ImGui::Button("Scale")) {
+                scale(&queryIdx, &queryScaFac, 1);
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
         }
     }
     //--- end TransformationComponent implementation

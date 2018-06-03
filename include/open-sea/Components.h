@@ -164,6 +164,12 @@ namespace open_sea::ecs {
             void showDebug() override;
             int queryIdxGen[2] {0, 0};
             int queryIdx = -1;
+            glm::vec3 queryPos{};
+            glm::quat queryOri;
+            glm::vec3 querySca;
+            glm::vec3 queryPosDelta{};
+            glm::quat queryOriDelta;
+            glm::vec3 queryScaFac{};
             void showQuery();
     };
 

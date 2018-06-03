@@ -955,9 +955,9 @@ namespace open_sea::gl {
      * \brief Show camera information
      */
     void Camera::showDebug() {
-        ImGui::InputFloat2("size", &size[0], 0);
-        ImGui::InputFloat("near", &near, 0, 0, 3);
-        ImGui::InputFloat("far", &far, 0, 0, 3);
+        ImGui::InputFloat2("size", &size[0], "%.0f");
+        ImGui::InputFloat("near", &near, 0, 0);
+        ImGui::InputFloat("far", &far, 0, 0);
         if (ImGui::Button("Recalculate")) {
             recalculateProj = true;
             getProjViewMatrix();

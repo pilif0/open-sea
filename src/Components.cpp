@@ -1109,7 +1109,7 @@ namespace open_sea::ecs {
 
         // Set position dialog
         if (ImGui::BeginPopupModal("set position", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-            ImGui::InputFloat3("position", &queryPos.x, 3);
+            ImGui::InputFloat3("position", &queryPos.x);
             ImGui::Separator();
             if (ImGui::Button("Cancel")) { ImGui::CloseCurrentPopup(); }
             if (ImGui::Button("Set")) {
@@ -1121,7 +1121,7 @@ namespace open_sea::ecs {
 
         // Set orientation dialog
         if (ImGui::BeginPopupModal("set orientation", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-            ImGui::InputFloat4("orientation", &queryOri.x, 3);
+            ImGui::InputFloat4("orientation", &queryOri.x);
             ImGui::Separator();
             if (ImGui::Button("Cancel")) { ImGui::CloseCurrentPopup(); }
             if (ImGui::Button("Set")) {
@@ -1133,7 +1133,7 @@ namespace open_sea::ecs {
 
         // Set scale dialog
         if (ImGui::BeginPopupModal("set scale", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-            ImGui::InputFloat3("scale", &querySca.x, 3);
+            ImGui::InputFloat3("scale", &querySca.x);
             ImGui::Separator();
             if (ImGui::Button("Cancel")) { ImGui::CloseCurrentPopup(); }
             if (ImGui::Button("Set")) {
@@ -1145,7 +1145,7 @@ namespace open_sea::ecs {
 
         // Translate dialog
         if (ImGui::BeginPopupModal("translate", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-            ImGui::InputFloat3("delta", &queryPosDelta.x, 3);
+            ImGui::InputFloat3("delta", &queryPosDelta.x);
             ImGui::Separator();
             if (ImGui::Button("Cancel")) { ImGui::CloseCurrentPopup(); } ImGui::SameLine();
             if (ImGui::Button("Translate")) {
@@ -1157,7 +1157,7 @@ namespace open_sea::ecs {
 
         // Rotate dialog
         if (ImGui::BeginPopupModal("rotate", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-            ImGui::InputFloat4("delta", &queryOriDelta.x, 3);
+            ImGui::InputFloat4("delta", &queryOriDelta.x);
             ImGui::Separator();
             if (ImGui::Button("Cancel")) { ImGui::CloseCurrentPopup(); } ImGui::SameLine();
             if (ImGui::Button("Rotate")) {
@@ -1169,7 +1169,7 @@ namespace open_sea::ecs {
 
         // Scale dialog
         if (ImGui::BeginPopupModal("scale", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-            ImGui::InputFloat3("factor", &queryScaFac.x, 3);
+            ImGui::InputFloat3("factor", &queryScaFac.x);
             ImGui::Separator();
             if (ImGui::Button("Cancel")) { ImGui::CloseCurrentPopup(); } ImGui::SameLine();
             if (ImGui::Button("Scale")) {

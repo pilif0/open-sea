@@ -336,6 +336,7 @@ namespace open_sea::ecs {
         if (ImGui::BeginPopupModal("Component Manager Query", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
             showQuery();
 
+            ImGui::Separator();
             if (ImGui::Button("Close")) { ImGui::CloseCurrentPopup(); }
             ImGui::EndPopup();
         }
@@ -1399,6 +1400,7 @@ namespace open_sea::ecs {
         if (ImGui::BeginPopupModal("Component Manager Query", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
             showQuery();
 
+            ImGui::Separator();
             if (ImGui::Button("Close")) { ImGui::CloseCurrentPopup(); }
             ImGui::EndPopup();
         }

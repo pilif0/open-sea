@@ -6,7 +6,6 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <imgui.h>
 
 #include <open-sea/Log.h>
 #include <open-sea/Window.h>
@@ -20,6 +19,7 @@
 #include <open-sea/Render.h>
 #include <open-sea/Systems.h>
 #include <open-sea/Controls.h>
+#include <open-sea/Debug.h>
 namespace os_log = open_sea::log;
 namespace window = open_sea::window;
 namespace input = open_sea::input;
@@ -30,6 +30,7 @@ namespace model = open_sea::model;
 namespace ecs = open_sea::ecs;
 namespace render = open_sea::render;
 namespace controls = open_sea::controls;
+namespace debug = open_sea::debug;
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
@@ -64,7 +65,7 @@ int main() {
     input::init();
 
     // Add close action to ESC
-    input::connection c = input::connect_key([](int k, int c, input::state s, int m) {
+    input::connect_key([](int k, int c, input::state s, int m) {
         if (s == input::press && k == GLFW_KEY_ESCAPE)
             window::close();
     });
@@ -79,7 +80,7 @@ int main() {
 
     // Add ImGui display toggle to F3
     bool show_imgui = false;
-    input::connection imgui_toggle = input::connect_key([&show_imgui](int k, int c, input::state s, int m) {
+    input::connect_key([&show_imgui](int k, int c, input::state s, int m) {
         if (s == input::press && k == GLFW_KEY_F3) {
             // Toggle the display flag
             show_imgui = !show_imgui;
@@ -121,9 +122,10 @@ int main() {
 
     // Generate test entities
     unsigned N = 1024;
-    ecs::EntityManager test_manager;
+    std::shared_ptr<ecs::EntityManager> test_manager = std::make_shared<ecs::EntityManager>();
     ecs::Entity entities[N];
-    test_manager.create(entities, N);
+    test_manager->create(entities, N);
+    debug::add_entity_manager(test_manager, "Test Manager");
 
     // Prepare and assign model
     std::shared_ptr<ecs::ModelComponent> model_comp_manager = std::make_shared<ecs::ModelComponent>();
@@ -136,6 +138,7 @@ int main() {
 
         model_comp_manager->add(entities, models.data(), N);
     }
+    debug::add_component_manager(model_comp_manager, "Model");
 
     // Prepare and assign random transformations
     std::shared_ptr<ecs::TransformationComponent> trans_comp_manager = std::make_shared<ecs::TransformationComponent>();
@@ -175,12 +178,14 @@ int main() {
         trans_comp_manager->add(entities, positions.data(), orientations.data(), scales.data(), N);
         os_log::log(lg, os_log::info, "Transformations set");
     }
+    debug::add_component_manager(trans_comp_manager, "Transformation");
 
     // Prepare renderer
-    std::unique_ptr<render::UntexturedRenderer> renderer = std::make_unique<render::UntexturedRenderer>(model_comp_manager, trans_comp_manager);
+    std::shared_ptr<render::UntexturedRenderer> renderer = std::make_shared<render::UntexturedRenderer>(model_comp_manager, trans_comp_manager);
+    debug::add_system(renderer, "Untextured Renderer");
 
     // Create camera guide entity
-    ecs::Entity camera_guide = test_manager.create();
+    ecs::Entity camera_guide = test_manager->create();
     glm::vec3 camera_guide_pos{0.0f, 0.0f, 1000.0f};
     glm::quat camera_guide_ori{0.0f, 0.0f, 0.0f, 1.0f};
     glm::vec3 camera_guide_sca(1.0f, 1.0f, 1.0f);
@@ -201,12 +206,15 @@ int main() {
 
         camera_comp_manager->add(es, cameras, 2);
     }
+    debug::add_component_manager(camera_comp_manager, "Camera");
 
     // Prepare camera follow system
-    std::unique_ptr<ecs::CameraFollow> camera_follow = std::make_unique<ecs::CameraFollow>(trans_comp_manager, camera_comp_manager);
+    std::shared_ptr<ecs::CameraFollow> camera_follow = std::make_shared<ecs::CameraFollow>(trans_comp_manager, camera_comp_manager);
+    debug::add_system(camera_follow, "Camera Follow");
     
     // Prepare controls for the camera guide
-    controls::Free::Config controls_config {
+    int controls_no = 0;
+    controls::Free::Config controls_free_config {
             .forward = input::unified_input::keyboard(GLFW_KEY_W),
             .backward = input::unified_input::keyboard(GLFW_KEY_S),
             .left = input::unified_input::keyboard(GLFW_KEY_A),
@@ -221,7 +229,32 @@ int main() {
             .turn_rate = 0.3f,
             .roll_rate = 30.0f
     };
-    std::unique_ptr<controls::Controls> controls = std::make_unique<controls::Free>(trans_comp_manager, camera_guide, controls_config);
+    std::shared_ptr<controls::Controls> controls_free = std::make_shared<controls::Free>(trans_comp_manager, camera_guide, controls_free_config);
+    debug::add_controls(controls_free, "Free Controls");
+    controls::FPS::Config controls_fps_config {
+            .forward = input::unified_input::keyboard(GLFW_KEY_W),
+            .backward = input::unified_input::keyboard(GLFW_KEY_S),
+            .left = input::unified_input::keyboard(GLFW_KEY_A),
+            .right = input::unified_input::keyboard(GLFW_KEY_D),
+            .speed_x = 150.0f,
+            .speed_z = 150.0f,
+            .turn_rate = 0.3f
+    };
+    std::shared_ptr<controls::Controls> controls_fps = std::make_shared<controls::FPS>(trans_comp_manager, camera_guide, controls_fps_config);
+    debug::add_controls(controls_fps, "FPS Controls");
+    controls::TopDown::Config controls_td_config {
+            .left = input::unified_input::keyboard(GLFW_KEY_A),
+            .right = input::unified_input::keyboard(GLFW_KEY_D),
+            .up = input::unified_input::keyboard(GLFW_KEY_LEFT_SHIFT),
+            .down = input::unified_input::keyboard(GLFW_KEY_LEFT_CONTROL),
+            .clockwise = input::unified_input::keyboard(GLFW_KEY_Q),
+            .counter_clockwise = input::unified_input::keyboard(GLFW_KEY_E),
+            .speed_x = 150.0f,
+            .speed_y = 150.0f,
+            .roll_rate = 30.0f
+    };
+    std::shared_ptr<controls::Controls> controls_td = std::make_shared<controls::TopDown>(trans_comp_manager, camera_guide, controls_td_config);
+    debug::add_controls(controls_td, "Top Down Controls");
 
     // Add suspend controls button
     bool suspend_controls = false;
@@ -231,6 +264,28 @@ int main() {
             suspend_controls = !suspend_controls;
         }
     });
+
+    // Add test environment menu
+    bool use_per_camera = true;
+    bool camera_info = false;
+    debug::menu_func environment_menu = [&use_per_camera, &controls_no, &suspend_controls, &camera_info](){
+        if (ImGui::MenuItem("Suspend Controls", nullptr, &suspend_controls)) {}
+        if (ImGui::BeginMenu("Active Camera:")) {
+            if (ImGui::MenuItem("Perspective", nullptr, use_per_camera)) { use_per_camera = true; }
+            if (ImGui::MenuItem("Orthographic", nullptr, !use_per_camera)) { use_per_camera = false; }
+
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Active Controls:")) {
+            if (ImGui::MenuItem("Free", nullptr, (controls_no == 0))) { controls_no = 0; }
+            if (ImGui::MenuItem("FPS", nullptr, (controls_no == 1))) { controls_no = 1; }
+            if (ImGui::MenuItem("Top Down", nullptr, (controls_no == 2))) { controls_no = 2; }
+
+            ImGui::EndMenu();
+        }
+        if (ImGui::MenuItem("Camera Info", nullptr, &camera_info)) {}
+    };
+    debug::add_menu(environment_menu, "Test Environment");
 
     // Set background to black
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -252,109 +307,44 @@ int main() {
         input::update_cursor_delta();
 
         // Update camera guide controls
-        if (!suspend_controls)
-            controls->transform();
-        else
+        if (!suspend_controls) {
+            switch (controls_no) {
+                case 0: controls_free->transform(); break;
+                case 1: controls_fps->transform(); break;
+                case 2: controls_td->transform(); break;
+                default: return -1;
+            }
+        } else
             glfwSetInputMode(window::window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
         // Update cameras based on associated guides
         camera_follow->transform();
 
+        // Decide what camera to use
+        std::shared_ptr<gl::Camera> camera = (use_per_camera) ? test_camera_per : test_camera_ort;
+
         // Draw the entities
-        static bool use_per_cam = true;
-        renderer->render((use_per_cam) ? test_camera_per : test_camera_ort, entities, N);
+        renderer->render(camera, entities, N);
 
         // Maintain components
-        model_comp_manager->gc(test_manager);
-        trans_comp_manager->gc(test_manager);
-        camera_comp_manager->gc(test_manager);
+        model_comp_manager->gc(*test_manager);
+        trans_comp_manager->gc(*test_manager);
+        camera_comp_manager->gc(*test_manager);
 
         // ImGui debug GUI
         if (show_imgui) {
             // Prepare new frame
             imgui::new_frame();
 
-            // Entity test
-            {
-                ImGui::Begin("Entity test");
+            // Main menu
+            debug::main_menu();
 
-                test_manager.showDebug();
-
-                if (ImGui::CollapsingHeader("Model Component Manager")) {
-                    model_comp_manager->showDebug();
+            // Camera info window
+            if (camera_info) {
+                if (ImGui::Begin("Active Camera")) {
+                    camera->showDebug();
                 }
-                if (ImGui::CollapsingHeader("Transformation Component Manager")) {
-                    trans_comp_manager->showDebug();
-                }
-
                 ImGui::End();
-            }
-
-            // Test camera controls
-            {
-                ImGui::Begin("Test camera controls");
-
-                controls->showDebug();
-
-                ImGui::End();
-            }
-
-            // Test environment controls
-            {
-                ImGui::Begin("Test environment controls");
-
-                ImGui::Checkbox("Use perspective camera", &use_per_cam);
-                ImGui::Checkbox("Suspend controls", &suspend_controls);
-
-                ImGui::Text("Test camera:");
-                if (use_per_cam)
-                    test_camera_per->showDebugControls();
-                else
-                    test_camera_ort->showDebugControls();
-                ImGui::Spacing();
-
-                ImGui::End();
-            }
-
-            // Additional window open flags
-            static bool show_window_debug = false;
-            static bool show_input_debug = false;
-            static bool show_opengl_debug = false;
-            static bool show_demo = false;
-
-            // System stats
-            {
-                ImGui::Begin("System Statistics");
-
-                open_sea::time::debug_widget();
-
-                if (ImGui::CollapsingHeader("Additional windows")) {
-                    ImGui::Checkbox("Window info", &show_window_debug);
-                    ImGui::Checkbox("Input info", &show_input_debug);
-                    ImGui::Checkbox("OpenGL info", &show_opengl_debug);
-                    ImGui::Checkbox("ImGui demo", &show_demo);
-                }
-
-
-                ImGui::End();
-            }
-
-            // Window info
-            if (show_window_debug)
-                window::show_debug();
-
-            // Input info
-            if (show_input_debug)
-                input::show_debug();
-
-            // OpenGL info
-            if (show_opengl_debug)
-                gl::debug_window();
-
-            // Demo window
-            if (show_demo) {
-                ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiCond_FirstUseEver);
-                ImGui::ShowDemoWindow(&show_demo);
             }
 
             //Render
@@ -372,10 +362,10 @@ int main() {
     // Clean up OpenGL objects before termination of the context
     model_comp_manager.reset();
     renderer.reset();
-
-    c.disconnect();
-    imgui_toggle.disconnect();
+    debug::clean_up();
     imgui::clean_up();
+
+    // Terminate OpenGL context and clean up window and logging modules
     window::clean_up();
     window::terminate();
     os_log::clean_up();

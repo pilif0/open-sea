@@ -1,11 +1,12 @@
 /*
  * Window implementation
  */
-#include <imgui.h>
-
 #include <open-sea/Window.h>
 #include <open-sea/config.h>
 #include <open-sea/Log.h>
+#include <open-sea/ImGui.h>
+
+#include <glm/glm.hpp>
 
 #include <sstream>
 
@@ -613,34 +614,124 @@ namespace open_sea::window {
         }
     }
 
+    // Temporary storage for modify dialog
+    char modify_title[64];  //TODO: is 64 enough?
+    glm::ivec2 modify_size;
+    window_state modify_state;
+    GLFWmonitor* modify_monitor;
+    int modify_state_no;
+    constexpr const char *modify_state_values[3] {"windowed", "borderless", "fullscreen"};
+    int modify_monitor_no;
+
+    /**
+     * \brief Reset temporary storage values for modify dialog
+     */
+    void modify_reset_temp() {
+        current->title.copy(modify_title, 64);
+        modify_size = {current->width, current->height};
+        modify_state = current->state;
+        modify_monitor = current->monitor;
+        switch (current->state) {
+            case windowed: modify_state_no = 0; break;
+            case borderless: modify_state_no = 1; break;
+            case fullscreen: modify_state_no = 2; break;
+        }
+        int count;
+        GLFWmonitor* *m = glfwGetMonitors(&count);
+        for (int i = 0; i < count; i++, m++) {
+            if (*m == current->monitor) {
+                modify_monitor_no = i;
+                break;
+            }
+        }
+    }
+
     /**
      * \brief Show the ImGui debug window
+     *
+     * \param open Pointer to window's open flag for the close widget
      */
-    void show_debug() {
-        ImGui::Begin("Window");
+    void debug_window(bool *open) {
+        if (ImGui::Begin("Window", open)) {
+            ImGui::Text("Window size: %d x %d", current->width, current->height);
+            ImGui::Text("Frame buffer size: %d x %d", current->fbWidth, current->fbHeight);
+            ImGui::Text("Window title: %s", current->title.c_str());
+            ImGui::Text("Processed title: %s", process_title().c_str());
+            const char *state;
+            switch (current->state) {
+                case windowed:
+                    state = "windowed";
+                    break;
+                case fullscreen:
+                    state = "fullscreen";
+                    break;
+                case borderless:
+                    state = "borderless";
+                    break;
+                default:
+                    state = "invalid";
+            }
+            ImGui::Text("Window state: %s", state);
+            ImGui::Text("Window monitor: %s",
+                        (current->monitor == nullptr) ? "none" : ::glfwGetMonitorName(current->monitor));
+            ImGui::Text("Vsync: %s", current->vSync ? "enabled" : "disabled");
+            if (ImGui::Button("Modify")) {
+                modify_reset_temp();
 
-        ImGui::Text("Window size: %d x %d", current->width, current->height);
-        ImGui::Text("Frame buffer size: %d x %d", current->fbWidth, current->fbHeight);
-        ImGui::Text("Window title: %s", current->title.c_str());
-        ImGui::Text("Processed title: %s", process_title().c_str());
-        const char* state;
-        switch (current->state) {
-            case windowed:
-                state = "windowed";
-                break;
-            case fullscreen:
-                state = "fullscreen";
-                break;
-            case borderless:
-                state = "borderless";
-                break;
-            default:
-                state = "invalid";
+                ImGui::OpenPopup("Modify Window");
+            }
+            if (ImGui::BeginPopupModal("Modify Window", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+                show_modify();
+
+                if (ImGui::Button("Close")) { ImGui::CloseCurrentPopup(); }
+                ImGui::EndPopup();
+            }
         }
-        ImGui::Text("Window state: %s", state);
-        ImGui::Text("Window monitor: %s", (current->monitor == nullptr) ? "none" : ::glfwGetMonitorName(current->monitor));
-        ImGui::Text("Vsync: %s", current->vSync ? "enabled" : "disabled");
-
         ImGui::End();
+    }
+
+    /**
+     * \brief Show the window modify popup contents
+     */
+    void show_modify() {
+        ImGui::InputText("title", modify_title, 64);
+        ImGui::InputInt2("size", &modify_size[0]);
+        ImGui::ListBox("state", &modify_state_no, modify_state_values, 3);
+
+        if (modify_state_no != 0) {
+            ImGui::InputInt("monitor", &modify_monitor_no);
+        }
+
+
+        if (ImGui::Button("Apply")) {
+            set_title(modify_title);
+            int count;
+            GLFWmonitor* *monitors = glfwGetMonitors(&count);
+
+            if (modify_monitor_no >= count || (modify_monitor = monitors[modify_monitor_no]) == nullptr) {
+                std::ostringstream message;
+                message << "Monitor " << modify_monitor_no << " not available when modifying the window, using primary";
+                log::log(lg, log::error, message.str());
+                modify_monitor = glfwGetPrimaryMonitor();
+                modify_monitor_no = 0;
+            }
+
+            switch (modify_state_no) {
+                case 0: modify_state = windowed; break;
+                case 1: modify_state = borderless; break;
+                case 2: modify_state = fullscreen; break;
+            }
+
+            if (modify_state == windowed) {
+                make_windowed(modify_size.x, modify_size.y);
+            } else if (modify_state == borderless) {
+                make_borderless(modify_monitor);
+            } else {
+                // modify_state == fullscreen
+                make_fullscreen(modify_size.x, modify_size.y, modify_monitor);
+            }
+
+            modify_reset_temp();
+        }
     }
 }

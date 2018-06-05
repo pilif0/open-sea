@@ -4,6 +4,7 @@
 
 #include <open-sea/Render.h>
 #include <open-sea/Model.h>
+#include <open-sea/ImGui.h>
 
 #include <vector>
 
@@ -83,6 +84,28 @@ namespace open_sea::render {
         // Reset state
         glBindVertexArray(0);
         shader->unset();
+    }
+
+    /**
+     * \brief Show ImGui debug information
+     */
+    // Note: ImGui ID stack interaction needed to separate the query modals of each component manager
+    void UntexturedRenderer::showDebug() {
+        if (ImGui::CollapsingHeader("Shader Program")) {
+            shader->showDebug();
+        }
+
+        if (ImGui::CollapsingHeader("Transformation Component Manager")) {
+            ImGui::PushID("transformMgr");
+            transformMgr->showDebug();
+            ImGui::PopID();
+        }
+
+        if (ImGui::CollapsingHeader("Model Component Manager")) {
+            ImGui::PushID("modelMgr");
+            modelMgr->showDebug();
+            ImGui::PopID();
+        }
     }
     //--- end UntexturedRenderer implementation
 }

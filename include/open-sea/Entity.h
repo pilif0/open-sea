@@ -8,6 +8,7 @@
 #define OPEN_SEA_ENTITY_H
 
 #include <open-sea/Log.h>
+#include <open-sea/Debuggable.h>
 
 #include <vector>
 #include <cstdint>
@@ -37,6 +38,11 @@ namespace open_sea::ecs {
         //! ID of this entity
         handle id;
 
+        Entity() {}
+
+        //! Construct an entity from index and generation
+        Entity(unsigned index, unsigned generation) { id = (generation << ENTITY_INDEX_BITS) + index; }
+
         //! Get index of this entity
         unsigned index() const { return id & ENTITY_INDEX_MASK; }
         //! Get generation of this entity
@@ -48,7 +54,7 @@ namespace open_sea::ecs {
         std::string str() const;
     };
 
-    class EntityManager {
+    class EntityManager : public debug::Debuggable {
         private:
             //! Record of currently living (or the next one to live if none alive) generation in an index
             std::vector<uint16_t> generation;
@@ -74,7 +80,7 @@ namespace open_sea::ecs {
             bool alive(Entity e) const;
             void kill(Entity e);
 
-            void showDebug() const;
+            void showDebug() override;
     };
 }
 

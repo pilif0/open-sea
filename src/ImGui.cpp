@@ -4,8 +4,6 @@
  * Based on the ImGui example at https://github.com/ocornut/imgui/tree/master/examples/opengl3_example
  */
 
-#include <imgui.h>
-
 #include <open-sea/ImGui.h>
 #include <open-sea/Window.h>
 #include <open-sea/Input.h>
@@ -82,7 +80,7 @@ namespace open_sea::imgui {
      */
     void scroll_callback(double xoffset, double yoffset) {
         ImGuiIO& io = ImGui::GetIO();
-        io.MouseWheel -= (float) yoffset;
+        io.MouseWheel = (float) yoffset;
     }
 
     /**
@@ -408,6 +406,7 @@ namespace open_sea::imgui {
         glScissor(last_scissor_box[0], last_scissor_box[1], (GLsizei)last_scissor_box[2], (GLsizei)last_scissor_box[3]);
     }
 
+
     /**
      * \brief Clean up after ImGui
      * Destroy cursors and OpenGL objects used by ImGui
@@ -435,4 +434,5 @@ namespace open_sea::imgui {
 
         log::log(lg, log::info, "Cleaned up");
     }
+
 }

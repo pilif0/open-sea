@@ -3,6 +3,7 @@
  */
 
 #include <open-sea/Components.h>
+#include <open-sea/Debug.h>
 
 #include <imgui.h>
 
@@ -329,6 +330,42 @@ namespace open_sea::ecs {
         ImGui::Text("Records (allocated): %i (%i)", data.n, data.allocated);
         ImGui::Text("Stored models: %i", models.size());
         ImGui::Text("Size data arrays (allocated): %i (%i) bytes", RECORD_SIZE * data.n, RECORD_SIZE * data.allocated);
+        if (ImGui::Button("Query")) {
+            ImGui::OpenPopup("Component Manager Query");
+        }
+        if (ImGui::BeginPopupModal("Component Manager Query", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            showQuery();
+
+            ImGui::Separator();
+            if (ImGui::Button("Close")) { ImGui::CloseCurrentPopup(); }
+            ImGui::EndPopup();
+        }
+    }
+
+    /**
+     * \brief Show ImGui form for querying data from a manager of this component
+     */
+    void ModelComponent::showQuery() {
+        ImGui::TextUnformatted("Entity:");
+        ImGui::InputInt2("index - generation", queryIdxGen);
+        if (ImGui::Button("Refresh")) {
+            if (queryIdxGen[0] >= 0 && queryIdxGen[1] >= 0) {
+                int i = lookup(ecs::Entity(static_cast<unsigned>(queryIdxGen[0]), static_cast<unsigned>(queryIdxGen[1])));
+                queryIdx = i;
+            } else {
+                queryIdx = -1;
+            }
+        }
+        ImGui::Separator();
+        if (queryIdx != -1) {
+            ImGui::Text("Model index: %i", data.model[queryIdx]);
+            ImGui::TextUnformatted("Model information:");
+            ImGui::Indent();
+            getModel(data.model[queryIdx])->showDebug();
+            ImGui::Unindent();
+        } else {
+            ImGui::TextUnformatted("No record found");
+        }
     }
     //--- end ModelComponent implementation
 
@@ -1002,6 +1039,145 @@ namespace open_sea::ecs {
         ImGui::Text("Record size: %i bytes", RECORD_SIZE);
         ImGui::Text("Records (allocated): %i (%i)", data.n, data.allocated);
         ImGui::Text("Size data arrays (allocated): %i (%i) bytes", RECORD_SIZE * data.n, RECORD_SIZE * data.allocated);
+        if (ImGui::Button("Query")) {
+            ImGui::OpenPopup("Component Manager Query");
+        }
+        if (ImGui::BeginPopupModal("Component Manager Query", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            showQuery();
+
+            ImGui::Separator();
+            if (ImGui::Button("Close")) { ImGui::CloseCurrentPopup(); }
+            ImGui::EndPopup();
+        }
+    }
+
+    /**
+     * \brief Show ImGui form for querying data from a manager of this component
+     */
+    void TransformationComponent::showQuery() {
+        ImGui::TextUnformatted("Entity:");
+        ImGui::InputInt2("index - generation", queryIdxGen);
+        if (ImGui::Button("Refresh")) {
+            if (queryIdxGen[0] >= 0 && queryIdxGen[1] >= 0) {
+                int i = lookup(ecs::Entity(static_cast<unsigned>(queryIdxGen[0]), static_cast<unsigned>(queryIdxGen[1])));
+                queryIdx = i;
+            } else {
+                queryIdx = -1;
+            }
+        }
+        ImGui::Separator();
+        if (queryIdx != -1) {
+            ImGui::Text("Position: %.3f, %.3f, %.3f", data.position[queryIdx].x, data.position[queryIdx].y, data.position[queryIdx].z);
+            ImGui::TextUnformatted("Orientation:");
+            ImGui::SameLine();
+            debug::show_quat(data.orientation[queryIdx]);
+            ImGui::Text("Scale: %.3f, %.3f, %.3f", data.scale[queryIdx].x, data.scale[queryIdx].y, data.scale[queryIdx].z);
+            debug::show_matrix(data.matrix[queryIdx]);
+            ImGui::Text("Parent: %s", (data.parent[queryIdx] == -1) ? "none" : data.entity[data.parent[queryIdx]].str().c_str());
+            ImGui::Text("First child: %s", (data.firstChild[queryIdx] == -1) ? "none" : data.entity[data.firstChild[queryIdx]].str().c_str());
+            ImGui::Text("Next sibling: %s", (data.nextSibling[queryIdx] == -1) ? "none" : data.entity[data.nextSibling[queryIdx]].str().c_str());
+            ImGui::Text("Previous sibling: %s", (data.prevSibling[queryIdx] == -1) ? "none" : data.entity[data.prevSibling[queryIdx]].str().c_str());
+            ImGui::Spacing();
+            if (ImGui::Button("Set Position")) {
+                queryPos = data.position[queryIdx];
+                ImGui::OpenPopup("set position");
+            } ImGui::SameLine();
+            if (ImGui::Button("Set Orientation")) {
+                queryOri = data.orientation[queryIdx];
+                ImGui::OpenPopup("set orientation");
+            } ImGui::SameLine();
+            if (ImGui::Button("Set Scale")) {
+                querySca = data.scale[queryIdx];
+                ImGui::OpenPopup("set scale");
+            }
+            ImGui::Spacing();
+            if (ImGui::Button("Translate")) {
+                queryPosDelta = {};
+                ImGui::OpenPopup("translate");
+            } ImGui::SameLine();
+            if (ImGui::Button("Rotate")) {
+                queryOriDelta = glm::quat();
+                ImGui::OpenPopup("rotate");
+            } ImGui::SameLine();
+            if (ImGui::Button("Scale")) {
+                queryScaFac = {};
+                ImGui::OpenPopup("scale");
+            }
+        } else {
+            ImGui::TextUnformatted("No record found");
+        }
+
+        // Set position dialog
+        if (ImGui::BeginPopupModal("set position", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::InputFloat3("position", &queryPos.x);
+            ImGui::Separator();
+            if (ImGui::Button("Cancel")) { ImGui::CloseCurrentPopup(); }
+            if (ImGui::Button("Set")) {
+                setPosition(&queryIdx, &queryPos, 1);
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
+
+        // Set orientation dialog
+        if (ImGui::BeginPopupModal("set orientation", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::InputFloat4("orientation", &queryOri.x);
+            ImGui::Separator();
+            if (ImGui::Button("Cancel")) { ImGui::CloseCurrentPopup(); }
+            if (ImGui::Button("Set")) {
+                setOrientation(&queryIdx, &queryOri, 1);
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
+
+        // Set scale dialog
+        if (ImGui::BeginPopupModal("set scale", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::InputFloat3("scale", &querySca.x);
+            ImGui::Separator();
+            if (ImGui::Button("Cancel")) { ImGui::CloseCurrentPopup(); }
+            if (ImGui::Button("Set")) {
+                setScale(&queryIdx, &querySca, 1);
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
+
+        // Translate dialog
+        if (ImGui::BeginPopupModal("translate", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::InputFloat3("delta", &queryPosDelta.x);
+            ImGui::Separator();
+            if (ImGui::Button("Cancel")) { ImGui::CloseCurrentPopup(); } ImGui::SameLine();
+            if (ImGui::Button("Translate")) {
+                translate(&queryIdx, &queryPosDelta, 1);
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
+
+        // Rotate dialog
+        if (ImGui::BeginPopupModal("rotate", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::InputFloat4("delta", &queryOriDelta.x);
+            ImGui::Separator();
+            if (ImGui::Button("Cancel")) { ImGui::CloseCurrentPopup(); } ImGui::SameLine();
+            if (ImGui::Button("Rotate")) {
+                rotate(&queryIdx, &queryOriDelta, 1);
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
+
+        // Scale dialog
+        if (ImGui::BeginPopupModal("scale", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::InputFloat3("factor", &queryScaFac.x);
+            ImGui::Separator();
+            if (ImGui::Button("Cancel")) { ImGui::CloseCurrentPopup(); } ImGui::SameLine();
+            if (ImGui::Button("Scale")) {
+                scale(&queryIdx, &queryScaFac, 1);
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
     }
     //--- end TransformationComponent implementation
 
@@ -1218,6 +1394,46 @@ namespace open_sea::ecs {
         ImGui::Text("Record size: %i bytes", RECORD_SIZE);
         ImGui::Text("Records (allocated): %i (%i)", data.n, data.allocated);
         ImGui::Text("Size data arrays (allocated): %i (%i) bytes", RECORD_SIZE * data.n, RECORD_SIZE * data.allocated);
+        if (ImGui::Button("Query")) {
+            ImGui::OpenPopup("Component Manager Query");
+        }
+        if (ImGui::BeginPopupModal("Component Manager Query", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            showQuery();
+
+            ImGui::Separator();
+            if (ImGui::Button("Close")) { ImGui::CloseCurrentPopup(); }
+            ImGui::EndPopup();
+        }
+    }
+
+    /**
+     * \brief Show ImGui form for querying data from a manager of this component
+     */
+    void CameraComponent::showQuery() {
+        ImGui::TextUnformatted("Entity:");
+        ImGui::InputInt2("index - generation", queryIdxGen);
+        if (ImGui::Button("Refresh")) {
+            queryCameras.clear();
+            if (queryIdxGen[0] >= 0 && queryIdxGen[1] >= 0) {
+                ecs::Entity q(static_cast<unsigned>(queryIdxGen[0]), static_cast<unsigned>(queryIdxGen[1]));
+                ecs::Entity *e = data.entity;
+                for (unsigned i = 0; i < data.n; i++, e++) {
+                    if (*e == q) queryCameras.emplace_back(data.camera[i]);
+                }
+            }
+        }
+        ImGui::Separator();
+        if (queryCameras.empty()) {
+            ImGui::TextUnformatted("No record found");
+        } else {
+            ImGui::Text("Camera count: %i", queryCameras.size());
+            for (unsigned i = 0; i < queryCameras.size(); i++) {
+                std::ostringstream label;
+                label << "Camera #" << i+1;
+                if (ImGui::CollapsingHeader(label.str().c_str()))
+                    queryCameras[i]->showDebug();
+            }
+        }
     }
     //--- end CameraComponent implementation
 }

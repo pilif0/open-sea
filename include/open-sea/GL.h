@@ -6,6 +6,8 @@
 #ifndef OPEN_SEA_GL_H
 #define OPEN_SEA_GL_H
 
+#include <open-sea/Debuggable.h>
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -15,6 +17,7 @@
 #include <glm/gtc/quaternion.hpp>
 
 #include <string>
+#include <memory>
 
 namespace open_sea::gl {
 
@@ -24,7 +27,7 @@ namespace open_sea::gl {
      * The supported shaders are: vertex, geometry, fragment, tessellation
      * If the context version is less than 4.0, attempts to attach tessellation shaders are ignored.
      */
-    class ShaderProgram {
+    class ShaderProgram : public debug::Debuggable {
         private:
             //! Vertex shader reference
             GLuint vertexShader   = 0;
@@ -54,6 +57,9 @@ namespace open_sea::gl {
             static uint programCount;
 
         public:
+            //! Supported shader types
+            enum class type {vertex, geometry, fragment, tessellation_control, tessellation_evaluation};
+
             //! Shader program reference
             GLuint programID = 0;
 
@@ -71,6 +77,12 @@ namespace open_sea::gl {
             bool attachTessConSource(const std::string& src);
             bool attachTessEvalSource(const std::string& src);
 
+            int getVertexSource(char *dest, unsigned size);
+            int getGeometrySource(char *dest, unsigned size);
+            int getFragmentSource(char *dest, unsigned size);
+            int getTessConSource(char *dest, unsigned size);
+            int getTessEvalSource(char *dest, unsigned size);
+
             void detachVertex();
             void detachGeometry();
             void detachFragment();
@@ -87,21 +99,32 @@ namespace open_sea::gl {
             GLint getAttributeLocation(const std::string& name);
 
             ~ShaderProgram();
+            //! Size of the buffer for shader source modification
+            static constexpr unsigned SOURCE_BUFFER_SIZE = 1 << 16;
+            //! Pointer to the buffer for shader source modification
+            std::unique_ptr<char[]> modifySource{};
+            //! Type of the shader being modified
+            type modifyType;
+            //! Whether modified shader was successfully attached
+            bool modifyAttached = true;
+            //! Whether modified shader was successfully linked
+            bool modifyLinked = true;
+            //! Whether modified shader was successfully validated
+            bool modifyValidated = true;
+            void modifyPopup();
+            void showDebug() override;
             static void debugWidget();
 
             bool operator==(const ShaderProgram &rhs) const;
             bool operator!=(const ShaderProgram &rhs) const;
     };
 
-    //--- Cameras
-    // Note: The system assumes origin in bottom-left corner with x to right, y up and z backward.
-
     /** \class Camera
      * \brief General camera representation
      * General camera representation.
      * All cameras are objects that produce a projection-view matrix based on some properties (transformation, size, ...).
      */
-    class Camera {
+    class Camera : public debug::Debuggable {
         protected:
             //! View matrix (inverse of transformation)
             glm::mat4 viewMatrix;
@@ -140,7 +163,7 @@ namespace open_sea::gl {
             void setFar(float newValue);
             float getFar() const;
 
-            virtual void showDebugControls();
+            void showDebug() override;
     };
 
     /** \class OrthographicCamera
@@ -166,7 +189,7 @@ namespace open_sea::gl {
         public:
             PerspectiveCamera(const glm::mat4 &transformation, const glm::vec2& size, float near, float far, float fov);
             glm::mat4 getProjViewMatrix() override;
-            void showDebugControls() override;
+            void showDebug() override;
 
             void setFOV(float newValue);
             float getFOV() const;
@@ -174,7 +197,7 @@ namespace open_sea::gl {
 
     void log_errors();
 
-    void debug_window();
+    void debug_window(bool *open);
 }
 
 #endif //OPEN_SEA_GL_H

@@ -6,6 +6,13 @@
 #ifndef OPEN_SEA_IMGUI_H
 #define OPEN_SEA_IMGUI_H
 
+#include <imgui.h>
+
+#include <utility>
+#include <vector>
+#include <string>
+#include <memory>
+
 namespace open_sea::imgui {
     void init();
     void new_frame();

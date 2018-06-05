@@ -3,25 +3,11 @@
  */
 
 #include <open-sea/Entity.h>
-
-#include <imgui.h>
+#include <open-sea/ImGui.h>
 
 #include <stdexcept>
 
 namespace open_sea::ecs {
-
-    /**
-     * \brief Make an entity
-     * Make an entity out of its index and generation.
-     * Assumes both values are within the valid range.
-     *
-     * \param index Entity index
-     * \param generation Entity generation
-     * \return Resulting entity
-     */
-    Entity make_entity(unsigned index, unsigned generation) {
-        return Entity{.id = (generation << ENTITY_INDEX_BITS) + index};
-    }
 
     //--- start Entity implementation
     /**
@@ -76,7 +62,7 @@ namespace open_sea::ecs {
         auto gen = generation[index];
         maxGeneration = (gen > maxGeneration) ? gen : maxGeneration;
 
-        return make_entity(index, gen);
+        return Entity(index, gen);
     }
 
     /**
@@ -119,7 +105,7 @@ namespace open_sea::ecs {
     /**
      * \brief Show ImGui debug information
      */
-    void EntityManager::showDebug() const {
+    void EntityManager::showDebug() {
         ImGui::Text("Living entities: %i", livingEntities);
         ImGui::Text("Maximum generation: %i", maxGeneration);
         ImGui::Text("Maximum index: %i", maxIndex);

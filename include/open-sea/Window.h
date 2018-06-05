@@ -89,7 +89,8 @@ namespace open_sea::window {
     void terminate();
     bool should_close();
 
-    void show_debug();
+    void debug_window(bool *open);
+    void show_modify();
 }
 
 #endif //OPEN_SEA_WINDOW_H

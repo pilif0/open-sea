@@ -3,6 +3,7 @@
  */
 
 #include <open-sea/Systems.h>
+#include <open-sea/ImGui.h>
 
 #include <vector>
 
@@ -62,6 +63,23 @@ namespace open_sea::ecs {
             } else {
                 (*c)->setTransformation(transformMgr->data.matrix[*i]);
             }
+        }
+    }
+
+    /**
+     * \brief Show ImGui debug information
+     */
+    void CameraFollow::showDebug() {
+        if (ImGui::CollapsingHeader("Transformation Component Manager")) {
+            ImGui::PushID("transformMgr");
+            transformMgr->showDebug();
+            ImGui::PopID();
+        }
+
+        if (ImGui::CollapsingHeader("Camera Component Manager")) {
+            ImGui::PushID("cameraMgr");
+            cameraMgr->showDebug();
+            ImGui::PopID();
         }
     }
     //--- endCameraFollow implementation

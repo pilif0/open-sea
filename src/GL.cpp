@@ -4,8 +4,9 @@
 
 #include <open-sea/GL.h>
 #include <open-sea/Log.h>
+#include <open-sea/Debug.h>
+#include <open-sea/ImGui.h>
 
-#include <imgui.h>
 #if not(defined(GLM_ENABLE_EXPERIMENTAL))
 #define GLM_ENABLE_EXPERIMENTAL
 #endif
@@ -382,6 +383,71 @@ namespace open_sea::gl {
     }
 
     /**
+     * \brief Get source code string from the vertex shader
+     *
+     * \param dest Destination buffer
+     * \param size Size of the destination buffer
+     * \return Length of the actual source code string
+     */
+    int ShaderProgram::getVertexSource(char *dest, unsigned size) {
+        GLsizei l;
+        glGetShaderSource(vertexShader, size, &l, dest);
+        return l;
+    }
+
+    /**
+     * \brief Get source code string from the geometry shader
+     *
+     * \param dest Destination buffer
+     * \param size Size of the destination buffer
+     * \return Length of the actual source code string
+     */
+    int ShaderProgram::getGeometrySource(char *dest, unsigned size) {
+        GLsizei l;
+        glGetShaderSource(geometryShader, size, &l, dest);
+        return l;
+    }
+
+    /**
+     * \brief Get source code string from the fragment shader
+     *
+     * \param dest Destination buffer
+     * \param size Size of the destination buffer
+     * \return Length of the actual source code string
+     */
+    int ShaderProgram::getFragmentSource(char *dest, unsigned size) {
+        GLsizei l;
+        glGetShaderSource(fragmentShader, size, &l, dest);
+        return l;
+    }
+
+    /**
+     * \brief Get source code string from the tessellation control shader
+     *
+     * \param dest Destination buffer
+     * \param size Size of the destination buffer
+     * \return Length of the actual source code string
+     */
+    int ShaderProgram::getTessConSource(char *dest, unsigned size) {
+        GLsizei l;
+        glGetShaderSource(tessConShader, size, &l, dest);
+        return l;
+    }
+
+    /**
+     * \brief Get source code string from the tessellation evaluation shader
+     *
+     * \param dest Destination buffer
+     * \param size Size of the destination buffer
+     * \return Length of the actual source code string
+     */
+    int ShaderProgram::getTessEvalSource(char *dest, unsigned size) {
+        GLsizei l;
+        glGetShaderSource(tessEvalShader, size, &l, dest);
+        return l;
+    }
+
+    /**
      * \brief Detach the vertex shader
      * Detach and delete the vertex shader
      */
@@ -590,6 +656,239 @@ namespace open_sea::gl {
     }
 
     /**
+     * \brief Show the source edit popup
+     */
+    void ShaderProgram::modifyPopup() {
+        // Source input field
+        ImGui::InputTextMultiline("source", modifySource.get(), SOURCE_BUFFER_SIZE, ImVec2(2 * debug::STANDARD_WIDTH, 0));
+
+        // Close button
+        ImGui::Separator();
+        if (ImGui::Button("Close")) {
+            modifySource.reset();
+            ImGui::CloseCurrentPopup();
+        }
+
+        // Save button
+        ImGui::SameLine();
+        if (ImGui::Button("Save")) {
+            std::string src(modifySource.get());
+
+            // Attach
+            switch (modifyType) {
+                case type::vertex: modifyAttached = attachVertexSource(src); break;
+                case type::geometry: modifyAttached = attachGeometrySource(src); break;
+                case type::fragment: modifyAttached = attachFragmentSource(src); break;
+                case type::tessellation_control: modifyAttached = attachTessConSource(src); break;
+                case type::tessellation_evaluation: modifyAttached = attachTessEvalSource(src); break;
+            }
+
+            // Link
+            if (modifyAttached)
+                modifyLinked = link();
+
+            // Validate
+            if (modifyLinked)
+                modifyValidated = validate();
+        }
+
+        // Reset button
+        ImGui::SameLine();
+        if (ImGui::Button("Reset")) {
+            switch (modifyType) {
+                case type::vertex: getVertexSource(modifySource.get(), SOURCE_BUFFER_SIZE); break;
+                case type::geometry: getGeometrySource(modifySource.get(), SOURCE_BUFFER_SIZE); break;
+                case type::fragment: getFragmentSource(modifySource.get(), SOURCE_BUFFER_SIZE); break;
+                case type::tessellation_control: getTessConSource(modifySource.get(), SOURCE_BUFFER_SIZE); break;
+                case type::tessellation_evaluation: getTessEvalSource(modifySource.get(), SOURCE_BUFFER_SIZE); break;
+            }
+        }
+
+        // Save error and success messages
+        if (!modifyAttached)
+            ImGui::TextColored(ImVec4(1, 0, 0, 1), "Shader source attachment error");
+        else if(!modifyLinked)
+            ImGui::TextColored(ImVec4(1, 0, 0, 1), "Shader program link error");
+        else if(!modifyValidated)
+            ImGui::TextColored(ImVec4(1, 0, 0, 1), "Shader program validation error");
+        else
+            ImGui::TextColored(ImVec4(0, 1, 0, 1), "Saved");
+    }
+
+    /**
+     * \brief Show shader program information
+     */
+    // Note: ## in button name needed for them to detect clicks (need unique labels)
+    void ShaderProgram::showDebug() {
+        // Vertex shader info
+        if (vertexShader > 0) {
+            ImGui::TextUnformatted("Vertex Shader - ");
+
+            // View and modify source button
+            ImGui::SameLine();
+            if (ImGui::SmallButton("source##0")) {
+                modifySource = std::make_unique<char[]>(SOURCE_BUFFER_SIZE);
+                getVertexSource(modifySource.get(), SOURCE_BUFFER_SIZE);
+                modifyType = type::vertex;
+                ImGui::OpenPopup("modify");
+            }
+
+            // Detach shader button
+            ImGui::SameLine();
+            if (ImGui::SmallButton("detach##0")) {
+                detachVertex();
+                link();
+            }
+        } else {
+            ImGui::TextUnformatted("Vertex Shader - ");
+
+            // Add shader button (view and modify empty source)
+            ImGui::SameLine();
+            if (ImGui::SmallButton("add##0")) {
+                modifySource = std::make_unique<char[]>(SOURCE_BUFFER_SIZE);
+                modifySource.get()[0] = '\0';
+                modifyType = type::vertex;
+                ImGui::OpenPopup("modify");
+            }
+        }
+
+        // Geometry shader info
+        if (geometryShader > 0) {
+            ImGui::TextUnformatted("Geometry Shader - ");
+
+            // View and modify source button
+            ImGui::SameLine();
+            if (ImGui::SmallButton("source##1")) {
+                modifySource = std::make_unique<char[]>(SOURCE_BUFFER_SIZE);
+                getGeometrySource(modifySource.get(), SOURCE_BUFFER_SIZE);
+                modifyType = type::geometry;
+                ImGui::OpenPopup("modify");
+            }
+
+            // Detach shader button
+            ImGui::SameLine();
+            if (ImGui::SmallButton("detach##1")) {
+                detachGeometry();
+                link();
+            }
+        } else {
+            ImGui::TextUnformatted("Geometry Shader - ");
+
+            // Add shader button (view and modify empty source)
+            ImGui::SameLine();
+            if (ImGui::SmallButton("add##1")) {
+                modifySource = std::make_unique<char[]>(SOURCE_BUFFER_SIZE);
+                modifySource.get()[0] = '\0';
+                modifyType = type::geometry;
+                ImGui::OpenPopup("modify");
+            }
+        }
+
+        // Fragment shader info
+        if (fragmentShader > 0) {
+            ImGui::TextUnformatted("Fragment Shader - ");
+
+            // View and modify source button
+            ImGui::SameLine();
+            if (ImGui::SmallButton("source##2")) {
+                modifySource = std::make_unique<char[]>(SOURCE_BUFFER_SIZE);
+                getFragmentSource(modifySource.get(), SOURCE_BUFFER_SIZE);
+                modifyType = type::fragment;
+                ImGui::OpenPopup("modify");
+            }
+
+            // Detach shader button
+            ImGui::SameLine();
+            if (ImGui::SmallButton("detach##2")) {
+                detachFragment();
+                link();
+            }
+        } else {
+            ImGui::TextUnformatted("Fragment Shader - ");
+
+            // Add shader button (view and modify empty source)
+            ImGui::SameLine();
+            if (ImGui::SmallButton("add##2")) {
+                modifySource = std::make_unique<char[]>(SOURCE_BUFFER_SIZE);
+                modifySource.get()[0] = '\0';
+                modifyType = type::fragment;
+                ImGui::OpenPopup("modify");
+            }
+        }
+
+        // Tessellation control shader info
+        if (tessConShader > 0) {
+            ImGui::TextUnformatted("Tessellation Control Shader - ");
+
+            // View and modify source button
+            ImGui::SameLine();
+            if (ImGui::SmallButton("source##3")) {
+                modifySource = std::make_unique<char[]>(SOURCE_BUFFER_SIZE);
+                getTessConSource(modifySource.get(), SOURCE_BUFFER_SIZE);
+                modifyType = type::tessellation_control;
+                ImGui::OpenPopup("modify");
+            }
+
+            // Detach shader button
+            ImGui::SameLine();
+            if (ImGui::SmallButton("detach##3")) {
+                detachTessCon();
+                link();
+            }
+        } else {
+            ImGui::TextUnformatted("Tessellation Control Shader - ");
+
+            // Add shader button (view and modify empty source)
+            ImGui::SameLine();
+            if (ImGui::SmallButton("add##3")) {
+                modifySource = std::make_unique<char[]>(SOURCE_BUFFER_SIZE);
+                modifySource.get()[0] = '\0';
+                modifyType = type::tessellation_control;
+                ImGui::OpenPopup("modify");
+            }
+        }
+
+        // Tessellation evaluation shader info
+        if (tessEvalShader > 0) {
+            ImGui::TextUnformatted("Tessellation Evaluation Shader - ");
+
+            // View and modify source button
+            ImGui::SameLine();
+            if (ImGui::SmallButton("source##4")) {
+                modifySource = std::make_unique<char[]>(SOURCE_BUFFER_SIZE);
+                getTessEvalSource(modifySource.get(), SOURCE_BUFFER_SIZE);
+                modifyType = type::tessellation_evaluation;
+                ImGui::OpenPopup("modify");
+            }
+
+            // Detach shader button
+            ImGui::SameLine();
+            if (ImGui::SmallButton("detach##4")) {
+                detachTessEval();
+                link();
+            }
+        } else {
+            ImGui::TextUnformatted("Tessellation Evaluation Shader - ");
+
+            // Add shader button (view and modify empty source)
+            ImGui::SameLine();
+            if (ImGui::SmallButton("add##4")) {
+                modifySource = std::make_unique<char[]>(SOURCE_BUFFER_SIZE);
+                modifySource.get()[0] = '\0';
+                modifyType = type::tessellation_evaluation;
+                ImGui::OpenPopup("modify");
+            }
+        }
+
+        // Show the view and modify dialog
+        if (ImGui::BeginPopupModal("modify", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            modifyPopup();
+            
+            ImGui::EndPopup();
+        }
+    }
+
+    /**
      * \brief Show the ImGui debug widget
      */
     void ShaderProgram::debugWidget() {
@@ -653,22 +952,24 @@ namespace open_sea::gl {
     }
 
     /**
-     * \brief Show ImGui widget to control camera state
+     * \brief Show camera information
      */
-    void Camera::showDebugControls() {
-        ImGui::InputFloat2("Size", &size[0]);
-        ImGui::InputFloat("Near", &near);
-        ImGui::InputFloat("Far", &far);
+    void Camera::showDebug() {
+        ImGui::InputFloat2("size", &size[0], "%.0f");
+        ImGui::InputFloat("near", &near, 0, 0);
+        ImGui::InputFloat("far", &far, 0, 0);
         if (ImGui::Button("Recalculate")) {
             recalculateProj = true;
             getProjViewMatrix();
         }
         ImGui::Spacing();
-        ImGui::Text("Projection-view matrix");
-        ImGui::InputFloat4("", &projViewMatrix[0][0]);
-        ImGui::InputFloat4("", &projViewMatrix[1][0]);
-        ImGui::InputFloat4("", &projViewMatrix[2][0]);
-        ImGui::InputFloat4("", &projViewMatrix[3][0]);
+
+        ImGui::TextUnformatted("Projection-view Matrix");
+        debug::show_matrix(projViewMatrix);
+        ImGui::Spacing();
+
+        ImGui::TextUnformatted("View Matrix");
+        debug::show_matrix(viewMatrix);
     }
 
 //--- end Camera implementation
@@ -764,24 +1065,28 @@ namespace open_sea::gl {
         return fov;
     }
 
-    void PerspectiveCamera::showDebugControls() {
-        Camera::showDebugControls();
-        ImGui::NewLine();
+    void PerspectiveCamera::showDebug() {
         ImGui::InputFloat("FOV", &fov);
+        Camera::showDebug();
     }
 
 //--- end PerspectiveCamera implementation
 
     /**
      * \brief Show the ImGui debug window
+     *
+     * \param open Pointer to window's open flag for the close widget
      */
-    void debug_window() {
-        ImGui::Begin("OpenGL");
+    void debug_window(bool *open) {
+        debug::set_standard_width();
 
-        if (ImGui::CollapsingHeader("Shaders")) {
-            ShaderProgram::debugWidget();
+        if (ImGui::Begin("OpenGL", open)) {
+            if (ImGui::CollapsingHeader("Shaders", ImGuiTreeNodeFlags_DefaultOpen)) {
+                ImGui::Indent();
+                ShaderProgram::debugWidget();
+                ImGui::Unindent();
+            }
         }
-
         ImGui::End();
     }
 

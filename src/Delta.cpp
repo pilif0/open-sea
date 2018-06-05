@@ -3,10 +3,10 @@
  */
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <imgui.h>
 
 #include <open-sea/Delta.h>
 #include <open-sea/Log.h>
+#include <open-sea/ImGui.h>
 
 #include <boost/circular_buffer.hpp>
 
@@ -123,15 +123,20 @@ namespace open_sea::time {
     }
 
     /**
-     * \brief Show the ImGui debug widget
+     * \brief Show the ImGui debug window
+     *
+     * \param open Pointer to window's open flag for the close widget
      */
-    void debug_widget() {
-        // Plot the delta time
-        ImGui::PlotLines("##plot", debug_history_get, nullptr, history_length);
-        ImGui::SameLine();
-        ImGui::Text("Delta time\n(%.3f ms)", get_delta() * 1000);
+    void debug_window(bool *open) {
+        if (ImGui::Begin("Time", open)) {
+            // Plot the delta time
+            ImGui::PlotLines("##plot", debug_history_get, nullptr, history_length);
+            ImGui::SameLine();
+            ImGui::Text("Delta time\n(%.3f ms)", get_delta() * 1000);
 
-        // Plot the FPS
-        ImGui::Text("FPS: %.1f (%.1f avg)", get_FPS_immediate(), get_FPS_average());
+            // Plot the FPS
+            ImGui::Text("FPS: %.1f (%.1f avg)", get_FPS_immediate(), get_FPS_average());
+        }
+        ImGui::End();
     }
 }

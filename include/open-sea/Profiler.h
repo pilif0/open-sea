@@ -52,6 +52,8 @@ namespace open_sea::profiler {
     void pop();
 
     std::vector<Node> get_last();
+
+    void show_text();
 }
 
 #endif //OPEN_SEA_PROFILER_H

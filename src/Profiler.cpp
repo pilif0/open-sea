@@ -4,6 +4,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <imgui.h>
+
 #include <open-sea/Profiler.h>
 
 namespace open_sea::profiler {
@@ -98,4 +100,34 @@ namespace open_sea::profiler {
      * \return Last completed frame tree
      */
     std::vector<Node> get_last() { return completed; }
+
+    // Recursive helper for show_text
+    void write_rec(int i) {
+        // Write the text
+        ImGui::Text("%s - %.3f ms", completed[i].label.c_str(), completed[i].time * 1e3);
+
+        // Do children if any
+        if (completed[i].child > 0) {
+            ImGui::Indent();
+            write_rec(completed[i].child);
+            ImGui::Unindent();
+        }
+
+        // Do next sibling if any
+        if (completed[i].next > 0) {
+            write_rec(completed[i].next);
+        }
+    }
+
+    /**
+     * \brief Show the text gui for the profiler
+     */
+    void show_text() {
+        if (completed.empty()) {
+            ImGui::TextUnformatted("No last completed frame tree");
+        } else {
+            // Line for each node, indent on children
+            write_rec(0);
+        }
+    }
 }

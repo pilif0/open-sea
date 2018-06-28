@@ -5,6 +5,7 @@
 #include <open-sea/Render.h>
 #include <open-sea/Model.h>
 #include <open-sea/ImGui.h>
+#include <open-sea/Profiler.h>
 
 #include <vector>
 
@@ -40,6 +41,7 @@ namespace open_sea::render {
      * \param count Number of entities
      */
     void UntexturedRenderer::render(std::shared_ptr<gl::Camera> camera, ecs::Entity *e, unsigned count) {
+        profiler::push("Setup");
         // Use the shader and set the projection view matrix
         shader->use();
         glUniformMatrix4fv(pMatLocation, 1, GL_FALSE, &camera->getProjViewMatrix()[0][0]);
@@ -47,17 +49,22 @@ namespace open_sea::render {
         // Prepare info and index destination
         std::vector<RenderInfo> infos(count);
         std::vector<int> indices(count);
+        profiler::pop();
 
         // Get world matrix pointers
+        profiler::push("World Matrices");
         transformMgr->lookup(e, indices.data(), count);
         int *i = indices.data();
         RenderInfo *r = infos.data();
         for (int j = 0; j < count; j++, i++, r++) {
-            if (*i != -1)
+            if (*i != -1) {
                 r->matrix = &transformMgr->data.matrix[*i][0][0];
+            }
         }
+        profiler::pop();
 
         // Get the model information
+        profiler::push("Models");
         modelMgr->lookup(e, indices.data(), count);
         i = indices.data();
         r = infos.data();
@@ -69,8 +76,10 @@ namespace open_sea::render {
                 r->vertexCount = model->getVertexCount();
             }
         }
+        profiler::pop();
 
         // Render the information
+        profiler::push("Render");
         r = infos.data();
         for (int j = 0; j < count; j++, r++) {
             // Skip invalid entities
@@ -80,10 +89,13 @@ namespace open_sea::render {
                 glDrawElements(GL_TRIANGLES, r->vertexCount, GL_UNSIGNED_INT, nullptr);
             }
         }
+        profiler::pop();
 
         // Reset state
+        profiler::push("Reset");
         glBindVertexArray(0);
         shader->unset();
+        profiler::pop();
     }
 
     /**

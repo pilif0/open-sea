@@ -13,16 +13,18 @@ set(open_sea_VERSION_FULL "${open_sea_VERSION_MAJOR}.${open_sea_VERSION_MINOR}.$
 
 # Declare options
 option(open_sea_BUILD_EXAMPLES "Build example programs" ON)
-option(open_sea_DEBUG "Debug mode" OFF)
+option(open_sea_DEBUG_LOG "Log debug messages" OFF)
 option(open_sea_BUILD_DOC "Build documentation" ON)
+set(open_sea_BOOST "/opt/boost" CACHE PATH "Boost directory")
 
 # Set some global locations
 set(SRC_DIR "${open_sea_SOURCE_DIR}/src")
 set(INCL_DIR "${open_sea_SOURCE_DIR}/include")
 set(DEP_DIR "${open_sea_SOURCE_DIR}/deps")
 
+message("Boost dir ${open_sea_BOOST}")
 # Boost
-set(BOOST_ROOT /opt/boost)
+set(BOOST_ROOT ${open_sea_BOOST})
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
@@ -62,7 +64,7 @@ if (open_sea_BUILD_DOC)
 endif()
 
 # Configure header
-set(OPEN_SEA_DEBUG ${open_sea_DEBUG})
+set(OPEN_SEA_DEBUG_LOG ${open_sea_DEBUG_LOG})
 configure_file(
         "${INCL_DIR}/open-sea/config.h.in"
         "${INCL_DIR}/open-sea/config.h"

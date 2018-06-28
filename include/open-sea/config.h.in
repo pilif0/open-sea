@@ -12,4 +12,4 @@
 #define OPEN_SEA_VERSION_FULL "@open_sea_VERSION_FULL@"
 
 // Debug flag
-#cmakedefine OPEN_SEA_DEBUG
+#cmakedefine OPEN_SEA_DEBUG_LOG

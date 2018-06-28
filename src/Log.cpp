@@ -68,7 +68,7 @@ namespace open_sea::log {
         boost::shared_ptr<std::ofstream> stream = boost::make_shared<std::ofstream>(file_path);
         sink->locked_backend()->add_stream(stream);
 
-#if !defined(OPEN_SEA_DEBUG)
+#if !defined(OPEN_SEA_DEBUG_LOG)
         // Filter out log records that are not at least warnings
         sink->set_filter(
                 logging::trivial::severity >= logging::trivial::warning

@@ -1,3 +1,3 @@
 # examples
 
- This directory contains various examples of how to use the project.
+- Sample Game &mdash; general example showing most of the capabilities.

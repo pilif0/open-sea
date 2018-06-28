@@ -71,7 +71,7 @@ int main() {
     });
 
     // Start OpenGL error handling
-#if !defined(OPEN_SEA_DEBUG)
+#if !defined(OPEN_SEA_DEBUG_LOG)
     gl::log_errors();
 #endif
 

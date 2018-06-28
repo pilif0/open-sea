@@ -31,10 +31,8 @@ namespace open_sea::profiler {
         //! Parent (block of code that contains it) or -1 if root
         //TODO: maybe have root be recognised by being at index 0? compare complexity of approaches
         int parent;
-//        //! Next sibling (block of code that follows it)
-//        int next;   // only valid when > 1 (root is 0 and 1 cannot be the next)
-//        //! Previous sibling (block of code that precedes it)
-//        int previous;  // only valid when > 0 (root is 0)   //TODO: needed?
+        //! Next sibling (block of code that follows it)
+        int next;   // only valid when > 1 (root is 0 and 1 cannot be the next)
         //! First child (first contained block)
         int child;  // only valid when > 0
 
@@ -44,19 +42,16 @@ namespace open_sea::profiler {
         //! Execution duration in seconds (only when finished, start time while executing)
         double time;
 
-//        Node(int parent, const std::string &label) : Node(parent, 0, label) {}
-//        Node(int parent, int previous, const std::string &label);
         Node(int parent, const std::string &label);
     };
-
-    //! Last completed frame tree
-    std::vector<Node> completed;
 
     void start();
     void finish();
 
     void push(const std::string &label);
     void pop();
+
+    std::vector<Node> get_last();
 }
 
 #endif //OPEN_SEA_PROFILER_H

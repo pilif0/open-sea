@@ -9,22 +9,22 @@
 namespace open_sea::profiler {
 
     //--- start Node implementation
-//    Node::Node(int parent, int previous, const std::string &label)
-//        : parent(parent), previous(previous), label(label) {
-//        next = 0;
-//        child = 0;
-//        time = glfwGetTime();
-//    }
     Node::Node(int parent, const std::string &label)
         : parent(parent), label(label) {
         time = glfwGetTime();
         child = 0;
+        next = 0;
     }
     //--- end Node implementation
 
     //! Frame tree being built
     std::vector<Node> in_progress;
+    //! Last completed frame tree
+    std::vector<Node> completed;
+    //! Current node being executed
     int current = -1;
+    //! Last child of current
+    int last_child = -1;
 
     /**
      * \brief Start profiling
@@ -34,7 +34,8 @@ namespace open_sea::profiler {
         // Clear buffer and add root
         in_progress.clear();
         current = 0;
-        in_progress.emplace_back({});
+        last_child = -1;
+        in_progress.emplace_back(-1, "Root");
     }
 
     /**
@@ -50,7 +51,8 @@ namespace open_sea::profiler {
 
         // Copy  buffer
         completed = in_progress;
-        current = -1;
+//        current = -1;
+//        last_child = -1;
     }
 
     /**
@@ -63,7 +65,16 @@ namespace open_sea::profiler {
         if (current < 0) return;
 
         // Add a child to current node
+        auto n = static_cast<int>(in_progress.size());
+        if (in_progress[current].child <= 0)
+            in_progress[current].child = n;
+        if (last_child > 0)
+            in_progress[last_child].next = n;
         in_progress.emplace_back(current, label);
+
+        // Update pointers
+        current = n;
+        last_child = -1;
     }
 
     /**
@@ -76,7 +87,15 @@ namespace open_sea::profiler {
         // Compute current duration
         in_progress[current].time = glfwGetTime() - in_progress[current].time;
 
-        // Move current
+        // Update pointers
+        last_child = current;
         current = in_progress[current].parent;
     }
+
+    /**
+     * \brief Get the last completed frame tree
+     *
+     * \return Last completed frame tree
+     */
+    std::vector<Node> get_last() { return completed; }
 }

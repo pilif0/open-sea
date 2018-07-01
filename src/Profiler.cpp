@@ -8,6 +8,8 @@
 
 #include <open-sea/Profiler.h>
 
+#include <sstream>
+
 namespace open_sea::profiler {
 
     //--- start Node implementation
@@ -128,6 +130,72 @@ namespace open_sea::profiler {
         } else {
             // Line for each node, indent on children
             write_rec(0);
+        }
+    }
+
+    constexpr float HEIGHT = 20.0f;
+    constexpr float HEIGHT_PAD = HEIGHT + 3.0f;
+    ImColor colA = IM_COL32(0, 255, 0, 255);
+    ImColor colB = IM_COL32(255, 0, 0, 255);
+    ImColor colT = IM_COL32(0, 0, 0, 255);
+
+    // Recursive helper for show_graphical that draws the children of node
+    void draw_rec(ImDrawList* draw_list, ImVec2 canvas_pos, ImVec2 canvas_size, int depth, float x_offset, int node, bool a) {
+        // Loop over all children of the node
+        int child = completed[node].child;
+        while (child > 0) {
+            // Compute width
+            auto width = static_cast<float>(canvas_size.x * completed[child].time / completed[0].time);
+
+            // Compute corners
+            ImVec2 top_left{canvas_pos.x + x_offset, canvas_pos.y + (depth * HEIGHT_PAD)};
+            ImVec2 bot_right{canvas_pos.x + x_offset + width, canvas_pos.y + HEIGHT + (depth * HEIGHT_PAD)};
+
+            // Draw the rectangle
+            draw_list->AddRectFilled(top_left, bot_right, a ? colA : colB);
+
+            // Draw the tag
+            std::ostringstream stream;
+            stream << completed[child].label << " - " << completed[child].time * 1000 << " ms";
+            std::string tag = stream.str();
+            draw_list->AddText(top_left, colT, tag.data());
+
+            // Recursively draw its children
+            draw_rec(draw_list, canvas_pos, canvas_size, depth + 1, x_offset, child, true);
+
+            // Increment anchors
+            child = completed[child].next;
+            x_offset += width;
+            a = !a;
+        }
+    }
+
+    void show_graphical() {
+        if (completed.empty()) {
+            ImGui::TextUnformatted("No last completed frame tree");
+        } else {
+            // Line for each hierarchy level, rectangle for each node sized relatively by duration and with tooltip info
+
+            // Set up regions
+            ImDrawList* draw_list = ImGui::GetWindowDrawList();
+            ImVec2 canvas_pos = ImGui::GetCursorScreenPos();
+            ImVec2 canvas_size = ImGui::GetContentRegionAvail();
+
+            double root_dur = completed[0].time;
+
+            // Draw root
+            draw_list->AddRectFilled(
+                    canvas_pos,
+                    ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + HEIGHT),
+                    colA
+            );
+            std::ostringstream stream;
+            stream << completed[0].label << " - " << completed[0].time * 1000 << " ms";
+            std::string tag = stream.str();
+            draw_list->AddText(canvas_pos, colT, tag.data());
+
+            // Have each node recursively draw its children
+            draw_rec(draw_list, canvas_pos, canvas_size, 1, 0.0f, 0, true);
         }
     }
 }

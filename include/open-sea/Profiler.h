@@ -12,9 +12,7 @@
 namespace open_sea::profiler {
     // Notes:
     //  - Result of profiling is a tree of runtime information nodes for code blocks.
-    //  - Time in a node is start time while executing to save space (not needed after duration is know --> can be replaced).
-    //  - Result is built into a vector of nodes, therefore the tree links are vector indices.
-    //  - Root of result has no siblings and is at index 0.
+    //  - Time in a node is start time while executing to save space (not needed after duration is known --> can be replaced).
 
     /**
      * \brief Node of the result tree
@@ -54,6 +52,7 @@ namespace open_sea::profiler {
     std::vector<Node> get_last();
 
     void show_text();
+    void show_graphical();
 }
 
 #endif //OPEN_SEA_PROFILER_H

@@ -1,45 +1,53 @@
-/**
+/*
  * Profiler implementation
  */
+#include <open-sea/Profiler.h>
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 #include <imgui.h>
 
-#include <open-sea/Profiler.h>
-
 #include <sstream>
 
 namespace open_sea::profiler {
 
-    //--- start Node implementation
-    Node::Node(int parent, const std::string &label)
-        : parent(parent), label(label) {
+    //--- start Info implementation
+    /**
+     * \brief Construct information from a label
+     * Construct code block information from a label and assign the execution start time.
+     * \param label
+     */
+    Info::Info(const std::string &label)
+        : label(label) {
         time = glfwGetTime();
-        child = 0;
-        next = 0;
     }
-    //--- end Node implementation
+    //--- end Info implementation
 
-    //! Frame tree being built
-    std::vector<Node> in_progress;
-    //! Last completed frame tree
-    std::vector<Node> completed;
-    //! Current node being executed
-    int current = -1;
-    //! Last child of current
-    int last_child = -1;
+    std::ostream& operator<<(std::ostream &os, const Info &info) {
+        std::ostringstream stream;
+        stream << info.label
+               << " - "
+               << info.time * 1e3
+               << " ms";
+        os << stream.str();
+        return os;
+    }
+
+    //! Pointer to frame track being built
+    // Empty when not started
+    std::shared_ptr<track> in_progress{};
+    //! Pointer to last completed frame track
+    std::shared_ptr<track> completed{};
 
     /**
      * \brief Start profiling
-     * Start profiling by clearing the frame tree buffer and adding the root node.
+     * Start profiling by constructing a new frame track.
      */
     void start() {
-        // Clear buffer and add root
-        in_progress.clear();
-        current = 0;
-        last_child = -1;
-        in_progress.emplace_back(-1, "Root");
+        // Clear buffer and push root
+        in_progress = std::make_shared<track>();
+        in_progress->push(Info("Root"));
     }
 
     /**
@@ -48,37 +56,27 @@ namespace open_sea::profiler {
      */
     void finish() {
         // Skip if not started
-        if (current < 0) return;
+        if (!in_progress) return;
 
-        // Compute root duration
-        in_progress[0].time = glfwGetTime() - in_progress[0].time;
+        // Pop root
+        pop();
 
-        // Copy  buffer
-        completed = in_progress;
-//        current = -1;
-//        last_child = -1;
+        // Copy the frame track into completed and clear in_progress
+        in_progress.swap(completed);
+        in_progress.reset();
     }
 
     /**
-     * \brief Push a block of code on the profiling stack
+     * \brief Push a block of code onto the profiling stack
      *
      * \param label Label
      */
     void push(const std::string &label) {
         // Skip if not started
-        if (current < 0) return;
+        if (!in_progress) return;
 
-        // Add a child to current node
-        auto n = static_cast<int>(in_progress.size());
-        if (in_progress[current].child <= 0)
-            in_progress[current].child = n;
-        if (last_child > 0)
-            in_progress[last_child].next = n;
-        in_progress.emplace_back(current, label);
-
-        // Update pointers
-        current = n;
-        last_child = -1;
+        // Push onto the track
+        in_progress->push(Info(label));
     }
 
     /**
@@ -86,14 +84,11 @@ namespace open_sea::profiler {
      */
     void pop() {
         // Skip if not started
-        if (current < 0) return;
+        if (!in_progress) return;
 
-        // Compute current duration
-        in_progress[current].time = glfwGetTime() - in_progress[current].time;
-
-        // Update pointers
-        last_child = current;
-        current = in_progress[current].parent;
+        // Compute the duration and pop the track element
+        in_progress->top().time = glfwGetTime() - in_progress->top().time;
+        in_progress->pop();
     }
 
     /**
@@ -101,101 +96,14 @@ namespace open_sea::profiler {
      *
      * \return Last completed frame tree
      */
-    std::vector<Node> get_last() { return completed; }
-
-    // Recursive helper for show_text
-    void write_rec(int i) {
-        // Write the text
-        ImGui::Text("%s - %.3f ms", completed[i].label.c_str(), completed[i].time * 1e3);
-
-        // Do children if any
-        if (completed[i].child > 0) {
-            ImGui::Indent();
-            write_rec(completed[i].child);
-            ImGui::Unindent();
-        }
-
-        // Do next sibling if any
-        if (completed[i].next > 0) {
-            write_rec(completed[i].next);
-        }
-    }
+    std::shared_ptr<track> get_last() { return completed; }
 
     /**
      * \brief Show the text gui for the profiler
      */
     void show_text() {
-        if (completed.empty()) {
-            ImGui::TextUnformatted("No last completed frame tree");
-        } else {
-            // Line for each node, indent on children
-            write_rec(0);
-        }
-    }
-
-    constexpr float HEIGHT = 20.0f;
-    constexpr float HEIGHT_PAD = HEIGHT + 3.0f;
-    ImColor colA = IM_COL32(0, 255, 0, 255);
-    ImColor colB = IM_COL32(255, 0, 0, 255);
-    ImColor colT = IM_COL32(0, 0, 0, 255);
-
-    // Recursive helper for show_graphical that draws the children of node
-    void draw_rec(ImDrawList* draw_list, ImVec2 canvas_pos, ImVec2 canvas_size, int depth, float x_offset, int node, bool a) {
-        // Loop over all children of the node
-        int child = completed[node].child;
-        while (child > 0) {
-            // Compute width
-            auto width = static_cast<float>(canvas_size.x * completed[child].time / completed[0].time);
-
-            // Compute corners
-            ImVec2 top_left{canvas_pos.x + x_offset, canvas_pos.y + (depth * HEIGHT_PAD)};
-            ImVec2 bot_right{canvas_pos.x + x_offset + width, canvas_pos.y + HEIGHT + (depth * HEIGHT_PAD)};
-
-            // Draw the rectangle
-            draw_list->AddRectFilled(top_left, bot_right, a ? colA : colB);
-
-            // Draw the tag
-            std::ostringstream stream;
-            stream << completed[child].label << " - " << completed[child].time * 1000 << " ms";
-            std::string tag = stream.str();
-            draw_list->AddText(top_left, colT, tag.data());
-
-            // Recursively draw its children
-            draw_rec(draw_list, canvas_pos, canvas_size, depth + 1, x_offset, child, true);
-
-            // Increment anchors
-            child = completed[child].next;
-            x_offset += width;
-            a = !a;
-        }
-    }
-
-    void show_graphical() {
-        if (completed.empty()) {
-            ImGui::TextUnformatted("No last completed frame tree");
-        } else {
-            // Line for each hierarchy level, rectangle for each node sized relatively by duration and with tooltip info
-
-            // Set up regions
-            ImDrawList* draw_list = ImGui::GetWindowDrawList();
-            ImVec2 canvas_pos = ImGui::GetCursorScreenPos();
-            ImVec2 canvas_size = ImGui::GetContentRegionAvail();
-
-            double root_dur = completed[0].time;
-
-            // Draw root
-            draw_list->AddRectFilled(
-                    canvas_pos,
-                    ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + HEIGHT),
-                    colA
-            );
-            std::ostringstream stream;
-            stream << completed[0].label << " - " << completed[0].time * 1000 << " ms";
-            std::string tag = stream.str();
-            draw_list->AddText(canvas_pos, colT, tag.data());
-
-            // Have each node recursively draw its children
-            draw_rec(draw_list, canvas_pos, canvas_size, 1, 0.0f, 0, true);
-        }
+        ImGui::TextUnformatted(completed ?
+                               completed->toIndentedString().c_str() :
+                               "No last completed frame track");
     }
 }

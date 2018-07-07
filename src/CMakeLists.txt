@@ -19,7 +19,8 @@ set(open_sea_HEADERS
         "${INCL_DIR}/open-sea/Controls.h"
         "${INCL_DIR}/open-sea/Debug.h"
         "${INCL_DIR}/open-sea/Debuggable.h"
-        "${INCL_DIR}/open-sea/Profiler.h")
+        "${INCL_DIR}/open-sea/Profiler.h"
+        "${INCL_DIR}/open-sea/Track.h")
 set(open_sea_SOURCES
         Log.cpp
         Window.cpp

@@ -6,9 +6,10 @@
 #ifndef OPEN_SEA_TRACK_H
 #define OPEN_SEA_TRACK_H
 
-#import <vector>
-#import <string>
+#include <vector>
+#include <string>
 #include <sstream>
+#include <memory>
 
 namespace open_sea::data {
 
@@ -45,7 +46,7 @@ namespace open_sea::data {
             };
         protected:
             //! Tree data
-            std::vector<Node> store;
+            std::shared_ptr<std::vector<Node>> store;
             //! Index of current node
             unsigned current;
             //! Index of last child of current node
@@ -64,8 +65,11 @@ namespace open_sea::data {
             void pop();
             //! Get reference to the top element of the stack
             // Reference to allow a way to change contents
-            value_type& top() { return store[current].content; }
+            value_type& top() { return (*store)[current].content; }
             void clear();
+
+            //! Get pointer to the tree data
+            std::shared_ptr<std::vector<Node>> getStore() { return store; }
 
             size_type stackSize() { return stack_size; }
             size_type treeSize() { return tree_size; }
@@ -82,6 +86,7 @@ namespace open_sea::data {
     // The tree contains only the implied root
     template<class T>
     Track<T>::Track() {
+        store = std::make_shared<std::vector<Node>>();
         current = Node::INVALID;
         lastChild = Node::INVALID;
         stack_size = 0;
@@ -99,15 +104,15 @@ namespace open_sea::data {
     template<class T>
     void Track<T>::push(T content) {
         // Add as first child if the current node is valid and has no valid first child
-        if (current != Node::INVALID && store[current].firstChild == Node::INVALID)
-            store[current].firstChild = tree_size;
+        if (current != Node::INVALID && (*store)[current].firstChild == Node::INVALID)
+            (*store)[current].firstChild = tree_size;
 
         // Add as next child if the last child is valid
         if (lastChild != Node::INVALID)
-            store[lastChild].next = tree_size;
+            (*store)[lastChild].next = tree_size;
 
         // Add the actual node
-        store.emplace_back(current, content);
+        store->emplace_back(current, content);
 
         // Update state
         current = tree_size;
@@ -132,7 +137,7 @@ namespace open_sea::data {
 
         // Point next child to current, current to parent, and decrement stack size
         lastChild = current;
-        current = store[current].parent;
+        current = (*store)[current].parent;
         stack_size--;
     }
 
@@ -145,7 +150,7 @@ namespace open_sea::data {
      */
     template<class T>
     void Track<T>::clear() {
-        store.clear();
+        store->clear();
         current = Node::INVALID;
         lastChild = Node::INVALID;
         stack_size = 0;
@@ -179,13 +184,13 @@ namespace open_sea::data {
         }
 
         // Print content and newline
-        stream << store[index].content << '\n';
+        stream << (*store)[index].content << '\n';
 
         // Recurse to children
-        unsigned child = store[index].firstChild;
+        unsigned child = (*store)[index].firstChild;
         while (child != Node::INVALID) {
             stream << toIndentedStringRec(child, depth + 1);
-            child = store[child].next;
+            child = (*store)[child].next;
         }
 
         // Return as string

@@ -274,6 +274,7 @@ int main() {
     debug::menu_func profiler_menu = [&profiler_toggle, &profiler_once, &profiler_text_gui](){
         if (ImGui::MenuItem("Toggle Profile", nullptr, &profiler_toggle)) {}
         if (ImGui::MenuItem("Text GUI", nullptr, &profiler_text_gui)) {}
+        if (ImGui::MenuItem("Clear Maximum")) { profiler::clear_maximum(); }
     };
     debug::add_menu(profiler_menu, "Profiler");
 

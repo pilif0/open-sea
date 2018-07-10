@@ -44,6 +44,8 @@ namespace open_sea::profiler {
     void pop();
 
     std::shared_ptr<track> get_last();
+    std::shared_ptr<track> get_maximum();
+    void clear_maximum();
 
     void show_text();
 }

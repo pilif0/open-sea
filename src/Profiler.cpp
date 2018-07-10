@@ -39,6 +39,8 @@ namespace open_sea::profiler {
     std::shared_ptr<track> in_progress{};
     //! Pointer to last completed frame track
     std::shared_ptr<track> completed{};
+    //! Pointer to frame track with the maximum recorded root duration
+    std::shared_ptr<track> maximum{};
 
     /**
      * \brief Start profiling
@@ -64,6 +66,11 @@ namespace open_sea::profiler {
         // Copy the frame track into completed and clear in_progress
         in_progress.swap(completed);
         in_progress.reset();
+
+        // Update maximum if relevant
+        if (!maximum || (*completed->getStore())[0].content.time > (*maximum->getStore())[0].content.time) {
+            maximum = completed;
+        }
     }
 
     /**
@@ -99,11 +106,31 @@ namespace open_sea::profiler {
     std::shared_ptr<track> get_last() { return completed; }
 
     /**
+     * \brief Get the maximum recorded frame tree
+     *
+     * \return Maximum recorded frame tree
+     */
+    std::shared_ptr<track> get_maximum() { return maximum; }
+
+    /**
+     * \brief Clear the maximum recorded frame tree
+     */
+    void clear_maximum() { maximum.reset(); }
+
+    //! Whether to show maximum instead of last
+    bool show_maximum = false;
+
+    /**
      * \brief Show the text gui for the profiler
      */
     void show_text() {
-        ImGui::TextUnformatted(completed ?
-                               completed->toIndentedString().c_str() :
-                               "No last completed frame track");
+        // Subject selection checkbox
+        ImGui::Checkbox("Show Maximum", &show_maximum);
+
+        // Selected track text
+        std::shared_ptr<track> subject = show_maximum ? maximum : completed;
+        ImGui::TextUnformatted(subject ?
+                               subject->toIndentedString().c_str() :
+                               "No completed frame track");
     }
 }

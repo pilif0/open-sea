@@ -48,6 +48,7 @@ namespace open_sea::profiler {
     void clear_maximum();
 
     void show_text();
+    void show_graphical();
 }
 
 #endif //OPEN_SEA_PROFILER_H

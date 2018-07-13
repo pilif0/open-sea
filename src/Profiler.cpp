@@ -117,20 +117,144 @@ namespace open_sea::profiler {
      */
     void clear_maximum() { maximum.reset(); }
 
-    //! Whether to show maximum instead of last
-    bool show_maximum = false;
+    //! Whether text should show maximum instead of last
+    bool text_show_maximum = false;
 
     /**
      * \brief Show the text gui for the profiler
      */
     void show_text() {
         // Subject selection checkbox
-        ImGui::Checkbox("Show Maximum", &show_maximum);
+        ImGui::Checkbox("Show Maximum", &text_show_maximum);
 
         // Selected track text
-        std::shared_ptr<track> subject = show_maximum ? maximum : completed;
+        std::shared_ptr<track> subject = text_show_maximum ? maximum : completed;
         ImGui::TextUnformatted(subject ?
                                subject->toIndentedString().c_str() :
                                "No completed frame track");
+    }
+
+    // Graphical gui parameters
+    //! Height of each rectangle
+    float height = 20.0f;
+    //! Height of each row
+    float height_and_pad = height + 3.0f;
+    //! Horizontal padding between rectangles
+    float width_pad = 1.0f;
+    //! Least width of rectangle to display
+    float least_width = 10.0f;
+    //! Rectangle colour A
+    ImVec4 col_a(1.0f, 0.4f, 0.4f, 1.0f);
+    //! Rectangle colour B
+    ImVec4 col_b(0.4f, 1.0f, 0.4f, 1.0f);
+    //! Text colour
+    ImVec4 col_text(0.0f, 0.0f, 0.0f, 1.0f);
+
+    /**
+     * \brief Recursive helper for show_graphical that draws the children of a node
+     *
+     * \param data Tree store of the frame track
+     * \param draw_list Window draw list
+     * \param canvas_pos Top-left canvas corner position
+     * \param canvas_size Size of the canvas
+     * \param root_time Duration of the root node
+     * \param depth Number of rows above the rectangles being displayed
+     * \param x_offset Offset from the left
+     * \param node Node whose children to display
+     */
+    void draw_rec(const std::shared_ptr<std::vector<track::Node>> &data, ImDrawList* draw_list, ImVec2 canvas_pos,
+                  ImVec2 canvas_size, double root_time, int depth, float x_offset, int node) {
+        // Loop over all children of the node
+        int child = (*data)[node].firstChild;
+        bool a = true;
+        while (child != track::Node::INVALID) {
+            // Get content
+            track::value_type content = (*data)[child].content;
+
+            // Compute width
+            auto width = static_cast<float>(canvas_size.x * content.time / root_time);
+
+            // Only draw if sufficient width
+            if (width >= least_width) {
+                // Compute corners
+                ImVec2 top_left{
+                        canvas_pos.x + x_offset + width_pad,
+                        canvas_pos.y + (depth * height_and_pad)};
+                ImVec2 bot_right{
+                        canvas_pos.x + x_offset + width - width_pad,
+                        canvas_pos.y + height + (depth * height_and_pad)};
+
+                // Draw the rectangle
+                draw_list->AddRectFilled(top_left, bot_right,
+                                         a ? ImGui::ColorConvertFloat4ToU32(col_a)
+                                           : ImGui::ColorConvertFloat4ToU32(col_b));
+
+                // Draw the tag
+                std::ostringstream stream;
+                stream << content.label;
+                std::string tag = stream.str();
+                draw_list->AddText(top_left, ImGui::ColorConvertFloat4ToU32(col_text), tag.data());
+
+                // Recursively draw its children
+                draw_rec(data, draw_list, canvas_pos, canvas_size, root_time, depth + 1, x_offset, child);
+
+                // Flip the colour when drawn
+                a = !a;
+            }
+
+            // Increment anchors
+            child = (*data)[child].next;
+            x_offset += width;
+        }
+    }
+
+    //! Whether graphical should show maximum instead of last
+    bool graphical_show_maximum = false;
+
+    /**
+     * \brief Show the graphical gui for the profiler
+     */
+    void show_graphical() {
+        // Subject selection checkbox
+        ImGui::Checkbox("Show Maximum", &graphical_show_maximum);
+        std::shared_ptr<track> subject = (graphical_show_maximum) ? maximum : completed;
+
+        // Parameter control
+        if (ImGui::CollapsingHeader("Parameters")) {
+            ImGui::InputFloat("rectangle height", &height);
+            ImGui::InputFloat("row height", &height_and_pad);
+            ImGui::InputFloat("horizontal padding", &width_pad);
+            ImGui::InputFloat("least width", &least_width);
+            ImGui::ColorEdit4("rectangle colour A", &col_a.x);
+            ImGui::ColorEdit4("rectangle colour B", &col_b.x);
+            ImGui::ColorEdit4("text colour", &col_text.x);
+        }
+
+        if (!subject) {
+            ImGui::TextUnformatted("No completed frame track");
+        } else {
+            // Retreive the data
+            std::shared_ptr<std::vector<track::Node>> data = subject->getStore();
+
+            // Set up regions
+            ImDrawList* draw_list = ImGui::GetWindowDrawList();
+            ImVec2 canvas_pos = ImGui::GetCursorScreenPos();
+            ImVec2 canvas_size = ImGui::GetContentRegionAvail();
+
+            // Draw root rectangle
+            draw_list->AddRectFilled(
+                    canvas_pos,
+                    ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + height),
+                    ImGui::ColorConvertFloat4ToU32(col_a));
+
+            // Draw root tag with time
+            std::ostringstream stream;
+            stream << (*data)[0].content.label << " - " << (*data)[0].content.time * 1000 << " ms";
+            std::string tag = stream.str();
+            draw_list->AddText(canvas_pos, ImGui::ColorConvertFloat4ToU32(col_text), tag.data());
+
+            // Have each node recursively draw its children
+            draw_rec(data, draw_list, canvas_pos, canvas_size, (*data)[0].content.time, 1, 0.0f, 0);
+        }
     }
 }

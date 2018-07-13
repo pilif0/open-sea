@@ -271,9 +271,11 @@ int main() {
     bool profiler_toggle = false;
     bool profiler_once = false;
     bool profiler_text_gui = false;
-    debug::menu_func profiler_menu = [&profiler_toggle, &profiler_once, &profiler_text_gui](){
+    bool profiler_graphical_gui = false;
+    debug::menu_func profiler_menu = [&profiler_toggle, &profiler_once, &profiler_text_gui, &profiler_graphical_gui](){
         if (ImGui::MenuItem("Toggle Profile", nullptr, &profiler_toggle)) {}
         if (ImGui::MenuItem("Text GUI", nullptr, &profiler_text_gui)) {}
+        if (ImGui::MenuItem("Graphical GUI", nullptr, &profiler_graphical_gui)) {}
         if (ImGui::MenuItem("Clear Maximum")) { profiler::clear_maximum(); }
     };
     debug::add_menu(profiler_menu, "Profiler");
@@ -387,6 +389,16 @@ int main() {
             if (profiler_text_gui) {
                 if (ImGui::Begin("Profiler - Text GUI")) {
                     profiler::show_text();
+                }
+                ImGui::End();
+            }
+            profiler::pop();
+
+            // Profiler graphical GUI
+            profiler::push("Profiler Graphical GUI");
+            if (profiler_graphical_gui) {
+                if (ImGui::Begin("Profiler - Graphical GUI")) {
+                    profiler::show_graphical();
                 }
                 ImGui::End();
             }

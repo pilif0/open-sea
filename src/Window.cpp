@@ -215,6 +215,18 @@ namespace open_sea::window {
         return window_properties(*current);
     }
 
+    //! Whether the window is focused
+    bool focus_flag = false;
+
+    /**
+     * \brief Get whether the window is focused
+     *
+     * \return Whether the window is focused
+     */
+    bool is_focused() {
+        return focus_flag;
+    }
+
     /**
      * \brief Update the window
      * Swap buffers and poll for events
@@ -283,6 +295,9 @@ namespace open_sea::window {
         // Skip if not the global window
         if (w != window)
             return;
+
+        // Update the flag
+        focus_flag = (focused != 0);
 
         // Fire the signal
         (*focus)(focused != 0);

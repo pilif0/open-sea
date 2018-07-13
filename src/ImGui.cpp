@@ -254,20 +254,29 @@ namespace open_sea::imgui {
         profiler::push("Inputs");
         profiler::push("Cursor");
         profiler::push("Focus query");
-        if (glfwGetWindowAttrib(window::window, GLFW_FOCUSED) && glfwGetInputMode(window::window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED) {
+        if (window::is_focused()) {
             profiler::pop();
 
-            if (io.WantSetMousePos) {
-                // Set mouse position if requested by io.WantMoveMouse flag (used when io.NavMovesTrue is enabled by
-                // user and using directional navigation)
-                profiler::push("Set position");
-                glfwSetCursorPos(window::window, (double) io.MousePos.x, (double) io.MousePos.y);
+            profiler::push("Mode query");
+            if (input::get_cursor_mode() != input::cursor_mode::disabled) {
                 profiler::pop();
+
+                if (io.WantSetMousePos) {
+                    // Set mouse position if requested by io.WantMoveMouse flag (used when io.NavMovesTrue is enabled by
+                    // user and using directional navigation)
+                    profiler::push("Set position");
+                    glfwSetCursorPos(window::window, (double) io.MousePos.x, (double) io.MousePos.y);
+                    profiler::pop();
+                } else {
+                    profiler::push("Get position");
+                    ::glm::dvec2 cursor_pos = input::cursor_position();
+                    io.MousePos = ImVec2((float) cursor_pos.x, (float) cursor_pos.y);
+                    profiler::pop();
+                }
             } else {
-                profiler::push("Get position");
-                ::glm::dvec2 cursor_pos = input::cursor_position();
-                io.MousePos = ImVec2((float) cursor_pos.x, (float) cursor_pos.y);
                 profiler::pop();
+
+                io.MousePos = ImVec2(-FLT_MAX,-FLT_MAX);
             }
         } else {
             profiler::pop();
@@ -289,14 +298,14 @@ namespace open_sea::imgui {
         // Update OS/hardware mouse cursor if imgui isn't drawing a software cursor
         profiler::push("Cursor icon");
         ImGuiMouseCursor cursor = ImGui::GetMouseCursor();
-        if (glfwGetInputMode(window::window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED) {
+        if (input::get_cursor_mode() != input::cursor_mode::disabled) {
             // Skip this when the cursor is disabled
 
             if (io.MouseDrawCursor || cursor == ImGuiMouseCursor_None) {
-                glfwSetInputMode(window::window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+                input::set_cursor_mode(input::cursor_mode::hidden);
             } else {
                 glfwSetCursor(window::window, cursors[cursor] ? cursors[cursor] : cursors[ImGuiMouseCursor_Arrow]);
-                glfwSetInputMode(window::window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                input::set_cursor_mode(input::cursor_mode::normal);
             }
         }
         profiler::pop();

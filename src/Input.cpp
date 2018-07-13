@@ -321,6 +321,46 @@ namespace open_sea::input {
         return std::string(cs);
     }
 
+    //! Current cursor mode (only reliable if \c cursor_mode_true is \c true)
+    cursor_mode::mode current_cursor_mode = cursor_mode::normal;
+    //! Flag that is \c false until the first time \c get_cursor_mode() is called
+    bool cursor_mode_true = false;
+
+    /**
+     * \brief Set cursor mode
+     *
+     * \param mode New value
+     */
+    void set_cursor_mode(cursor_mode::mode mode) {
+        if (get_cursor_mode() != mode) {
+            glfwSetInputMode(window::window, GLFW_CURSOR,
+                             (mode == cursor_mode::normal) ?
+                                 GLFW_CURSOR_NORMAL :
+                                 (mode == cursor_mode::hidden) ? GLFW_CURSOR_HIDDEN : GLFW_CURSOR_DISABLED);
+            current_cursor_mode = mode;
+        }
+    }
+
+    /**
+     * \brief Get cursor mode
+     *
+     * \return Cursor mode
+     */
+    cursor_mode::mode get_cursor_mode() {
+        if (!cursor_mode_true) {
+            auto glfw_mode = glfwGetInputMode(window::window, GLFW_CURSOR);
+            switch (glfw_mode) {
+                case GLFW_CURSOR_NORMAL: current_cursor_mode = cursor_mode::normal; break;
+                case GLFW_CURSOR_HIDDEN: current_cursor_mode = cursor_mode::hidden; break;
+                case GLFW_CURSOR_DISABLED: current_cursor_mode = cursor_mode::disabled; break;
+                default: current_cursor_mode = cursor_mode::normal;
+            }
+            cursor_mode_true = true;
+        }
+
+        return current_cursor_mode;
+    }
+
     /**
      * \brief Get clipboard content
      *

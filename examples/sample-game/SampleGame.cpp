@@ -338,7 +338,7 @@ int main() {
                 default: return -1;
             }
         } else
-            glfwSetInputMode(window::window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            input::set_cursor_mode(input::cursor_mode::normal);
         profiler::pop();
 
         // Update cameras based on associated guides

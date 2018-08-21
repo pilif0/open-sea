@@ -135,21 +135,22 @@ namespace open_sea::profiler {
     }
 
     // Graphical gui parameters
-    //! Height of each rectangle
-    float height = 20.0f;
+    //! Height of each bar
+    float bar_height = 20.0f;
     //! Height of each row
-    float height_and_pad = height + 3.0f;
-    //! Horizontal padding between rectangles
-    float width_pad = 1.0f;
-    //! Least width of rectangle to display
+    float row_height = bar_height + 3.0f;
+    //! Horizontal bar spacing
+    float bar_spacing = 1.0f;
+    //! Least width of bar to display
     float least_width = 10.0f;
-    //! Rectangle colour
+    //! Bar colour
     ImVec4 col_bar(0.4f, 0.8f, 1.0f, 1.0f);
     //! Text colour
     ImVec4 col_text(0.0f, 0.0f, 0.0f, 1.0f);
     //! Text padding from the top-left
-    ImVec2 text_pad{1.0f, 1.0f};
+    ImVec2 text_pad{3.0f, 3.0f};
 
+    //! Add two ImGui 2D vectors
     ImVec2 add(ImVec2 a, ImVec2 b) { return ImVec2{a.x + b.x, a.y + b.y}; }
 
     /**
@@ -160,7 +161,7 @@ namespace open_sea::profiler {
      * \param canvas_pos Top-left canvas corner position
      * \param canvas_size Size of the canvas
      * \param root_time Duration of the root node
-     * \param depth Number of rows above the rectangles being displayed
+     * \param depth Number of rows above the bars being displayed
      * \param x_offset Offset from the left
      * \param node Node whose children to display
      */
@@ -179,13 +180,13 @@ namespace open_sea::profiler {
             if (width >= least_width) {
                 // Compute corners
                 ImVec2 top_left{
-                        canvas_pos.x + x_offset + width_pad,
-                        canvas_pos.y + (depth * height_and_pad)};
+                        canvas_pos.x + x_offset + bar_spacing,
+                        canvas_pos.y + (depth * row_height)};
                 ImVec2 bot_right{
-                        canvas_pos.x + x_offset + width - width_pad,
-                        canvas_pos.y + height + (depth * height_and_pad)};
+                        canvas_pos.x + x_offset + width - bar_spacing,
+                        canvas_pos.y + bar_height + (depth * row_height)};
 
-                // Draw the rectangle
+                // Draw the bar
                 draw_list->AddRectFilled(top_left, bot_right, ImGui::ColorConvertFloat4ToU32(col_bar));
 
                 // Draw the tag
@@ -214,11 +215,11 @@ namespace open_sea::profiler {
 
         // Parameter control
         if (ImGui::CollapsingHeader("Parameters")) {
-            ImGui::InputFloat("rectangle height", &height);
-            ImGui::InputFloat("row height", &height_and_pad);
-            ImGui::InputFloat("horizontal padding", &width_pad);
+            ImGui::InputFloat("bar height", &bar_height);
+            ImGui::InputFloat("row height", &row_height);
+            ImGui::InputFloat("horizontal spacing", &bar_spacing);
             ImGui::InputFloat("least width", &least_width);
-            ImGui::ColorEdit4("rectangle colour", &col_bar.x);
+            ImGui::ColorEdit4("bar colour", &col_bar.x);
             ImGui::ColorEdit4("text colour", &col_text.x);
             ImGui::InputFloat2("text padding", &text_pad.x);
         }
@@ -226,7 +227,7 @@ namespace open_sea::profiler {
         if (!subject) {
             ImGui::TextUnformatted("No completed frame track");
         } else {
-            // Retreive the data
+            // Retrieve the data
             std::shared_ptr<std::vector<track::Node>> data = subject->getStore();
 
             // Set up regions
@@ -234,20 +235,23 @@ namespace open_sea::profiler {
             ImVec2 canvas_pos = ImGui::GetCursorScreenPos();
             ImVec2 canvas_size = ImGui::GetContentRegionAvail();
 
-            // Draw root rectangle
+            // Draw root bar
             draw_list->AddRectFilled(
                     canvas_pos,
-                    ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + height),
+                    ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + bar_height),
                     ImGui::ColorConvertFloat4ToU32(col_bar));
+
+            // Get root content
+            track::value_type root_content = (*data)[0].content;
 
             // Draw root tag with time
             std::ostringstream stream;
-            stream << (*data)[0].content.label << " - " << (*data)[0].content.time * 1000 << " ms";
+            stream << root_content.label << " - " << root_content.time * 1000 << " ms";
             std::string tag = stream.str();
             draw_list->AddText(add(canvas_pos, text_pad), ImGui::ColorConvertFloat4ToU32(col_text), tag.data());
 
             // Have each node recursively draw its children
-            draw_rec(data, draw_list, canvas_pos, canvas_size, (*data)[0].content.time, 1, 0.0f, 0);
+            draw_rec(data, draw_list, canvas_pos, canvas_size, root_content.time, 1, 0.0f, 0);
         }
     }
 }

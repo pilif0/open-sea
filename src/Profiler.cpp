@@ -189,10 +189,7 @@ namespace open_sea::profiler {
                 draw_list->AddRectFilled(top_left, bot_right, ImGui::ColorConvertFloat4ToU32(col_bar));
 
                 // Draw the tag
-                std::ostringstream stream;
-                stream << content.label;
-                std::string tag = stream.str();
-                draw_list->AddText(add(top_left, text_pad), ImGui::ColorConvertFloat4ToU32(col_text), tag.data());
+                draw_list->AddText(add(top_left, text_pad), ImGui::ColorConvertFloat4ToU32(col_text), content.label.data());
 
                 // Recursively draw its children
                 draw_rec(data, draw_list, canvas_pos, canvas_size, root_time, depth + 1, x_offset, child);

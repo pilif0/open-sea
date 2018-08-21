@@ -57,7 +57,7 @@ namespace open_sea::data {
             // Index of the next element to be inserted into the store
             size_type tree_size;
         private:
-            std::string toIndentedStringRec(unsigned index, unsigned depth);
+            void toIndentedStringRec(unsigned index, unsigned depth, std::ostringstream &stream);
         public:
             Track();
 
@@ -162,26 +162,18 @@ namespace open_sea::data {
      * Recursively get the contents of the node at the specified index and its children as an indented string.
      * The indentation starts at the specified depth, increases by 1 every time a child is descended into, and is done
      *  with TABs.
+     * The string is written into \c stream.
      *
      * \tparam T Value type
      * \param index Node index
      * \param depth Starting indentation depth
-     * \return Indented string
+     * \param stream Stream to write into
      */
     // Recursive helper for Track::toIndentedString()
     template<class T>
-    std::string Track<T>::toIndentedStringRec(unsigned index, unsigned depth) {
-        // Prepare result
-        std::ostringstream stream;
-
-        // Terminate on invalid
-        if (index == Node::INVALID)
-            return stream.str();
-
+    void Track<T>::toIndentedStringRec(unsigned index, unsigned depth, std::ostringstream &stream) {
         // Print indentation
-        for (int j = 0; j < depth; j++) {
-            stream << '\t';
-        }
+        stream << std::string(depth, '\t');
 
         // Print content and newline
         stream << (*store)[index].content << '\n';
@@ -189,12 +181,9 @@ namespace open_sea::data {
         // Recurse to children
         unsigned child = (*store)[index].firstChild;
         while (child != Node::INVALID) {
-            stream << toIndentedStringRec(child, depth + 1);
+            toIndentedStringRec(child, depth + 1, stream);
             child = (*store)[child].next;
         }
-
-        // Return as string
-        return stream.str();
     }
 
     /**
@@ -206,7 +195,15 @@ namespace open_sea::data {
      * \return Indented string
      */
     template<class T>
-    std::string Track<T>::toIndentedString() { return toIndentedStringRec(0, 0); }
+    std::string Track<T>::toIndentedString() {
+        // Skip if empty
+        if (tree_size == 0)
+            return "";
+
+        std::ostringstream stream;
+        toIndentedStringRec(0, 0, stream);
+        return stream.str();
+    }
 }
 
 #endif //OPEN_SEA_TRACK_H

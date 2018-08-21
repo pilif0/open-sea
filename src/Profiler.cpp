@@ -130,7 +130,7 @@ namespace open_sea::profiler {
         // Selected track text
         std::shared_ptr<track> subject = text_show_maximum ? maximum : completed;
         ImGui::TextUnformatted(subject ?
-                               subject->toIndentedString().c_str() :
+                               subject->toIndentedString().data() :
                                "No completed frame track");
     }
 

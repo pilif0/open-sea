@@ -143,12 +143,14 @@ namespace open_sea::profiler {
     float width_pad = 1.0f;
     //! Least width of rectangle to display
     float least_width = 10.0f;
-    //! Rectangle colour A
-    ImVec4 col_a(1.0f, 0.4f, 0.4f, 1.0f);
-    //! Rectangle colour B
-    ImVec4 col_b(0.4f, 1.0f, 0.4f, 1.0f);
+    //! Rectangle colour
+    ImVec4 col_bar(0.4f, 0.8f, 1.0f, 1.0f);
     //! Text colour
     ImVec4 col_text(0.0f, 0.0f, 0.0f, 1.0f);
+    //! Text padding from the top-left
+    ImVec2 text_pad{1.0f, 1.0f};
+
+    ImVec2 add(ImVec2 a, ImVec2 b) { return ImVec2{a.x + b.x, a.y + b.y}; }
 
     /**
      * \brief Recursive helper for show_graphical that draws the children of a node
@@ -166,7 +168,6 @@ namespace open_sea::profiler {
                   ImVec2 canvas_size, double root_time, int depth, float x_offset, int node) {
         // Loop over all children of the node
         int child = (*data)[node].firstChild;
-        bool a = true;
         while (child != track::Node::INVALID) {
             // Get content
             track::value_type content = (*data)[child].content;
@@ -185,21 +186,16 @@ namespace open_sea::profiler {
                         canvas_pos.y + height + (depth * height_and_pad)};
 
                 // Draw the rectangle
-                draw_list->AddRectFilled(top_left, bot_right,
-                                         a ? ImGui::ColorConvertFloat4ToU32(col_a)
-                                           : ImGui::ColorConvertFloat4ToU32(col_b));
+                draw_list->AddRectFilled(top_left, bot_right, ImGui::ColorConvertFloat4ToU32(col_bar));
 
                 // Draw the tag
                 std::ostringstream stream;
                 stream << content.label;
                 std::string tag = stream.str();
-                draw_list->AddText(top_left, ImGui::ColorConvertFloat4ToU32(col_text), tag.data());
+                draw_list->AddText(add(top_left, text_pad), ImGui::ColorConvertFloat4ToU32(col_text), tag.data());
 
                 // Recursively draw its children
                 draw_rec(data, draw_list, canvas_pos, canvas_size, root_time, depth + 1, x_offset, child);
-
-                // Flip the colour when drawn
-                a = !a;
             }
 
             // Increment anchors
@@ -225,9 +221,9 @@ namespace open_sea::profiler {
             ImGui::InputFloat("row height", &height_and_pad);
             ImGui::InputFloat("horizontal padding", &width_pad);
             ImGui::InputFloat("least width", &least_width);
-            ImGui::ColorEdit4("rectangle colour A", &col_a.x);
-            ImGui::ColorEdit4("rectangle colour B", &col_b.x);
+            ImGui::ColorEdit4("rectangle colour", &col_bar.x);
             ImGui::ColorEdit4("text colour", &col_text.x);
+            ImGui::InputFloat2("text padding", &text_pad.x);
         }
 
         if (!subject) {
@@ -245,13 +241,13 @@ namespace open_sea::profiler {
             draw_list->AddRectFilled(
                     canvas_pos,
                     ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + height),
-                    ImGui::ColorConvertFloat4ToU32(col_a));
+                    ImGui::ColorConvertFloat4ToU32(col_bar));
 
             // Draw root tag with time
             std::ostringstream stream;
             stream << (*data)[0].content.label << " - " << (*data)[0].content.time * 1000 << " ms";
             std::string tag = stream.str();
-            draw_list->AddText(canvas_pos, ImGui::ColorConvertFloat4ToU32(col_text), tag.data());
+            draw_list->AddText(add(canvas_pos, text_pad), ImGui::ColorConvertFloat4ToU32(col_text), tag.data());
 
             // Have each node recursively draw its children
             draw_rec(data, draw_list, canvas_pos, canvas_size, (*data)[0].content.time, 1, 0.0f, 0);

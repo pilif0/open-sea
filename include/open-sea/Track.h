@@ -56,8 +56,6 @@ namespace open_sea::data {
             //! Number of nodes in store (number of tree nodes without implied root)
             // Index of the next element to be inserted into the store
             size_type tree_size;
-        private:
-            void toIndentedStringRec(unsigned index, unsigned depth, std::ostringstream &stream);
         public:
             Track();
 
@@ -158,35 +156,6 @@ namespace open_sea::data {
     }
 
     /**
-     * \brief Get contents of the node at the index and its children, indented starting at the depth
-     * Recursively get the contents of the node at the specified index and its children as an indented string.
-     * The indentation starts at the specified depth, increases by 1 every time a child is descended into, and is done
-     *  with TABs.
-     * The string is written into \c stream.
-     *
-     * \tparam T Value type
-     * \param index Node index
-     * \param depth Starting indentation depth
-     * \param stream Stream to write into
-     */
-    // Recursive helper for Track::toIndentedString()
-    template<class T>
-    void Track<T>::toIndentedStringRec(unsigned index, unsigned depth, std::ostringstream &stream) {
-        // Print indentation
-        stream << std::string(depth, '\t');
-
-        // Print content and newline
-        stream << (*store)[index].content << '\n';
-
-        // Recurse to children
-        unsigned child = (*store)[index].firstChild;
-        while (child != Node::INVALID) {
-            toIndentedStringRec(child, depth + 1, stream);
-            child = (*store)[child].next;
-        }
-    }
-
-    /**
      * \brief Get track contents as an indented string
      * Get track contents with each node on a separate line and indented (with TABs) by depth.
      * The children of the implied root start with no indentation.
@@ -200,8 +169,39 @@ namespace open_sea::data {
         if (tree_size == 0)
             return "";
 
-        std::ostringstream stream;
-        toIndentedStringRec(0, 0, stream);
+        std::ostringstream stream;  // Result stream
+        unsigned current = 0;       // Index of current node
+        unsigned depth = 0;         // Current depth (equal to ancestors count)
+
+        while (current != Node::INVALID) {
+            // Print indentation, content and newline
+            stream << std::string(depth, '\t') << (*store)[current].content << '\n';
+
+            // Select next node
+            if ((*store)[current].firstChild != Node::INVALID) {
+                // Go to child
+                depth++;
+                current = (*store)[current].firstChild;
+            } else if ((*store)[current].next != Node::INVALID) {
+                // Go to next sibling
+                current = (*store)[current].next;
+            } else {
+                // Find first (great)*parent with valid next sibling
+                unsigned ancestor = current;
+                while (ancestor != Node::INVALID && (*store)[ancestor].next == Node::INVALID) {
+                    ancestor = (*store)[ancestor].parent;
+                    depth--;
+                }
+
+                // Go to the found sibling or break out
+                if (ancestor != Node::INVALID)
+                    current = (*store)[ancestor].next;
+                else
+                    break;
+            }
+        }
+
+        // Return the result
         return stream.str();
     }
 }

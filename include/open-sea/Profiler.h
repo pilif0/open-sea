@@ -14,10 +14,6 @@
 #include <ostream>
 
 namespace open_sea::profiler {
-    // Notes:
-    //  - Result of profiling is a tree of runtime information nodes for code blocks.
-    //  - Time in a node is start time while executing to save space (not needed after duration is known --> can be replaced).
-
     /** \struct Info
      * \brief Information in each element of the frame track
      * Information in each element of the frame track.

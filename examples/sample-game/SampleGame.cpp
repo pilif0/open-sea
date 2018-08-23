@@ -415,8 +415,8 @@ int main() {
         window::update();
         profiler::pop();
 
-        // Finish profiling
-        if (profiler_toggle) profiler::finish();
+        // Try to finish profiling
+        profiler::finish();
 
         // Update delta time
         open_sea::time::update_delta();

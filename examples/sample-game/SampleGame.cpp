@@ -268,14 +268,13 @@ int main() {
     });
 
     // Add profiler menu
-    bool profiler_toggle = false;
-    bool profiler_once = false;
-    bool profiler_text_gui = false;
-    bool profiler_graphical_gui = false;
-    debug::menu_func profiler_menu = [&profiler_toggle, &profiler_once, &profiler_text_gui, &profiler_graphical_gui](){
+    bool profiler_toggle = true;
+    bool profiler_text_display = false;
+    bool profiler_graphical_display = false;
+    debug::menu_func profiler_menu = [&profiler_toggle, &profiler_text_display, &profiler_graphical_display](){
         if (ImGui::MenuItem("Toggle Profile", nullptr, &profiler_toggle)) {}
-        if (ImGui::MenuItem("Text GUI", nullptr, &profiler_text_gui)) {}
-        if (ImGui::MenuItem("Graphical GUI", nullptr, &profiler_graphical_gui)) {}
+        if (ImGui::MenuItem("Text Display", nullptr, &profiler_text_display)) {}
+        if (ImGui::MenuItem("Graphical Display", nullptr, &profiler_graphical_display)) {}
         if (ImGui::MenuItem("Clear Maximum")) { profiler::clear_maximum(); }
     };
     debug::add_menu(profiler_menu, "Profiler");
@@ -316,7 +315,7 @@ int main() {
     open_sea::time::start_delta();
     while (!window::should_close()) {
         // Start profiling
-        if (profiler_toggle || profiler_once) profiler::start();
+        if (profiler_toggle) profiler::start();
 
         // Clear
         profiler::push("glClear");
@@ -384,10 +383,10 @@ int main() {
             }
             profiler::pop();
 
-            // Profiler text GUI
-            profiler::push("Profiler Text GUI");
-            if (profiler_text_gui) {
-                if (ImGui::Begin("Profiler - Text GUI")) {
+            // Profiler text display
+            profiler::push("Profiler - Text Diplay");
+            if (profiler_text_display) {
+                if (ImGui::Begin("Profiler - Text Display")) {
                     profiler::show_text();
                 }
                 ImGui::End();
@@ -395,9 +394,9 @@ int main() {
             profiler::pop();
 
             // Profiler graphical GUI
-            profiler::push("Profiler Graphical GUI");
-            if (profiler_graphical_gui) {
-                if (ImGui::Begin("Profiler - Graphical GUI")) {
+            profiler::push("Profiler - Graphical Display");
+            if (profiler_graphical_display) {
+                if (ImGui::Begin("Profiler - Graphical Display")) {
                     profiler::show_graphical();
                 }
                 ImGui::End();
@@ -417,10 +416,7 @@ int main() {
         profiler::pop();
 
         // Finish profiling
-        if (profiler_toggle || profiler_once) profiler::finish();
-
-        // Reset profile once flag
-        profiler_once = false;
+        if (profiler_toggle) profiler::finish();
 
         // Update delta time
         open_sea::time::update_delta();

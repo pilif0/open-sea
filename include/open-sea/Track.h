@@ -39,10 +39,12 @@ namespace open_sea::data {
                 unsigned next = INVALID;
                 //! First child (\c INVALID means none)
                 unsigned firstChild = INVALID;
+                //! Node depth (size of stack at that node)
+                size_type depth;
                 //! Node content
                 value_type content;
 
-                Node(unsigned int parent, T content) : parent(parent), content(content) {}
+                Node(unsigned int parent, size_type depth, T content) : parent(parent), depth(depth), content(content) {}
             };
         protected:
             //! Tree data
@@ -51,7 +53,7 @@ namespace open_sea::data {
             unsigned current;
             //! Index of last child of current node
             unsigned lastChild;
-            //! Length of path from root to current
+            //! Length of path from implied root to current node
             size_type stack_size;
             //! Number of nodes in store (number of tree nodes without implied root)
             // Index of the next element to be inserted into the store
@@ -109,14 +111,13 @@ namespace open_sea::data {
         if (lastChild != Node::INVALID)
             (*store)[lastChild].next = tree_size;
 
-        // Add the actual node
-        store->emplace_back(current, content);
+        // Increment stack size and add the actual node
+        store->emplace_back(current, ++stack_size, content);
 
         // Update state
         current = tree_size;
         lastChild = Node::INVALID;  // Newly created node has no children
         tree_size++;
-        stack_size++;
     }
 
     /**
@@ -170,36 +171,10 @@ namespace open_sea::data {
             return "";
 
         std::ostringstream stream;  // Result stream
-        unsigned current = 0;       // Index of current node
-        unsigned depth = 0;         // Current depth (equal to ancestors count)
 
-        while (current != Node::INVALID) {
-            // Print indentation, content and newline
-            stream << std::string(depth, '\t') << (*store)[current].content << '\n';
-
-            // Select next node
-            if ((*store)[current].firstChild != Node::INVALID) {
-                // Go to child
-                depth++;
-                current = (*store)[current].firstChild;
-            } else if ((*store)[current].next != Node::INVALID) {
-                // Go to next sibling
-                current = (*store)[current].next;
-            } else {
-                // Find first (great)*parent with valid next sibling
-                unsigned ancestor = current;
-                while (ancestor != Node::INVALID && (*store)[ancestor].next == Node::INVALID) {
-                    ancestor = (*store)[ancestor].parent;
-                    depth--;
-                }
-
-                // Go to the found sibling or break out
-                if (ancestor != Node::INVALID)
-                    current = (*store)[ancestor].next;
-                else
-                    break;
-            }
-        }
+        // Write each node in sequence with proper indentation
+        for (Node current : (*store))
+            stream << std::string(current.depth - 1, '\t') << current.content << '\n';
 
         // Return the result
         return stream.str();

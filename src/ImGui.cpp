@@ -10,6 +10,7 @@
 #include <open-sea/Log.h>
 #include <open-sea/Delta.h>
 #include <open-sea/GL.h>
+#include <open-sea/Profiler.h>
 
 #include <optional>
 #include <memory>
@@ -229,9 +230,12 @@ namespace open_sea::imgui {
      * Update display size, delta time, input and cursor
      */
     void new_frame() {
+        profiler::push("Device objects");
         if (!fontTexture)
             create_device_objects();
+        profiler::pop();
 
+        profiler::push("Set up");
         ImGuiIO& io = ImGui::GetIO();
 
         // Setup display size (every frame to accommodate for window resizing)
@@ -244,44 +248,73 @@ namespace open_sea::imgui {
 
         // Setup time step
         io.DeltaTime = static_cast<float>(open_sea::time::get_delta());
+        profiler::pop();
 
         // Setup inputs
-        if (glfwGetWindowAttrib(window::window, GLFW_FOCUSED) && glfwGetInputMode(window::window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED) {
-            if (io.WantSetMousePos) {
-                // Set mouse position if requested by io.WantMoveMouse flag (used when io.NavMovesTrue is enabled by
-                // user and using directional navigation)
-                glfwSetCursorPos(window::window, (double) io.MousePos.x, (double) io.MousePos.y);
+        profiler::push("Inputs");
+        profiler::push("Cursor");
+        profiler::push("Focus query");
+        if (window::is_focused()) {
+            profiler::pop();
+
+            profiler::push("Mode query");
+            if (input::get_cursor_mode() != input::cursor_mode::disabled) {
+                profiler::pop();
+
+                if (io.WantSetMousePos) {
+                    // Set mouse position if requested by io.WantMoveMouse flag (used when io.NavMovesTrue is enabled by
+                    // user and using directional navigation)
+                    profiler::push("Set position");
+                    glfwSetCursorPos(window::window, (double) io.MousePos.x, (double) io.MousePos.y);
+                    profiler::pop();
+                } else {
+                    profiler::push("Get position");
+                    ::glm::dvec2 cursor_pos = input::cursor_position();
+                    io.MousePos = ImVec2((float) cursor_pos.x, (float) cursor_pos.y);
+                    profiler::pop();
+                }
             } else {
-                ::glm::dvec2 cursor_pos = input::cursor_position();
-                io.MousePos = ImVec2((float) cursor_pos.x, (float) cursor_pos.y);
+                profiler::pop();
+
+                io.MousePos = ImVec2(-FLT_MAX,-FLT_MAX);
             }
         } else {
+            profiler::pop();
+
             io.MousePos = ImVec2(-FLT_MAX,-FLT_MAX);
         }
+        profiler::pop();
 
+        profiler::push("Mouse buttons");
         for (int i = 0; i < 3; i++) {
             // If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release
             // events that are shorter than 1 frame.
             io.MouseDown[i] = mouseJustPressed[i] || input::mouse_state(i) == input::press;
             mouseJustPressed[i] = false;
         }
+        profiler::pop();
+        profiler::pop();
 
         // Update OS/hardware mouse cursor if imgui isn't drawing a software cursor
+        profiler::push("Cursor icon");
         ImGuiMouseCursor cursor = ImGui::GetMouseCursor();
-        if (glfwGetInputMode(window::window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED) {
+        if (input::get_cursor_mode() != input::cursor_mode::disabled) {
             // Skip this when the cursor is disabled
 
             if (io.MouseDrawCursor || cursor == ImGuiMouseCursor_None) {
-                glfwSetInputMode(window::window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+                input::set_cursor_mode(input::cursor_mode::hidden);
             } else {
                 glfwSetCursor(window::window, cursors[cursor] ? cursors[cursor] : cursors[ImGuiMouseCursor_Arrow]);
-                glfwSetInputMode(window::window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                input::set_cursor_mode(input::cursor_mode::normal);
             }
         }
+        profiler::pop();
 
         // Start the frame. This call will update the io.WantCaptureMouse, io.WantCaptureKeyboard flag that you can use
         // to dispatch inputs (or not) to your application.
+        profiler::push("Internal");
         ImGui::NewFrame();
+        profiler::pop();
     }
 
     /**

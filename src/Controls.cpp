@@ -96,8 +96,8 @@ namespace open_sea::controls {
         // Update rotation
         {
             // Ensure cursor is disabled
-            if (glfwGetInputMode(window::window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED)
-                glfwSetInputMode(window::window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            if (input::get_cursor_mode() != input::cursor_mode::disabled)
+                input::set_cursor_mode(input::cursor_mode::disabled);
 
             // Look up subject transformation
             int index = transformMgr->lookup(subject);
@@ -220,8 +220,8 @@ namespace open_sea::controls {
         // Update rotation
         {
             // Ensure cursor is disabled
-            if (glfwGetInputMode(window::window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED)
-                glfwSetInputMode(window::window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            if (input::get_cursor_mode() != input::cursor_mode::disabled)
+                input::set_cursor_mode(input::cursor_mode::disabled);
 
             // Look up subject transformation
             int index = transformMgr->lookup(subject);

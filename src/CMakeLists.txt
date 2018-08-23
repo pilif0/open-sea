@@ -18,7 +18,9 @@ set(open_sea_HEADERS
         "${INCL_DIR}/open-sea/Systems.h"
         "${INCL_DIR}/open-sea/Controls.h"
         "${INCL_DIR}/open-sea/Debug.h"
-        "${INCL_DIR}/open-sea/Debuggable.h")
+        "${INCL_DIR}/open-sea/Debuggable.h"
+        "${INCL_DIR}/open-sea/Profiler.h"
+        "${INCL_DIR}/open-sea/Track.h")
 set(open_sea_SOURCES
         Log.cpp
         Window.cpp
@@ -32,7 +34,8 @@ set(open_sea_SOURCES
         Render.cpp
         Systems.cpp
         Controls.cpp
-        Debug.cpp)
+        Debug.cpp
+        Profiler.cpp)
 
 # Add the library
 add_library(open_sea ${open_sea_SOURCES} ${open_sea_HEADERS} ${ImGui})

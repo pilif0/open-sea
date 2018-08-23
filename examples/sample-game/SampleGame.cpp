@@ -20,6 +20,7 @@
 #include <open-sea/Systems.h>
 #include <open-sea/Controls.h>
 #include <open-sea/Debug.h>
+#include <open-sea/Profiler.h>
 namespace os_log = open_sea::log;
 namespace window = open_sea::window;
 namespace input = open_sea::input;
@@ -31,6 +32,7 @@ namespace ecs = open_sea::ecs;
 namespace render = open_sea::render;
 namespace controls = open_sea::controls;
 namespace debug = open_sea::debug;
+namespace profiler = open_sea::profiler;
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
@@ -265,6 +267,18 @@ int main() {
         }
     });
 
+    // Add profiler menu
+    bool profiler_toggle = true;
+    bool profiler_text_display = false;
+    bool profiler_graphical_display = false;
+    debug::menu_func profiler_menu = [&profiler_toggle, &profiler_text_display, &profiler_graphical_display](){
+        if (ImGui::MenuItem("Toggle Profile", nullptr, &profiler_toggle)) {}
+        if (ImGui::MenuItem("Text Display", nullptr, &profiler_text_display)) {}
+        if (ImGui::MenuItem("Graphical Display", nullptr, &profiler_graphical_display)) {}
+        if (ImGui::MenuItem("Clear Maximum")) { profiler::clear_maximum(); }
+    };
+    debug::add_menu(profiler_menu, "Profiler");
+
     // Add test environment menu
     bool use_per_camera = true;
     bool camera_info = false;
@@ -300,13 +314,21 @@ int main() {
     // Loop until the user closes the window
     open_sea::time::start_delta();
     while (!window::should_close()) {
+        // Start profiling
+        if (profiler_toggle) profiler::start();
+
         // Clear
+        profiler::push("glClear");
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        profiler::pop();
 
         // Update cursor delta
+        profiler::push("Input Update");
         input::update_cursor_delta();
+        profiler::pop();
 
         // Update camera guide controls
+        profiler::push("Camera Controls");
         if (!suspend_controls) {
             switch (controls_no) {
                 case 0: controls_free->transform(); break;
@@ -315,44 +337,86 @@ int main() {
                 default: return -1;
             }
         } else
-            glfwSetInputMode(window::window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            input::set_cursor_mode(input::cursor_mode::normal);
+        profiler::pop();
 
         // Update cameras based on associated guides
+        profiler::push("Camera Transform");
         camera_follow->transform();
+        profiler::pop();
 
+        profiler::push("Draw");
         // Decide what camera to use
         std::shared_ptr<gl::Camera> camera = (use_per_camera) ? test_camera_per : test_camera_ort;
 
         // Draw the entities
         renderer->render(camera, entities, N);
+        profiler::pop();
 
         // Maintain components
+        profiler::push("Maintain Components");
         model_comp_manager->gc(*test_manager);
         trans_comp_manager->gc(*test_manager);
         camera_comp_manager->gc(*test_manager);
+        profiler::pop();
 
         // ImGui debug GUI
+        profiler::push("ImGui Debug GUI");
         if (show_imgui) {
             // Prepare new frame
+            profiler::push("New Frame");
             imgui::new_frame();
+            profiler::pop();
 
             // Main menu
+            profiler::push("Main Menu");
             debug::main_menu();
+            profiler::pop();
 
             // Camera info window
+            profiler::push("Camera Info");
             if (camera_info) {
                 if (ImGui::Begin("Active Camera")) {
                     camera->showDebug();
                 }
                 ImGui::End();
             }
+            profiler::pop();
+
+            // Profiler text display
+            profiler::push("Profiler - Text Diplay");
+            if (profiler_text_display) {
+                if (ImGui::Begin("Profiler - Text Display")) {
+                    profiler::show_text();
+                }
+                ImGui::End();
+            }
+            profiler::pop();
+
+            // Profiler graphical GUI
+            profiler::push("Profiler - Graphical Display");
+            if (profiler_graphical_display) {
+                if (ImGui::Begin("Profiler - Graphical Display")) {
+                    profiler::show_graphical();
+                }
+                ImGui::End();
+            }
+            profiler::pop();
 
             //Render
+            profiler::push("Render");
             imgui::render();
+            profiler::pop();
         }
+        profiler::pop();
 
         // Update the window
+        profiler::push("Window Update");
         window::update();
+        profiler::pop();
+
+        // Try to finish profiling
+        profiler::finish();
 
         // Update delta time
         open_sea::time::update_delta();

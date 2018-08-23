@@ -78,6 +78,7 @@ namespace open_sea::window {
     void hide();
     void close();
     window_properties current_properties();
+    bool is_focused();
 
     connection connect_size(const size_signal::slot_type& slot);
     connection connect_focus(const focus_signal::slot_type& slot);

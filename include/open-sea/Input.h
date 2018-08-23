@@ -87,6 +87,13 @@ namespace open_sea::input {
     state mouse_state(int button);
     std::string key_name(int key, int scancode);
 
+    namespace cursor_mode {
+        //! Possible cursor modes
+        enum mode { normal, hidden, disabled };
+    }
+    void set_cursor_mode(cursor_mode::mode mode);
+    cursor_mode::mode get_cursor_mode();
+
     const char* get_clipboard();
     void set_clipboard(const char* in);
 

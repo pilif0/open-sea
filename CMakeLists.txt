@@ -51,12 +51,14 @@ set(GLM_DIR "${DEP_DIR}/glm")
 # ImGUI
 set(ImGui_DIR "${DEP_DIR}/imgui")
 set(ImGui "${ImGui_DIR}/imgui.h"
-        "${ImGui_DIR}/stb_rect_pack.h"
-        "${ImGui_DIR}/stb_textedit.h"
-        "${ImGui_DIR}/stb_truetype.h"
+        "${ImGui_DIR}/imstb_rectpack.h"
+        "${ImGui_DIR}/imstb_textedit.h"
+        "${ImGui_DIR}/imstb_truetype.h"
         "${ImGui_DIR}/imgui.cpp"
         "${ImGui_DIR}/imgui_draw.cpp"
-        "${ImGui_DIR}/imgui_demo.cpp")
+        "${ImGui_DIR}/imgui_demo.cpp"
+        "${ImGui_DIR}/imgui_widgets.cpp"
+        "${ImGui_DIR}/imgui_internal.h")
 
 # Doxygen
 if (open_sea_BUILD_DOC)

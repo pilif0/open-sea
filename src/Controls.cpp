@@ -15,9 +15,9 @@
 
 namespace open_sea::controls {
     // Local axes of rotation
-    constexpr glm::vec3 pitch_axis{1.0f, 0.0f, 0.0f};   // Positive x axis
-    constexpr glm::vec3 yaw_axis{0.0f, 1.0f, 0.0f};     // Positive y axis
-    constexpr glm::vec3 roll_axis{0.0f, 0.0f, 1.0f};    // Positive z axis
+    glm::vec3 pitch_axis{1.0f, 0.0f, 0.0f};   // Positive x axis
+    glm::vec3 yaw_axis{0.0f, 1.0f, 0.0f};     // Positive y axis
+    glm::vec3 roll_axis{0.0f, 0.0f, 1.0f};    // Positive z axis
 
     //--- start Controls implementation
     /**

@@ -58,7 +58,7 @@ int main() {
         return -1;
 
     // Create window
-    constexpr glm::ivec2 window_size{1280, 720};
+    glm::ivec2 window_size{1280, 720};
     window::set_title("Sample Game");
     if (!window::make_windowed(window_size.x, window_size.y))
         return -1;

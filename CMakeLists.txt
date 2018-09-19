@@ -22,7 +22,6 @@ set(SRC_DIR "${open_sea_SOURCE_DIR}/src")
 set(INCL_DIR "${open_sea_SOURCE_DIR}/include")
 set(DEP_DIR "${open_sea_SOURCE_DIR}/deps")
 
-message("Boost dir ${open_sea_BOOST}")
 # Boost
 set(BOOST_ROOT ${open_sea_BOOST})
 set(Boost_USE_STATIC_LIBS ON)

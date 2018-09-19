@@ -1,6 +1,6 @@
 # Set location of files to use
-set(DOC_SRC "${INCL_DIR}/open-sea/Log.h"
-        "${SRC_DIR}/Log.cpp")
+list(APPEND DOC_SRC ${open_sea_HEADERS})
+list(APPEND DOC_SRC ${open_sea_SOURCES})
 
 # Set Doxygen options
 set(DOXYGEN_PROJECT_NAME "Open Sea")

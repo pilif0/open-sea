@@ -10,12 +10,17 @@
 #include <string>
 #include <iosfwd>
 
+//! Logging related namespace
 namespace open_sea::log {
     /**
      * \addtogroup Log
-     * Code concerning logging. Internally uses Boost.Log. To start logging, use \c init_logging().
-     * To log a message, use \c log(). If the application crashes on process termination, use \c clean_up() before
-     * returning from \c main().
+     * \brief Loggin module
+     *
+     * Logging module, which internally uses Boost.Log.
+     * To start logging, use \c init_logging().
+     * To log a message, use \c log().
+     * If the application crashes on process termination, use \c clean_up() before returning from \c main().
+     *
      * @{
      */
 

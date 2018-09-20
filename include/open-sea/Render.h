@@ -14,7 +14,17 @@
 #include <memory>
 #include <utility>
 
+//! Renderer systems and related functions
 namespace open_sea::render {
+    /**
+     * \addtogroup Render
+     * \brief Renderer systems and related functions
+     *
+     * Renderer systems using various ECS Components to render Entities.
+     * A renderer is a system that uses components associated with an entity to render it in a certain way.
+     *
+     * @{
+     */
 
     /** \class UntexturedRenderer
      * \brief Renderer using untextured models
@@ -46,6 +56,10 @@ namespace open_sea::render {
 
             void showDebug() override;
     };
+
+    /**
+     * @}
+     */
 }
 
 #endif //OPEN_SEA_RENDER_H

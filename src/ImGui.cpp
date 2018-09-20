@@ -1,7 +1,9 @@
-/*
+/** \file ImGui.cpp
  * ImGui integration
  *
  * Based on the ImGui example at https://github.com/ocornut/imgui/tree/master/examples/opengl3_example
+ *
+ * \author Filip Smola
  */
 
 #include <open-sea/ImGui.h>
@@ -16,6 +18,7 @@
 #include <memory>
 
 namespace open_sea::imgui {
+    //! Module logger
     log::severity_logger lg = log::get_logger("ImGui");
 
     //! Different cursors used by ImGui
@@ -184,6 +187,7 @@ namespace open_sea::imgui {
 
     /**
      * \brief Create OpenGL objects
+     *
      * Create shader and font texture
      */
     void create_device_objects() {
@@ -227,6 +231,7 @@ namespace open_sea::imgui {
 
     /**
      * \brief Prepare for a new frame
+     *
      * Update display size, delta time, input and cursor
      */
     void new_frame() {
@@ -442,6 +447,7 @@ namespace open_sea::imgui {
 
     /**
      * \brief Clean up after ImGui
+     *
      * Destroy cursors and OpenGL objects used by ImGui
      */
     void clean_up() {

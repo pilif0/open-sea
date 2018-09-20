@@ -19,10 +19,16 @@
 #include <unordered_map>
 
 namespace open_sea::ecs {
-    // Notes:
-    //  - Index -1 means that the component for that entity was not found
-    //  - Index can be represented by int, because it will always fit into non-negative int range (as long as at least
-    //      one bit of the entity handles is used for generation)
+    /**
+     * \addtogroup Components
+     * \brief Component managers of the ECS
+     *
+     * Component managers of the ECS.
+     * Index can be \c int, because as long as at least one bit of the entity handles is used for generation it will fit.
+     * Index \c -1 means that the record was not found.
+     *
+     * @{
+     */
 
     //! Default starting size of component managers
     constexpr unsigned DEFAULT_SIZE = 1;
@@ -86,7 +92,8 @@ namespace open_sea::ecs {
     };
 
     /** \class TransformationComponent
-     * \breif Associates an entity with a transformation relative to some parent
+     * \brief Associates an entity with a transformation relative to some parent
+     *
      * Associates an entity with a local transformation relative to some parent.
      * If the entity has no parent (index -1) then it is considered a root and its transformation is relative to identity.
      * Multiple root entities are not considered siblings.
@@ -175,6 +182,7 @@ namespace open_sea::ecs {
 
     /** \class CameraComponent
      * \brief Associates an entity with a camera
+     *
      * Associates an entity with a camera.
      * Each camera should have at most one entity associated with it (otherwise following it might be unpredictable).
      * One entity can have multiple associated cameras.
@@ -226,6 +234,10 @@ namespace open_sea::ecs {
             std::vector<std::shared_ptr<gl::Camera>> queryCameras;
             void showQuery();
     };
+
+    /**
+     * @}
+     */
 }
 
 #endif //OPEN_SEA_COMPONENTS_H

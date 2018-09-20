@@ -13,7 +13,18 @@
 #include <open-sea/Input.h>
 #include <open-sea/Debuggable.h>
 
+//! %Controls that allow for transforming of an entity based on user input
 namespace open_sea::controls {
+    /**
+     * \addtogroup Controls
+     * \brief Entity transformation controls
+     *
+     * Controls that allow for transforming (translating and rotating) of an entity based on user input.
+     * Each control scheme has a single entity as the subject.
+     * More entities can be moved by taking advantage of the parent-child relationship in the transformation component.
+     *
+     * @{
+     */
 
     /** \class Controls
      * \brief Abstract base class for all controls
@@ -29,6 +40,7 @@ namespace open_sea::controls {
 
         public:
             Controls(ecs::Entity s) : subject(s), lastRotate(glm::quat()) {}
+            //! Transform the subject according to input
             virtual void transform() = 0;
             virtual void setSubject(ecs::Entity newSubject);
             virtual ecs::Entity getSubject() const;
@@ -38,9 +50,10 @@ namespace open_sea::controls {
             virtual ~Controls() {}
     };
 
-    /** \class FreeControls
-     * \brief Controls an entity using free controls
-     * Controls an entity using free controls.
+    /** \class Free
+     * \brief %Controls an entity using free controls
+     *
+     * %Controls an entity using free controls.
      * No restrictions on orientation or position control.
      * Unified input control over X, Y, Z position and roll.
      * Mouse control over pitch and yaw.
@@ -94,8 +107,9 @@ namespace open_sea::controls {
     };
 
     /** \class FPS
-     * \brief Controls an entity using FPS controls
-     * Controls an entity using FPS controls.
+     * \brief %Controls an entity using %FPS controls
+     *
+     * %Controls an entity using FPS controls.
      * Position control in XZ plane (from the perspective of the entity) without restriction through unified input.
      * Rotation control of yaw around parent's Y axis and of pitch within [+90,-90] degrees through mouse input.
      * No control over roll and movement along the Y axis.
@@ -145,8 +159,9 @@ namespace open_sea::controls {
     };
 
     /** \class TopDown
-     * \brief Controls an entity using top down controls
-     * Controls an entity using top down controls.
+     * \brief %Controls an entity using top down controls
+     *
+     * %Controls an entity using top down controls.
      * Position control in XY plane (from the perspective of the entity) without restriction through unified input.
      * Rotation control of roll around entity's Z axis through unified input.
      * No control over yaw, pitch and movement along the Z axis.
@@ -190,6 +205,10 @@ namespace open_sea::controls {
 
             void showDebug() override;
     };
+
+    /**
+     * @}
+     */
 
 };
 

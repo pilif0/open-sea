@@ -1,5 +1,7 @@
-/*
+/** \file Components.cpp
  * Component implementations
+ *
+ * \author Filip Smola
  */
 
 #include <open-sea/Components.h>
@@ -20,6 +22,7 @@ namespace open_sea::ecs {
     //--- start ModelComponent implementation
     /**
      * \brief Construct a model component manager
+     *
      * Construct a model component manager and pre-allocate space for the given number of components.
      *
      * \param size Number of components
@@ -31,6 +34,7 @@ namespace open_sea::ecs {
 
     /**
      * \brief Allocate space for components
+     *
      * Allocate space for the given number of components
      *
      * \param size Number of components
@@ -69,6 +73,7 @@ namespace open_sea::ecs {
 
     /**
      * \brief Get index to a model
+     *
      * Get index to a model, adding the model to the manager's storage if necessary.
      *
      * \param model Pointer to model
@@ -108,6 +113,7 @@ namespace open_sea::ecs {
 
     /**
      * \brief Look up indices of the entities
+     *
      * Look up indices of the entities in the data arrays and write them into the destination.
      * Indices are written in the same order as the entities.
      * Index of \c -1 means the entity was not found.
@@ -131,6 +137,7 @@ namespace open_sea::ecs {
 
     /**
      * \brief Get the model at the index
+     *
      * Get the model at the index from the internal storage
      *
      * \param i Index
@@ -142,6 +149,7 @@ namespace open_sea::ecs {
 
     /**
      * \brief Add the component to the entities
+     *
      * Add the component to the entities.
      * The model pointers get converted to indices using \c modelToIndex .
      * The number of entities and models must match.
@@ -163,6 +171,7 @@ namespace open_sea::ecs {
 
     /**
      * \brief Add the component to the entities
+     *
      * Add the component to the entities.
      * The indices are passed naively and are not checked against the actual \c models storage.
      * The number of entities and indices must match.
@@ -206,6 +215,7 @@ namespace open_sea::ecs {
 
     /**
      * \brief Set the models at the indices
+     *
      * Set the models at the indices.
      * If an index is out of range (greater than or equal to \c data.n), nothing is set (points either to destroyed record
      * or out of allocated range for that data array).
@@ -227,6 +237,7 @@ namespace open_sea::ecs {
 
     /**
      * \brief Set the models at the indices
+     *
      * Set the models at the indices.
      * If an index is out of range (greater than or equal to \c data.n), nothing is set (points either to destroyed record
      * or out of allocated range fro that data array).
@@ -255,6 +266,7 @@ namespace open_sea::ecs {
 
     /**
      * \brief Destroy the record at the index
+     *
      * Destroy the record at the index.
      * This can lead to reshuffling of the data arrays (to keep them tightly packed) and therefore invalidation of
      * previously looked up indices.
@@ -283,6 +295,7 @@ namespace open_sea::ecs {
 
     /**
      * \brief Collect garbage
+     *
      * Destroy records for dead entities.
      * This is done by checking random records until a certain number of live entities in a row are found.
      * Therefore with few dead entities not much time is wasted iterating through the array, and with many dead entities
@@ -387,6 +400,7 @@ namespace open_sea::ecs {
     //--- start TransformationComponent implementation
     /**
      * \brief Construct a transformation component manager
+     *
      * Construct a transformation component manager and pre-allocate space for the given number of components.
      *
      * \param size Number of components
@@ -398,6 +412,7 @@ namespace open_sea::ecs {
 
     /**
      * \brief Allocate space for components
+     *
      * Allocate space for the given number of components
      *
      * \param size Number of components
@@ -464,6 +479,7 @@ namespace open_sea::ecs {
 
     /**
      * \brief Look up indices of the entities
+     *
      * Look up indices of the entities in the data arrays and write them into the destination.
      * Indices are written in the same order as the entities.
      * Index of \c -1 means the entity was not found.
@@ -486,6 +502,7 @@ namespace open_sea::ecs {
 
     /**
      * \brief Add the component to the entities
+     *
      * Add the component to the entities.
      * The number of each argument must match.
      * Skips any attempt to add the component to an entity that already has it.
@@ -572,6 +589,7 @@ namespace open_sea::ecs {
 
     /**
      * \brief Set the transformation at the indices
+     *
      * Set the transformation at the indices.
      * If an index is out of range (greater than or equal to \c data.n), nothing is set (points either to destroyed record
      * or out of allocated range for that data array).
@@ -605,6 +623,7 @@ namespace open_sea::ecs {
 
     /**
      * \brief Swap two records
+     *
      * Swap two records and adjust references to them to refer to new positions.
      *
      * \param i Record
@@ -777,6 +796,7 @@ namespace open_sea::ecs {
 
     /**
      * \brief Destroy the record at the index
+     *
      * Destroy the record at the index.
      * This can lead to reshuffling of the data arrays (to keep them tightly packed) and therefore invalidation of
      * previously looked up indices.
@@ -842,6 +862,7 @@ namespace open_sea::ecs {
 
     /**
      * \brief Collect garbage
+     *
      * Destroy records for dead entities.
      * This is done by checking random records until a certain number of live entities in a row are found.
      * Therefore with few dead entities not much time is wasted iterating through the array, and with many dead entities
@@ -877,6 +898,7 @@ namespace open_sea::ecs {
 
     /**
      * \brief Translate entities at indices
+     *
      * Translate entities at given indices.
      * Updates both the position and the matrix.
      *
@@ -903,11 +925,12 @@ namespace open_sea::ecs {
 
     /**
      * \brief Rotate entities at indices
+     *
      * Rotate entities at given indices.
      * Updates both the orientation and the matrix.
      *
      * \param i Indices
-     * \param dela Rotation quaternions
+     * \param delta Rotation quaternions
      * \param count Number of indices
      */
     void TransformationComponent::rotate(int *i, glm::quat *delta, unsigned count) {
@@ -929,6 +952,7 @@ namespace open_sea::ecs {
 
     /**
      * \brief Scale entities at indices
+     *
      * Scale (multiplicatively) entities at given indices.
      * Updates both the scale and the matrix.
      * Scaling is done by component-wise multiplying current scale by the vector.
@@ -956,6 +980,7 @@ namespace open_sea::ecs {
 
     /**
      * \brief Set position of entities at indices
+     *
      * Set position of entities at given indices.
      * Updates both the position and the matrix.
      *
@@ -982,6 +1007,7 @@ namespace open_sea::ecs {
 
     /**
      * \brief Set orientation of entities at indices
+     *
      * Set orientation of entities at given indices.
      * Updates both the orientation and the matrix.
      *
@@ -1008,6 +1034,7 @@ namespace open_sea::ecs {
 
     /**
      * \brief Set scale of entities at indices
+     *
      * Set scale of entities at given indices.
      * Updates both the scale and the matrix.
      *
@@ -1184,6 +1211,7 @@ namespace open_sea::ecs {
     //--- start CameraComponent implementation
     /**
      * \brief Construct a camera component manager
+     *
      * Construct a camera component manager and pre-allocate space for the given number of components.
      *
      * \param size Number of components
@@ -1195,6 +1223,7 @@ namespace open_sea::ecs {
 
     /**
      * \brief Allocate space for components
+     *
      * Allocate space for the given number of components
      *
      * \param size Number of components
@@ -1244,6 +1273,7 @@ namespace open_sea::ecs {
 
     /**
      * \brief Look up first indices of the entities
+     *
      * Look up first indices of the entities in the data arrays and write them into the destination.
      * Indices are written in the same order as the entities.
      * Index of \c -1 means the entity was not found.
@@ -1261,6 +1291,7 @@ namespace open_sea::ecs {
 
     /**
      * \brief Add the component to the entities
+     *
      * Add the component to the entities.
      * The number of entities and cameras must match.
      *
@@ -1292,6 +1323,7 @@ namespace open_sea::ecs {
 
     /**
      * \brief Set the cameras at the indices
+     *
      * Set the cameras at the indices.
      * If an index is out of range (greater than or equal to \c data.n), nothing is set (points either to destroyed record
      * or out of allocated range for that data array).
@@ -1319,6 +1351,7 @@ namespace open_sea::ecs {
 
     /**
      * \brief Destroy the record at the index
+     *
      * Destroy the record at the index.
      * This can lead to reshuffling of the data arrays (to keep them tightly packed) and therefore invalidation of
      * previously looked up indices.
@@ -1348,6 +1381,7 @@ namespace open_sea::ecs {
 
     /**
      * \brief Collect garbage
+     *
      * Destroy records for dead entities.
      * This is done by checking random records until a certain number of live entities in a row are found.
      * Therefore with few dead entities not much time is wasted iterating through the array, and with many dead entities

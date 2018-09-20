@@ -12,7 +12,18 @@
 #include <functional>
 #include <memory>
 
+//! Debug GUI related namespace
 namespace open_sea::debug {
+    /**
+     * \addtogroup Debug
+     * \brief Debug GUI
+     *
+     * Debug GUI using Dear ImGui.
+     * Mostly revolves around handling of the main menu bar and some convenience functions.
+     *
+     * @{
+     */
+
     //! Standard width for debug windows
     // This is to provide some unified appearance and easy arrangement into columns
     constexpr float STANDARD_WIDTH = 350.0f;
@@ -46,6 +57,10 @@ namespace open_sea::debug {
     void show_quat(const glm::quat &q);
 
     void clean_up();
+
+    /**
+     * @}
+     */
 }
 
 #endif //OPEN_SEA_DEBUG_H

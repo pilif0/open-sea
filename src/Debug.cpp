@@ -1,5 +1,7 @@
-/*
+/** \file Debug.cpp
  * Debug gui implementation
+ *
+ * \author Filip Smola
  */
 
 #include <open-sea/Debug.h>
@@ -15,6 +17,7 @@
 #include <sstream>
 
 namespace open_sea::debug {
+    //! Module logger
     log::severity_logger lg = log::get_logger("Debug");
 
     //! List of registered entity managers
@@ -61,7 +64,7 @@ namespace open_sea::debug {
     }
 
     /**
-     * \biref Add a main menu bar item for the component manager
+     * \brief Add a main menu bar item for the component manager
      *
      * \param com Component Manager
      * \param label Label

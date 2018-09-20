@@ -15,10 +15,18 @@ namespace signals = boost::signals2;
 #include <string>
 #include <memory>
 
+//! All window state and related functions
 namespace open_sea::window {
-    // General Assumptions:
-    //  - Only one window at all times
-    //  - The window is not resizable
+    /**
+     * \addtogroup Window
+     * \brief All window state and related functions
+     *
+     * All window properties, state and related functions.
+     * There is only one window at all times.
+     * The window is not resizable.
+     *
+     * @{
+     */
 
     //! Possible window states
     enum window_state {
@@ -29,14 +37,14 @@ namespace open_sea::window {
 
     //! Default property values
     namespace defaults {
-        constexpr int16_t width = 1280;
-        constexpr int16_t height = 720;
-        constexpr int16_t fbWidth = 1280;
-        constexpr int16_t fbHeight = 720;
-        constexpr const char* title = "Game";
-        constexpr ::GLFWmonitor* monitor = nullptr;
-        constexpr window_state state = windowed;
-        constexpr bool vSync = false;
+        constexpr int16_t width = 1280;             //!< Width
+        constexpr int16_t height = 720;             //!< Height
+        constexpr int16_t fbWidth = 1280;           //!< Frame buffer width
+        constexpr int16_t fbHeight = 720;           //!< Frame buffer height
+        constexpr const char* title = "Game";       //!< Title
+        constexpr ::GLFWmonitor* monitor = nullptr; //!< Monitor
+        constexpr window_state state = windowed;    //!< State
+        constexpr bool vSync = false;               //!< vSync
     }
 
     //! Set of window properties
@@ -92,6 +100,10 @@ namespace open_sea::window {
 
     void debug_window(bool *open);
     void show_modify();
+
+    /**
+     * @}
+     */
 }
 
 #endif //OPEN_SEA_WINDOW_H

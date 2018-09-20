@@ -1,5 +1,7 @@
-/*
+/** \file Model.cpp
  * Model implementation
+ *
+ * \author Filip Smola
  */
 
 #include <open-sea/Model.h>
@@ -18,12 +20,14 @@
 #include <algorithm>
 
 namespace open_sea::model {
+    //! Module logger
     log::severity_logger lg = log::get_logger("Model");
 
     // Note: OBJ files have 1-based indexing
 
     /**
      * \brief Read vertex descriptions from an OBJ file
+     *
      * Read vertex positions and UV coordinates from a stream of an OBJ file.
      * Read until the next line would be a face definition.
      * Skip any empty, comment or unsupported lines.
@@ -94,6 +98,7 @@ namespace open_sea::model {
 
     /**
      * \brief Read faces from an OBJ file given previously read positions and UV coordinates
+     *
      * Read face descriptions form an OBJ file and use previously read vertex positions and UV coordinates to construct
      * a list of unique vertices and indices to use.
      * Assumes triangular faces.
@@ -244,6 +249,7 @@ namespace open_sea::model {
     //--- start Model implementation
     /**
      * \brief Construct a model from vertices and indices
+     *
      * Construct a model from vertex descriptions and indices of the vertices in triangular faces.
      *
      * \param vertices Vertex descriptions
@@ -276,6 +282,7 @@ namespace open_sea::model {
 
     /**
      * \brief Read a model from an OBJ file
+     *
      * Read a model from an OBJ file, taking into account vertex positions, UV coordinates and face descriptions.
      *
      * \param path Path to the file
@@ -309,6 +316,7 @@ namespace open_sea::model {
 
     /**
      * \brief Draw the model
+     *
      * Bind the vertex array, draw the model, unbind the vertex array
      */
     void Model::draw() const {
@@ -351,6 +359,7 @@ namespace open_sea::model {
 
     /**
      * \brief Construct an untextured model from vertices and indices
+     *
      * Construct an untextured model from vertex descriptions and indices of the vertices in triangular faces.
      *
      * \param vertices Vertex descriptions
@@ -382,6 +391,7 @@ namespace open_sea::model {
 
     /**
      * \brief Read an untextured model from an OBJ file
+     *
      * Read an untextured model from an OBJ file, taking into account vertex positions and face descriptions.
      *
      * \param path Path to the file

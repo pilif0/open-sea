@@ -13,7 +13,20 @@
 #include <memory>
 #include <ostream>
 
+//! Runtime profiler
 namespace open_sea::profiler {
+    /**
+     * \addtogroup Profiler
+     * \brief Runtime profiler
+     *
+     * Runtime profiler using the \see open_sea::data::Track "Track" data structure.
+     * Has text and graphical display for ImGui.
+     * All functions (except \c start()) can be safely called (with no effect) even when profiling has not been started.
+     * Stores the last completed frame and the maximum overall duration frame.
+     *
+     * @{
+     */
+
     /** \struct Info
      * \brief Information in each element of the frame track
      * Information in each element of the frame track.
@@ -45,6 +58,10 @@ namespace open_sea::profiler {
 
     void show_text();
     void show_graphical();
+
+    /**
+     * @}
+     */
 }
 
 #endif //OPEN_SEA_PROFILER_H

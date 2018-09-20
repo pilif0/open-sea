@@ -8,6 +8,12 @@
 
 namespace open_sea::debug {
     /**
+     * \addtogroup Debug
+     *
+     * @{
+     */
+
+    /**
      * \brief Interface for any object that has a debug window
      */
     class Debuggable {
@@ -15,6 +21,10 @@ namespace open_sea::debug {
             //! Show debug information (called within an ImGui window)
             virtual void showDebug() = 0;
     };
+
+    /**
+     * @}
+     */
 }
 
 #endif //OPEN_SEA_DEBUGGABLE_H

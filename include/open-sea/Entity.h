@@ -14,13 +14,21 @@
 #include <cstdint>
 #include <queue>
 
+//! %Entity Component System namespace
 namespace open_sea::ecs {
-    // Notes:
-    //  - Supports ~4 million concurrent entities
-    //  - Supports 1024 generations before a previously used handle reappears
-    //  - There should never be two entities alive with the same index and generation
-    //  - Of two entities with equal index and distinct generation, the one with greater generation is considered alive
-    //  - Entity ID layout: (10 bits of generation)(22 bits of index)
+    /**
+     * \addtogroup Entity
+     * \brief %Entity representation
+     *
+     * %Entity Component System core, the Entity representation.
+     * A handle is an unsigned 32 bit integer split into index (22 bits) and generation (10 bits).
+     * Supports up to 2^22 concurrent entities.
+     * Each index can be reused 2^10 times until the handle repeats.
+     * An entity is considered alive iff its generation is equal to the generation at its index in the manager.
+     * Handle layout is first generation and then index.
+     *
+     * @{
+     */
 
     //! Handle type alias
     typedef uint32_t handle;
@@ -34,8 +42,9 @@ namespace open_sea::ecs {
     //! Mask for extracting entity generation from handle (after shifting away the index)
     constexpr handle ENTITY_GENERATION_MASK = (1 << ENTITY_GENERATION_BITS) - 1;  // 10 1s, padded to left with 0s
 
+    //! Entity represented by its handle
     struct Entity {
-        //! ID of this entity
+        //! Handle of this entity
         handle id;
 
         Entity() {}
@@ -54,6 +63,13 @@ namespace open_sea::ecs {
         std::string str() const;
     };
 
+    /** \class EntityManager
+     * \brief Manages which entities are considered alive
+     *
+     * Manages which entities are alive by keeping a record of the generation at each index.
+     * Only reuses indices (incrementing the generation) when there is a certain number available, thus spreading the
+     *  index use more evenly and making full handle reuse less likely.
+     */
     class EntityManager : public debug::Debuggable {
         private:
             //! Record of currently living (or the next one to live if none alive) generation in an index
@@ -82,6 +98,10 @@ namespace open_sea::ecs {
 
             void showDebug() override;
     };
+
+    /**
+     * @}
+     */
 }
 
 // Hash function for entities

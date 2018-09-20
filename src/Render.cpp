@@ -1,5 +1,7 @@
-/*
+/** \file Render.cpp
  * Renderer implementations
+ *
+ * \author Filip Smola
  */
 
 #include <open-sea/Render.h>
@@ -14,6 +16,7 @@ namespace open_sea::render {
     //--- start UntexturedRenderer implementation
     /**
      * \brief Construct a renderer
+     *
      * Construct a renderer assigning it pointers to relevant component managers and initialising the shader.
      *
      * \param m Model component manager
@@ -34,6 +37,7 @@ namespace open_sea::render {
 
     /**
      * \brief Render entities through camera
+     *
      * Render a set of entities through a camera.
      *
      * \param camera Camera

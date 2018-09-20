@@ -19,12 +19,22 @@
 #include <string>
 #include <memory>
 
+//! OpenGL specific code
 namespace open_sea::gl {
+    /**
+     * \addtogroup Shaders
+     * \brief OpenGL shader program
+     *
+     * OpenGL shader program representation and relevant functions.
+     *
+     * @{
+     */
 
     /** \class ShaderProgram
      * \brief OpenGL shader program representation
+     *
      * OpenGL shader program representation that ties together different shaders.
-     * The supported shaders are: vertex, geometry, fragment, tessellation
+     * The supported shaders are: vertex, geometry, fragment, tessellation.
      * If the context version is less than 4.0, attempts to attach tessellation shaders are ignored.
      */
     class ShaderProgram : public debug::Debuggable {
@@ -119,8 +129,22 @@ namespace open_sea::gl {
             bool operator!=(const ShaderProgram &rhs) const;
     };
 
+    /**
+     * @}
+     */
+
+    /**
+     * \addtogroup Cameras
+     * \brief OpenGL cameras
+     *
+     * Various cameras useable for OpenGL projection.
+     *
+     * @{
+     */
+
     /** \class Camera
      * \brief General camera representation
+     *
      * General camera representation.
      * All cameras are objects that produce a projection-view matrix based on some properties (transformation, size, ...).
      */
@@ -168,6 +192,7 @@ namespace open_sea::gl {
 
     /** \class OrthographicCamera
      * \brief Orthographic camera representation
+     *
      * Orthographic camera that produces an orthographic projection-view matrix based on position, orientation and view size.
      * Camera position is the position of the centre of the view.
      */
@@ -179,6 +204,7 @@ namespace open_sea::gl {
 
     /** \class PerspectiveCamera
      * \brief Perspective camera representation
+     *
      * Perspecitve camera that produces a perspective projection-view matrix based on position, orientation, view size and
      * field of view.
      */
@@ -198,6 +224,10 @@ namespace open_sea::gl {
     void log_errors();
 
     void debug_window(bool *open);
+
+    /**
+     * @}
+     */
 }
 
 #endif //OPEN_SEA_GL_H

@@ -1,5 +1,7 @@
-/*
+/** \file Input.cpp
  * Input implementation
+ *
+ * \author Filip Smola
  */
 #include <open-sea/Input.h>
 #include <open-sea/Log.h>
@@ -10,7 +12,7 @@ namespace w = open_sea::window;
 #include <sstream>
 
 namespace open_sea::input {
-    // Logger for this module
+    //! Module logger
     log::severity_logger lg = log::get_logger("Input");
 
     // Signals
@@ -223,6 +225,7 @@ namespace open_sea::input {
 
     /**
      * \brief Initialize input
+     *
      * Instantiate the various signals and attach them to the current global window.
      */
     void init() {
@@ -244,6 +247,7 @@ namespace open_sea::input {
 
     /**
      * \brief Get cursor position
+     *
      * Get position of the cursor in screen coordinates relative to origin of the window (top left).
      *
      * \return Cursor position
@@ -271,6 +275,7 @@ namespace open_sea::input {
 
     /**
      * \brief Update cursor delta
+     *
      * Compute new cursor delta based on current and last cursor position
      */
     void update_cursor_delta() {
@@ -281,6 +286,7 @@ namespace open_sea::input {
 
     /**
      * \brief Get key state
+     *
      * Get state of a key. Only returns \c press or \c release (due to GLFW).
      *
      * \param key GLFW key name
@@ -292,6 +298,7 @@ namespace open_sea::input {
 
     /**
      * \brief Get mouse button state
+     *
      * Get the state of a mouse button. Only returns \c press or \c release (due to GLFW).
      *
      * \param button GLFW mouse button name
@@ -303,8 +310,9 @@ namespace open_sea::input {
 
     /**
      * \brief Get key name
+     *
      * Get the name of the supplied key.
-     * If \c key is \c unknown_key then \scancode is used, otherwise it is ignored.
+     * If \c key is \c unknown_key then \c scancode is used, otherwise it is ignored.
      * Returns "undefined" when no name is found.
      *
      * Note: unsupported by GLFW on Wayland, returns "undefined" for all keys

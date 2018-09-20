@@ -1,5 +1,7 @@
-/*
+/** \file Log.cpp
  * Logging implementation
+ *
+ * \author Filip Smola
  */
 #include <open-sea/Log.h>
 #include <open-sea/config.h>

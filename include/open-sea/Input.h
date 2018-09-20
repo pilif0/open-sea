@@ -17,6 +17,13 @@ namespace signals = boost::signals2;
 #include <set>
 
 namespace open_sea::input {
+    /**
+     * \addtogroup Input
+     * \brief All input related code
+     *
+     * @{
+     */
+
     //! GLFW name for the unknown key
     constexpr int unknown_key = GLFW_KEY_UNKNOWN;
 
@@ -98,6 +105,10 @@ namespace open_sea::input {
     void set_clipboard(const char* in);
 
     void debug_window(bool *open);
+
+    /**
+     * @}
+     */
 }
 
 #endif //OPEN_SEA_INPUT_H

@@ -1,5 +1,7 @@
-/**
+/** \file Delta.cpp
  * Delta time implementation
+ *
+ * \author Filip Smola
  */
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -11,6 +13,7 @@
 #include <boost/circular_buffer.hpp>
 
 namespace open_sea::time {
+    //! Module logger
     log::severity_logger lg = log::get_logger("Time");
 
     //! Current delta time in seconds
@@ -27,11 +30,14 @@ namespace open_sea::time {
     double average_FPS;
 
     // Debug data
+    //! Length of debug history
     constexpr int history_length = 1000;
+    //! History buffer
     boost::circular_buffer<float> history(history_length);
 
     /**
      * \brief Start delta time tracking
+     *
      * Reset all the counters.
      * Has to be called after GLFW initialization and should be immediately before the main loop starts.
      */
@@ -49,6 +55,7 @@ namespace open_sea::time {
 
     /**
      * \brief Update the delta time tracking
+     *
      * Update all the counters and compute values as required.
      * Should be done at the end of each frame.
      */
@@ -82,6 +89,7 @@ namespace open_sea::time {
 
     /**
      * \brief Get value of delta time
+     *
      * Get value of delta time as a fraction of a second.
      *
      * \return Delta time
@@ -92,6 +100,7 @@ namespace open_sea::time {
 
     /**
      * \brief Get the immediate FPS
+     *
      * Get the immediate FPS, i.e. the multiplicative inverse of delta time.
      *
      * \return Immediate FPS
@@ -102,6 +111,7 @@ namespace open_sea::time {
 
     /**
      * \brief Get the average FPS
+     *
      * Get the average FPS, recalculated at most every second.
      *
      * \return Average FPS
@@ -112,6 +122,7 @@ namespace open_sea::time {
 
     /**
      * \brief Get the delta time for \c i far in history
+     *
      * Get the element of \c history at index \c i. Used by plotting in the debug widget.
      *
      * \param data User data

@@ -1,5 +1,7 @@
-/*
- * System implementations
+/** \file Systems.cpp
+ * General system implementations
+ *
+ * \author Filip Smola
  */
 
 #include <open-sea/Systems.h>

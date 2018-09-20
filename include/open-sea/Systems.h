@@ -11,6 +11,15 @@
 #include <open-sea/Debuggable.h>
 
 namespace open_sea::ecs {
+    /**
+     * \addtogroup Systems
+     * \brief General systems of the ECS
+     *
+     * General systems of the ECS.
+     * These are systems that do not fit into any other module.
+     *
+     * @{
+     */
 
     /** \class CameraFollow
      * \brief System that makes GL cameras follow entities they have assigned
@@ -32,6 +41,10 @@ namespace open_sea::ecs {
 
             void showDebug() override;
     };
+
+    /**
+     * @}
+     */
 }
 
 #endif //OPEN_SEA_SYSTEMS_H

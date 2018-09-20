@@ -1,5 +1,7 @@
-/*
- * GL implementation
+/** \file GL.cpp
+ * OpenGL related implementation
+ *
+ * \author Filip Smola
  */
 
 #include <open-sea/GL.h>
@@ -19,7 +21,9 @@
 
 namespace open_sea::gl {
     // Loggers
+    //! Module logger
     log::severity_logger lg = log::get_logger("OpenGL");
+    //! Shader specific logger
     log::severity_logger shaderLG = log::get_logger("OpenGL Shaders");
 
 //--- start ShaderProgram implementation
@@ -36,6 +40,7 @@ namespace open_sea::gl {
 
     /**
      * \brief Construct an empty shader program
+     *
      * Create a shader program with no shaders attached.
      */
     ShaderProgram::ShaderProgram() {
@@ -63,6 +68,7 @@ namespace open_sea::gl {
 
     /**
      * \brief Attach a vertex shader from a file
+     *
      * Read, compile and attach a vertex shader from the source file at the specified path.
      *
      * \param path Path to the source file
@@ -74,6 +80,7 @@ namespace open_sea::gl {
 
     /**
      * \brief Attach a geometry shader from a file
+     *
      * Read, compile and attach a geometry shader from the source file at the specified path.
      *
      * \param path Path to the source file
@@ -85,6 +92,7 @@ namespace open_sea::gl {
 
     /**
      * \brief Attach a fragment shader from a file
+     *
      * Read, compile and attach a fragment shader from the source file at the specified path.
      *
      * \param path Path to the source file
@@ -96,6 +104,7 @@ namespace open_sea::gl {
 
     /**
      * \brief Attach a tessellation control shader from a file
+     *
      * Read, compile and attach a tessellation control shader from the source file at the specified path.
      *
      * \param path Path to the source file
@@ -107,6 +116,7 @@ namespace open_sea::gl {
 
     /**
      * \brief Attach a tessellation evaluation shader from a file
+     *
      * Read, compile and attach a tessellation evaluation shader from the source file at the specified path.
      *
      * \param path Path to the source file
@@ -118,6 +128,7 @@ namespace open_sea::gl {
 
     /**
      * \brief Attach a vertex shader
+     *
      * Compile and attach a vertex shader from the provided source.
      *
      * \param src Shader source
@@ -168,6 +179,7 @@ namespace open_sea::gl {
 
     /**
      * \brief Attach a geometry shader
+     *
      * Compile and attach a geometry shader from the provided source.
      *
      * \param src Shader source
@@ -218,6 +230,7 @@ namespace open_sea::gl {
 
     /**
      * \brief Attach a fragment shader
+     *
      * Compile and attach a fragment shader from the provided source.
      *
      * \param src Shader source
@@ -268,6 +281,7 @@ namespace open_sea::gl {
 
     /**
      * \brief Attach a tessellation control shader
+     *
      * Compile and attach a tessellation control shader from the provided source.
      * Attachment is skipped if context version is less than 4.0 (still returns \c true, just doesn't apply the shader).
      *
@@ -326,6 +340,7 @@ namespace open_sea::gl {
 
     /**
      * \brief Attach a tessellation evaluation shader
+     *
      * Compile and attach a tessellation evaluation shader from the provided source.
      * Attachment is skipped if context version is less than 4.0 (still returns \c true, just doesn't apply the shader).
      *
@@ -636,6 +651,7 @@ namespace open_sea::gl {
 
     /**
      * \brief Whether the programs are equal
+     *
      * Shader programs are equal if they have the same program ID.
      *
      * \param rhs Right hand side
@@ -902,7 +918,16 @@ namespace open_sea::gl {
 //--- end ShaderProgram implementation
 
 //--- start Camera implementation
-
+    /**
+     * \brief Construct a camera from all relevant data
+     *
+     * Construct the camera from all data needed to calculate the matrices
+     *
+     * \param transformation Position and orientation
+     * \param size Size of the viewport
+     * \param near Near clipping plane
+     * \param far Far clipping plane
+     */
     Camera::Camera(const glm::mat4 &transformation, const glm::vec2 &size, float near, float far) : near(near), far(far) {
         this->setTransformation(transformation);
         this->size = glm::vec2(size);
@@ -978,10 +1003,10 @@ namespace open_sea::gl {
 
     /**
      * \brief Construct the camera from all relevant data
+     *
      * Construct the orthographic camera from all data needed to calculate the matrices.
      * 
-     * \param position Position of the camera
-     * \param orientation Orientation of the camera
+     * \param transformation Position and orientation
      * \param size Size of the viewport
      * \param near Near clipping plane
      * \param far Far clipping plane
@@ -1018,10 +1043,10 @@ namespace open_sea::gl {
 //--- start PerspectiveCamera implementation
     /**
      * \brief Construct a camera from all relevant data
+     *
      * Construct the perspective camera from all data needed to calculate the matrices
      *
-     * \param position Position of the camera
-     * \param orientation Orientation of the camera
+     * \param transformation Position and orientation
      * \param size Size of the viewport
      * \param near Near clipping plane
      * \param far Far clipping plane

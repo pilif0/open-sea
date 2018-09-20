@@ -12,9 +12,16 @@
 #include <memory>
 
 namespace open_sea::data {
+    /**
+     * \addtogroup Data
+     * \brief Generalised data structures
+     *
+     * @{
+     */
 
     /** \class Track
      * \brief Tree-stack hybrid
+     *
      * Hybrid data structure that can be built up as a stack, but retains "memory" of past state.
      * Can be used to reconstruct the stack's evolution.
      * The tree has an implied root that represents an empty stack, therefore what is stored is actually a forest of
@@ -78,7 +85,12 @@ namespace open_sea::data {
     };
 
     /**
+     * @}
+     */
+
+    /**
      * \brief Construct an empty track
+     *
      * Construct a track representing an empty stack.
      *
      * \tparam T Value type
@@ -95,6 +107,7 @@ namespace open_sea::data {
 
     /**
      * \brief Push element onto the stack
+     *
      * Push an element onto the stack.
      * This creates a new node in the tree as a next child of the current node and fills it with the provided content.
      *
@@ -122,6 +135,7 @@ namespace open_sea::data {
 
     /**
      * \brief Pop element from the stack
+     *
      * Pop element from the top of the stack.
      * This moves the current and next child pointers one level up in the tree.
      * Does nothing when the stack is empty.
@@ -142,6 +156,7 @@ namespace open_sea::data {
 
     /**
      * \brief Clear track
+     *
      * Clear the tree and stack.
      * This returns the track into a state same as right after construction.
      *
@@ -158,6 +173,7 @@ namespace open_sea::data {
 
     /**
      * \brief Get track contents as an indented string
+     *
      * Get track contents with each node on a separate line and indented (with TABs) by depth.
      * The children of the implied root start with no indentation.
      *

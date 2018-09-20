@@ -1,5 +1,7 @@
-/*
+/** \file Profiler.cpp
  * Profiler implementation
+ *
+ * \author Filip Smola
  */
 #include <open-sea/Profiler.h>
 
@@ -15,7 +17,9 @@ namespace open_sea::profiler {
     //--- start Info implementation
     /**
      * \brief Construct information from a label
+     *
      * Construct code block information from a label and assign the execution start time.
+     *
      * \param label
      */
     Info::Info(const std::string &label)
@@ -44,6 +48,7 @@ namespace open_sea::profiler {
 
     /**
      * \brief Start profiling
+     *
      * Start profiling by constructing a new frame track.
      */
     void start() {
@@ -54,6 +59,7 @@ namespace open_sea::profiler {
 
     /**
      * \brief Finish profiling
+     *
      * Finish profiling by computing root node and copying from the frame tree buffer.
      */
     void finish() {

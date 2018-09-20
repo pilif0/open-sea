@@ -1,5 +1,7 @@
-/*
+/** \file Controls.cpp
  * Control component and system implementations
+ *
+ * \author Filip Smola
  */
 
 #include <open-sea/Controls.h>
@@ -14,10 +16,12 @@
 #include <glm/gtx/vector_angle.hpp>
 
 namespace open_sea::controls {
-    // Local axes of rotation
-    glm::vec3 pitch_axis{1.0f, 0.0f, 0.0f};   // Positive x axis
-    glm::vec3 yaw_axis{0.0f, 1.0f, 0.0f};     // Positive y axis
-    glm::vec3 roll_axis{0.0f, 0.0f, 1.0f};    // Positive z axis
+    //! Local pitch axis - positive x axis
+    glm::vec3 pitch_axis{1.0f, 0.0f, 0.0f};
+    //! Local yaw axis - ositive y axis
+    glm::vec3 yaw_axis{0.0f, 1.0f, 0.0f};
+    //! Local roll axis - ositive z axis
+    glm::vec3 roll_axis{0.0f, 0.0f, 1.0f};
 
     //--- start Controls implementation
     /**
@@ -50,9 +54,7 @@ namespace open_sea::controls {
     }
     //--- end Controls implementation
     //--- start Free implementation
-    /**
-     * \brief Transform the subject according to input
-     */
+
     void Free::transform() {
         // Update position
         {
@@ -169,9 +171,7 @@ namespace open_sea::controls {
     }
     //--- end Free implementation
     //--- start FPS implementation
-    /**
-     * \brief Transform the subject according to input
-     */
+
     void FPS::transform() {
         // Update position
         {

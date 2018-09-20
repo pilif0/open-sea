@@ -1,5 +1,7 @@
-/*
+/** \file Entity.cpp
  * Entity implementation
+ *
+ * \author Filip Smola
  */
 
 #include <open-sea/Entity.h>
@@ -26,7 +28,7 @@ namespace open_sea::ecs {
      * \brief Create a new entity
      *
      * \return Created entity
-     * \throw \c std::runtime_error when there is no available index for new entity
+     * \throw std::runtime_error when there is no available index for new entity
      */
     Entity EntityManager::create() {
         unsigned index;
@@ -79,6 +81,7 @@ namespace open_sea::ecs {
 
     /**
      * \brief Get whether the entity is alive
+     *
      * Get whether the entity is alive.
      * An entity is considered alive iff its generation matches the generation at its index.
      *

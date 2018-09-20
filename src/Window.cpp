@@ -1,5 +1,7 @@
-/*
+/** \file Window.cpp
  * Window implementation
+ *
+ * \author Filip Smola
  */
 #include <open-sea/Window.h>
 #include <open-sea/config.h>
@@ -11,7 +13,7 @@
 #include <sstream>
 
 namespace open_sea::window {
-    // Logger for this module
+    //! Module logger
     log::severity_logger lg = log::get_logger("Window");
 
     //! Size signal
@@ -42,6 +44,7 @@ namespace open_sea::window {
 
     /**
      * \brief Initialize GLFW
+     *
      * Initialize GLFW and signals, and log the actions
      *
      * \return \c false on failure, \c true otherwise
@@ -73,6 +76,7 @@ namespace open_sea::window {
 
     /**
      * \brief Prepare the title in the current window properties for printing
+     *
      * Append engine information to the title in the current window propeties.
      *
      * \return Processed title
@@ -86,6 +90,7 @@ namespace open_sea::window {
 
     /**
      * \brief Set the window title
+     *
      * Set the window title and log the action
      *
      * \param title New value
@@ -104,6 +109,7 @@ namespace open_sea::window {
 
     /**
      * \brief Set size of the windowed window
+     *
      * Set size of the window if in windowed or fullscreen state.
      * Do nothing if the window is in borderless state (the size there is governed by the monitor), the window doesn't
      * exist, or for non-positive parameters.
@@ -143,6 +149,7 @@ namespace open_sea::window {
 
     /**
      * \brief Enable vSync
+     *
      * Enable vertical synchronisation (swap interval of 1).
      * Once enabled, cannot be disabled.
      */
@@ -160,6 +167,7 @@ namespace open_sea::window {
 
     /**
      * \brief Center the window
+     *
      * Center the window on the primary monitor.
      * Do nothing for non-windowed windows.
      */
@@ -191,7 +199,7 @@ namespace open_sea::window {
     }
 
     /**
-     * \breif Hide the window
+     * \brief Hide the window
      */
     void hide() {
         ::glfwHideWindow(window);
@@ -199,6 +207,7 @@ namespace open_sea::window {
 
     /**
      * \brief Close the window
+     *
      * Instruct the window to close. Means \c should_close() will return \c true.
      */
     void close() {
@@ -207,6 +216,7 @@ namespace open_sea::window {
 
     /**
      * \brief Get properties of the current window
+     *
      * Get a copy of properties of the current window
      *
      * \return Current properties
@@ -229,6 +239,7 @@ namespace open_sea::window {
 
     /**
      * \brief Update the window
+     *
      * Swap buffers and poll for events
      */
     void update() {
@@ -250,6 +261,7 @@ namespace open_sea::window {
 
     /**
      * \brief Clean up the window
+     *
      * Destroy the window and reset the pointer to \c nullptr
      */
     void clean_up() {
@@ -319,6 +331,7 @@ namespace open_sea::window {
 
     /**
      * \brief Attach callbacks to the window
+     *
      * Attach callbacks that fire appropriate signals to the window
      */
     void attach_callbacks() {
@@ -408,6 +421,7 @@ namespace open_sea::window {
 
     /**
      * \brief Make the window windowed of the given size
+     *
      * If the window exists, transform it into the right size and make it windowed.
      * If it doesn't exist, create one with the given size and other properties from the current window properties.
      *
@@ -479,6 +493,7 @@ namespace open_sea::window {
 
     /**
      * \brief Make the window borderless on the given monitor
+     *
      * If the window exists, make it borderless on the given monitor.
      * If it doesn't exist, create one on the given monitor and other properties from the current window properties.
      *
@@ -558,6 +573,7 @@ namespace open_sea::window {
 
     /**
      * \brief Make the window fullscreen of the given size on the given monitor
+     *
      * If the window exists, make it fullscreen of the given size on the given monitor.
      * If it doesn't exist, create one of the fiven size on the given monitor and other properties from the current
      * window properties.
@@ -630,12 +646,19 @@ namespace open_sea::window {
     }
 
     // Temporary storage for modify dialog
+    //! Title buffer
     char modify_title[64];  //TODO: is 64 enough?
+    //! Size buffer
     glm::ivec2 modify_size;
+    //! Window state buffer
     window_state modify_state;
+    //! Monitor pointer buffer
     GLFWmonitor* modify_monitor;
+    //! Window state selector buffer
     int modify_state_no;
+    //! Window state selector labels
     constexpr const char *modify_state_values[3] {"windowed", "borderless", "fullscreen"};
+    //! Monitor ID buffer
     int modify_monitor_no;
 
     /**

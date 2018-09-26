@@ -71,9 +71,6 @@ configure_file(
         "${INCL_DIR}/open-sea/config.h"
 )
 
-# Include own public interface
-include_directories(${INCL_DIR})        # This feels wrong but means not having to navigate to the directory when including
-
 # Add subdirectories
 add_subdirectory(src)
 add_subdirectory(data)

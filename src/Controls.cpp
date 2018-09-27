@@ -60,18 +60,24 @@ namespace open_sea::controls {
         {
             // Gather input
             glm::vec3 local{};
-            if (input::is_held(config.left))
+            if (input::is_held(config.left)) {
                 local.x += -1;
-            if (input::is_held(config.right))
+            }
+            if (input::is_held(config.right)) {
                 local.x += 1;
-            if (input::is_held(config.forward))
+            }
+            if (input::is_held(config.forward)) {
                 local.z += -1;
-            if (input::is_held(config.backward))
+            }
+            if (input::is_held(config.backward)) {
                 local.z += 1;
-            if (input::is_held(config.up))
+            }
+            if (input::is_held(config.up)) {
                 local.y += 1;
-            if (input::is_held(config.down))
+            }
+            if (input::is_held(config.down)) {
                 local.y += -1;
+            }
 
             // Only translate if needed
             float l = glm::length(local);
@@ -79,8 +85,9 @@ namespace open_sea::controls {
                 int index = transform_mgr->lookup(subject);
 
                 // Normalise
-                if (l != 0.0f && l != 1.0f)
+                if (l != 0.0f && l != 1.0f) {
                     local /= l;
+                }
 
                 // Transform and apply
                 glm::vec3 global_translate = glm::rotate(transform_mgr->data.orientation[index], local);
@@ -98,8 +105,9 @@ namespace open_sea::controls {
         // Update rotation
         {
             // Ensure cursor is disabled
-            if (input::get_cursor_mode() != input::cursor_mode::disabled)
+            if (input::get_cursor_mode() != input::cursor_mode::disabled) {
                 input::set_cursor_mode(input::cursor_mode::disabled);
+            }
 
             // Look up subject transformation
             int index = transform_mgr->lookup(subject);
@@ -115,10 +123,12 @@ namespace open_sea::controls {
 
             // Positive roll is counter clockwise
             float roll = 0.0f;
-            if (input::is_held(config.clockwise))
+            if (input::is_held(config.clockwise)) {
                 roll += config.roll_rate;
-            if (input::is_held(config.counter_clockwise))
+            }
+            if (input::is_held(config.counter_clockwise)) {
                 roll -= config.roll_rate;
+            }
             roll *= time::get_delta();
 
             // Compute transformation quaternion and transform
@@ -177,14 +187,18 @@ namespace open_sea::controls {
         {
             // Gather input
             glm::vec3 local{};
-            if (input::is_held(config.left))
+            if (input::is_held(config.left)) {
                 local.x += -1;
-            if (input::is_held(config.right))
+            }
+            if (input::is_held(config.right)) {
                 local.x += 1;
-            if (input::is_held(config.forward))
+            }
+            if (input::is_held(config.forward)) {
                 local.z += -1;
-            if (input::is_held(config.backward))
+            }
+            if (input::is_held(config.backward)) {
                 local.z += 1;
+            }
 
             // Only translate if actually needed
             if (glm::length(local) != 0) {
@@ -200,8 +214,9 @@ namespace open_sea::controls {
                 float l = glm::length(global_translate);
                 if (l != 0) {
                     // Normalise
-                    if (l != 1.0f)
+                    if (l != 1.0f) {
                         global_translate /= l;
+                    }
 
                     // Scale by speed and delta time
                     global_translate.x *= config.speed_x;
@@ -220,8 +235,9 @@ namespace open_sea::controls {
         // Update rotation
         {
             // Ensure cursor is disabled
-            if (input::get_cursor_mode() != input::cursor_mode::disabled)
+            if (input::get_cursor_mode() != input::cursor_mode::disabled) {
                 input::set_cursor_mode(input::cursor_mode::disabled);
+            }
 
             // Look up subject transformation
             int index = transform_mgr->lookup(subject);
@@ -239,10 +255,11 @@ namespace open_sea::controls {
             // Compute transformation quaternion and transform
             if (pitch != 0 || yaw != 0) {
                 // Clamp pitch
-                if (new_pitch > 90)
+                if (new_pitch > 90) {
                     pitch -= new_pitch - 90;
-                else if (new_pitch < -90)
+                } else if (new_pitch < -90) {
                     pitch -= new_pitch - (-90);
+                }
 
                 // Transform axes of rotation
                 glm::quat original = transform_mgr->data.orientation[index];
@@ -291,11 +308,13 @@ namespace open_sea::controls {
 
         // Pitch is the angle from the projection to forward
         float l = glm::length(forward);
-        if (l != 0.0f && l != 1.0f)
+        if (l != 0.0f && l != 1.0f) {
             forward /= l;
+        }
         l = glm::length(forward_xz);
-        if (l != 0.0f && l != 1.0f)
+        if (l != 0.0f && l != 1.0f) {
             forward_xz /= l;
+        }
         pitch = glm::orientedAngle(forward_xz, forward, glm::vec3{1.0f, 0.0f, 0.0f});
     }
 
@@ -329,14 +348,18 @@ namespace open_sea::controls {
         {
             // Gather input
             glm::vec3 local{};
-            if (input::is_held(config.left))
+            if (input::is_held(config.left)) {
                 local.x += -1;
-            if (input::is_held(config.right))
+            }
+            if (input::is_held(config.right)) {
                 local.x += 1;
-            if (input::is_held(config.up))
+            }
+            if (input::is_held(config.up)) {
                 local.y += 1;
-            if (input::is_held(config.down))
+            }
+            if (input::is_held(config.down)) {
                 local.y += -1;
+            }
 
             // Translate only if needed
             if (glm::length(local) != 0) {
@@ -352,8 +375,9 @@ namespace open_sea::controls {
                 float l = glm::length(global_translate);
                 if (l != 0) {
                     // Normalise
-                    if (l != 1.0f)
+                    if (l != 1.0f) {
                         global_translate /= l;
+                    }
 
                     // Scale by speed and delta time
                     global_translate.x *= config.speed_x;
@@ -379,10 +403,12 @@ namespace open_sea::controls {
 
             // Positive roll is counter clockwise
             float roll = 0.0f;
-            if (input::is_held(config.clockwise))
+            if (input::is_held(config.clockwise)) {
                 roll += config.roll_rate;
-            if (input::is_held(config.counter_clockwise))
+            }
+            if (input::is_held(config.counter_clockwise)) {
                 roll -= config.roll_rate;
+            }
             roll *= time::get_delta();
 
             // Compute transformation quaternion and transform

@@ -47,8 +47,9 @@ namespace open_sea::ecs {
         for (int j = 0; j < count; j++, c_loc++) {
             std::shared_ptr<gl::Camera> *c_com = camera_mgr->data.camera;
             for (int i = 0; i < camera_mgr->data.n; i++, c_com++) {
-                if (*c_loc == *c_com)
+                if (*c_loc == *c_com) {
                     entities.push_back(camera_mgr->data.entity[i]);
+                }
             }
         }
 

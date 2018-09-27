@@ -117,12 +117,14 @@ namespace open_sea::data {
     template<class T>
     void Track<T>::push(T content) {
         // Add as first child if the current node is valid and has no valid first child
-        if (current != Node::invalid && (*store)[current].first_child == Node::invalid)
+        if (current != Node::invalid && (*store)[current].first_child == Node::invalid) {
             (*store)[current].first_child = tree_size;
+        }
 
         // Add as next child if the last child is valid
-        if (last_child != Node::invalid)
+        if (last_child != Node::invalid) {
             (*store)[last_child].next = tree_size;
+        }
 
         // Increment stack size and add the actual node
         store->emplace_back(current, ++stack_size, content);
@@ -145,8 +147,9 @@ namespace open_sea::data {
     template<class T>
     void Track<T>::pop() {
         // Skip if current is invalid
-        if (current == Node::invalid)
+        if (current == Node::invalid) {
             return;
+        }
 
         // Point next child to current, current to parent, and decrement stack size
         last_child = current;
@@ -183,14 +186,16 @@ namespace open_sea::data {
     template<class T>
     std::string Track<T>::to_indented_string() {
         // Skip if empty
-        if (tree_size == 0)
+        if (tree_size == 0) {
             return "";
+        }
 
         std::ostringstream stream;  // Result stream
 
         // Write each node in sequence with proper indentation
-        for (Node current : (*store))
+        for (Node current : (*store)) {
             stream << std::string(current.depth - 1, '\t') << current.content << '\n';
+        }
 
         // Return the result
         return stream.str();

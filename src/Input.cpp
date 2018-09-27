@@ -45,8 +45,9 @@ namespace open_sea::input {
      */
     void key_callback(::GLFWwindow* window, int key, int scancode, int action, int mods) {
         // Skip if not the global window
-        if (window != w::window)
+        if (window != w::window) {
             return;
+        }
 
         // Transform values
         state state = (action == GLFW_PRESS) ? press : (action == GLFW_REPEAT) ? repeat : release;
@@ -70,8 +71,12 @@ namespace open_sea::input {
             // Let ImGui take all input when it wants it
             open_sea::imgui::key_callback(key, scancode, state, mods);
 
-            if (key == GLFW_KEY_ESCAPE && state == press) imgui_waits_esc = true;
-            if (key == GLFW_KEY_ENTER && state == press) imgui_waits_ent = true;
+            if (key == GLFW_KEY_ESCAPE && state == press) {
+                imgui_waits_esc = true;
+            }
+            if (key == GLFW_KEY_ENTER && state == press) {
+                imgui_waits_ent = true;
+            }
         } else {
             if (imgui_waits_esc && key == GLFW_KEY_ESCAPE && state == release) {
                 open_sea::imgui::key_callback(key, scancode, state, mods);
@@ -93,8 +98,9 @@ namespace open_sea::input {
      */
     void cursor_enter_callback(::GLFWwindow* window, int entered) {
         // Skip if not the global window
-        if (window != w::window)
+        if (window != w::window) {
             return;
+        }
 
         // Fire the signal
         (*enter)(entered == GLFW_TRUE);
@@ -110,8 +116,9 @@ namespace open_sea::input {
      */
     void mouse_button_callback(::GLFWwindow* window, int button, int action, int mods) {
         // Skip if not the global window
-        if (window != w::window)
+        if (window != w::window) {
             return;
+        }
 
         // Transform values
         state state = (action == GLFW_PRESS) ? press : (action == GLFW_REPEAT) ? repeat : release;
@@ -129,10 +136,11 @@ namespace open_sea::input {
         }
 
         // Fire a signal
-        if (ImGui::GetIO().WantCaptureMouse)
+        if (ImGui::GetIO().WantCaptureMouse) {
             open_sea::imgui::mouse_callback(button, state, mods);
-        else
+        } else {
             (*mouse)(button, state, mods);
+        }
     }
 
     /**
@@ -144,14 +152,16 @@ namespace open_sea::input {
      */
     void scroll_callback(::GLFWwindow* window, double xoffset, double yoffset) {
         // Skip if not the global window
-        if (window != w::window)
+        if (window != w::window) {
             return;
+        }
 
         // Fire a signal
-        if (ImGui::GetIO().WantCaptureMouse)
+        if (ImGui::GetIO().WantCaptureMouse) {
             open_sea::imgui::scroll_callback(xoffset, yoffset);
-        else
+        } else {
             (*scroll)(xoffset, yoffset);
+        }
     }
 
     /**
@@ -162,14 +172,16 @@ namespace open_sea::input {
      */
     void character_callback(::GLFWwindow* window, unsigned int codepoint) {
         // Skip if not the global window
-        if (window != w::window)
+        if (window != w::window) {
             return;
+        }
 
         // Fire a signal
-        if (ImGui::GetIO().WantCaptureKeyboard)
+        if (ImGui::GetIO().WantCaptureKeyboard) {
             open_sea::imgui::char_callback(codepoint);
-        else
+        } else {
             (*character)(codepoint);
+        }
     }
 
     /**
@@ -323,8 +335,9 @@ namespace open_sea::input {
      */
     std::string key_name(int key, int scancode) {
         const char* cs = ::glfwGetKeyName(key, scancode);
-        if (cs == nullptr)
+        if (cs == nullptr) {
             return std::string("undefined");
+        }
 
         return std::string(cs);
     }

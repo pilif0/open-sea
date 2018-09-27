@@ -64,8 +64,9 @@ namespace open_sea::ecs {
         }
 
         // Deallocate old data
-        if (data.allocated > 0)
+        if (data.allocated > 0) {
             allocator.deallocate(static_cast<unsigned char *>(data.buffer), data.allocated * record_size);
+        }
 
         // Set the data
         data = new_data;
@@ -456,8 +457,9 @@ namespace open_sea::ecs {
         }
 
         // Deallocate old data
-        if (data.allocated > 0)
+        if (data.allocated > 0) {
             allocator.deallocate(static_cast<unsigned char *>(data.buffer), data.allocated * record_size);
+        }
 
         // Set the data
         data = new_data;
@@ -528,12 +530,13 @@ namespace open_sea::ecs {
         if (parent != -1) {
             prev_sib = data.first_child[parent];
             while (prev_sib != -1) {
-                if (data.next_sibling[prev_sib] != -1)
+                if (data.next_sibling[prev_sib] != -1) {
                     // Next sibling present, move to it
                     prev_sib = data.next_sibling[prev_sib];
-                else
+                } else {
                     // Found last sibling, break out
                     break;
+                }
             }
         }
 
@@ -572,10 +575,11 @@ namespace open_sea::ecs {
             *dest_m = transformation(*position, *orientation, *scale);
             *dest_parent = parent;
             *dest_first_ch = -1;
-            if (i == count - 1 || parent == -1)
+            if (i == count - 1 || parent == -1) {
                 *dest_next_sib = -1;
-            else
+            } else {
                 *dest_next_sib = data.n + 1;
+            }
             *dest_prev_sib = (parent == -1) ? -1 : prev_sib;
 
             // Current is previous sibling for next iteration
@@ -658,23 +662,26 @@ namespace open_sea::ecs {
         int parent = data.parent[j];
         int ignore_parent = -1;  // Used to fix problem when i an j have a common parent and j is the first child
         if (prev_sib != -1) {
-            if (prev_sib == i)
+            if (prev_sib == i) {
                 buffer_nex = i;
-            else
+            } else {
                 data.next_sibling[prev_sib] = i;
+            }
         }
         if (next_sib != -1) {
-            if (next_sib == i)
+            if (next_sib == i) {
                 buffer_pre = i;
-            else
+            } else {
                 data.prev_sibling[next_sib] = i;
+            }
         }
         if (parent != -1 && data.first_child[parent] == j) {
             if (parent == i) {
                 buffer_fir = i;
             } else {
-                if (buffer_par == parent)
+                if (buffer_par == parent) {
                     ignore_parent = parent;
+                }
                 data.first_child[parent] = i;
             }
         }
@@ -694,12 +701,15 @@ namespace open_sea::ecs {
         prev_sib = buffer_pre;
         next_sib = buffer_nex;
         parent = buffer_par;
-        if (prev_sib != -1)
+        if (prev_sib != -1) {
             data.next_sibling[prev_sib] = j;
-        if (next_sib != -1)
+        }
+        if (next_sib != -1) {
             data.prev_sibling[next_sib] = j;
-        if (parent != -1 && data.first_child[parent] == i && parent != ignore_parent)
+        }
+        if (parent != -1 && data.first_child[parent] == i && parent != ignore_parent) {
             data.first_child[parent] = j;
+        }
 
         // Update entity-index mappings
         map[data.entity[i]] = i;
@@ -741,8 +751,11 @@ namespace open_sea::ecs {
         } else {
             // Find last child
             int last_child = data.first_child[parent];
-            if (last_child != -1)
-                while (data.next_sibling[last_child] != -1) last_child = data.next_sibling[last_child];
+            if (last_child != -1) {
+                while (data.next_sibling[last_child] != -1) {
+                    last_child = data.next_sibling[last_child];
+                }
+            }
 
             // Append self
             data.next_sibling[last_child] = i;
@@ -778,10 +791,11 @@ namespace open_sea::ecs {
     void TransformationComponent::update_matrix(int i) {
         // Retreive parent matrix
         glm::mat4 parent;
-        if (data.parent[i] == -1)
+        if (data.parent[i] == -1) {
             parent = glm::mat4(1.0f);
-        else
+        } else {
             parent = data.matrix[data.parent[i]];
+        }
 
         // Update own matrix
         data.matrix[i] = parent * transformation(data.position[i], data.orientation[i], data.scale[i]);
@@ -823,12 +837,15 @@ namespace open_sea::ecs {
         int next_sib = data.next_sibling[i];
         int prev_sib = data.prev_sibling[i];
         int parent = data.parent[i];
-        if (parent != -1 && data.first_child[parent] == i)
+        if (parent != -1 && data.first_child[parent] == i) {
             data.first_child[parent] = next_sib;
-        if (next_sib != -1)
+        }
+        if (next_sib != -1) {
             data.prev_sibling[next_sib] = prev_sib;
-        if (prev_sib != -1)
+        }
+        if (prev_sib != -1) {
             data.next_sibling[prev_sib] = next_sib;
+        }
 
         // Remove entity-index mapping and update data count
         map.erase(data.entity[i]);
@@ -849,12 +866,15 @@ namespace open_sea::ecs {
         data.first_child[i] = data.first_child[last_idx];
         data.next_sibling[i] = next_sib_last;
         data.prev_sibling[i] = prev_sib_last;
-        if (parent_last != -1 && data.first_child[parent_last] == last_idx)
+        if (parent_last != -1 && data.first_child[parent_last] == last_idx) {
             data.first_child[parent_last] = i;
-        if (prev_sib_last != -1)
+        }
+        if (prev_sib_last != -1) {
             data.next_sibling[prev_sib_last] = i;
-        if (next_sib_last != -1)
+        }
+        if (next_sib_last != -1) {
             data.prev_sibling[next_sib_last] = i;
+        }
 
         // Update entity-index mapping
         map[last] = i;
@@ -1251,8 +1271,9 @@ namespace open_sea::ecs {
         }
 
         // Deallocate old data
-        if (data.allocated > 0)
+        if (data.allocated > 0) {
             allocator.deallocate(static_cast<unsigned char *>(data.buffer), data.allocated * record_size);
+        }
 
         // Set the data
         data = new_data;
@@ -1266,8 +1287,11 @@ namespace open_sea::ecs {
      */
     int CameraComponent::lookup(Entity e) const {
         Entity *d = data.entity;
-        for (int i = 0; i < data.n; i++, d++)
-            if (e == *d) return i;
+        for (int i = 0; i < data.n; i++, d++) {
+            if (e == *d) {
+                return i;
+            }
+        }
         return -1;
     }
 
@@ -1452,7 +1476,9 @@ namespace open_sea::ecs {
                 ecs::Entity q(static_cast<unsigned>(query_idx_gen[0]), static_cast<unsigned>(query_idx_gen[1]));
                 ecs::Entity *e = data.entity;
                 for (unsigned i = 0; i < data.n; i++, e++) {
-                    if (*e == q) query_cameras.emplace_back(data.camera[i]);
+                    if (*e == q) {
+                        query_cameras.emplace_back(data.camera[i]);
+                    }
                 }
             }
         }
@@ -1463,9 +1489,10 @@ namespace open_sea::ecs {
             ImGui::Text("Camera count: %i", query_cameras.size());
             for (unsigned i = 0; i < query_cameras.size(); i++) {
                 std::ostringstream label;
-                label << "Camera #" << i+1;
-                if (ImGui::CollapsingHeader(label.str().c_str()))
+                label << "Camera #" << (i + 1);
+                if (ImGui::CollapsingHeader(label.str().c_str())) {
                     query_cameras[i]->show_debug();
+                }
             }
         }
     }

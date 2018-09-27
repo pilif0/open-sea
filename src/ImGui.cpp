@@ -45,10 +45,12 @@ namespace open_sea::imgui {
         ImGuiIO& io = ImGui::GetIO();
 
         // Set key state
-        if (action == input::press)
+        if (action == input::press) {
             io.KeysDown[key] = true;
-        if (action == input::release)
+        }
+        if (action == input::release) {
             io.KeysDown[key] = false;
+        }
 
         // Update modifier flags
         io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
@@ -93,8 +95,9 @@ namespace open_sea::imgui {
      * \param codepoint Unicode codepoint of the character
      */
     void char_callback(unsigned int codepoint) {
-        if (codepoint > 0 && codepoint < 0x10000)
+        if (codepoint > 0 && codepoint < 0x10000) {
             ImGui::GetIO().AddInputCharacter((unsigned short) codepoint);
+        }
     }
 
     /**
@@ -236,8 +239,9 @@ namespace open_sea::imgui {
      */
     void new_frame() {
         profiler::push("Device objects");
-        if (!font_texture)
+        if (!font_texture) {
             create_device_objects();
+        }
         profiler::pop();
 
         profiler::push("Set up");
@@ -334,8 +338,9 @@ namespace open_sea::imgui {
         ImGuiIO& io = ImGui::GetIO();
         int fb_width = (int)(io.DisplaySize.x * io.DisplayFramebufferScale.x);
         int fb_height = (int)(io.DisplaySize.y * io.DisplayFramebufferScale.y);
-        if (fb_width == 0 || fb_height == 0)
+        if (fb_width == 0 || fb_height == 0) {
             return;
+        }
         draw_data->ScaleClipRects(io.DisplayFramebufferScale);
 
         // Backup GL state
@@ -435,10 +440,26 @@ namespace open_sea::imgui {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, last_element_array_buffer);
         glBlendEquationSeparate(last_blend_equation_rgb, last_blend_equation_alpha);
         glBlendFuncSeparate(last_blend_src_rgb, last_blend_dst_rgb, last_blend_src_alpha, last_blend_dst_alpha);
-        if (last_enable_blend) glEnable(GL_BLEND); else glDisable(GL_BLEND);
-        if (last_enable_cull_face) glEnable(GL_CULL_FACE); else glDisable(GL_CULL_FACE);
-        if (last_enable_depth_test) glEnable(GL_DEPTH_TEST); else glDisable(GL_DEPTH_TEST);
-        if (last_enable_scissor_test) glEnable(GL_SCISSOR_TEST); else glDisable(GL_SCISSOR_TEST);
+        if (last_enable_blend) {
+            glEnable(GL_BLEND);
+        } else {
+            glDisable(GL_BLEND);
+        }
+        if (last_enable_cull_face) {
+            glEnable(GL_CULL_FACE);
+        } else {
+            glDisable(GL_CULL_FACE);
+        }
+        if (last_enable_depth_test) {
+            glEnable(GL_DEPTH_TEST);
+        } else {
+            glDisable(GL_DEPTH_TEST);
+        }
+        if (last_enable_scissor_test) {
+            glEnable(GL_SCISSOR_TEST);
+        } else {
+            glDisable(GL_SCISSOR_TEST);
+        }
         glPolygonMode(GL_FRONT_AND_BACK, (GLenum)last_polygon_mode[0]);
         glViewport(last_viewport[0], last_viewport[1], (GLsizei)last_viewport[2], (GLsizei)last_viewport[3]);
         glScissor(last_scissor_box[0], last_scissor_box[1], (GLsizei)last_scissor_box[2], (GLsizei)last_scissor_box[3]);
@@ -454,13 +475,18 @@ namespace open_sea::imgui {
         log::log(lg, log::info, "Cleaning up...");
 
         // Destroy GLFW mouse cursors
-        for (ImGuiMouseCursor cursor_n = 0; cursor_n < ImGuiMouseCursor_Count_; cursor_n++)
+        for (ImGuiMouseCursor cursor_n = 0; cursor_n < ImGuiMouseCursor_Count_; cursor_n++) {
             ::glfwDestroyCursor(cursors[cursor_n]);
+        }
         memset(cursors, 0, sizeof(cursors));
 
         // Destroy OpenGL objects
-        if (vbo) glDeleteBuffers(1, &vbo);
-        if (elements) glDeleteBuffers(1, &elements);
+        if (vbo) {
+            glDeleteBuffers(1, &vbo);
+        }
+        if (elements) {
+            glDeleteBuffers(1, &elements);
+        }
         vbo = elements = 0;
 
         shader_program.reset();

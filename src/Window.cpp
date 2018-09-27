@@ -100,8 +100,9 @@ namespace open_sea::window {
         current->title = title;
 
         // Modify the window
-        if (window)
+        if (window) {
             ::glfwSetWindowTitle(window, process_title().c_str());
+        }
 
         // Log the action
         log::log(lg, log::info, (std::string("Title set to: ")).append(title));
@@ -119,20 +120,24 @@ namespace open_sea::window {
      */
     void set_size(int width, int height) {
         // Skip if either parameter is non-positive
-        if (width < 1 || height < 1)
+        if (width < 1 || height < 1) {
             return;
+        }
 
         // Skip if the window doesn't exist (size is always set on creation)
-        if (!window)
+        if (!window) {
             return;
+        }
 
         // Skip when not windowed
-        if (current->state == borderless)
+        if (current->state == borderless) {
             return;
+        }
 
         // Skip when no adjustment necessary
-        if (current->width == width && current->height == height)
+        if (current->width == width && current->height == height) {
             return;
+        }
 
         // Modify the window
         ::glfwSetWindowSize(window, width, height);
@@ -155,8 +160,9 @@ namespace open_sea::window {
      */
     void enable_v_sync() {
         // Skip if already enabled
-        if (current->v_sync)
+        if (current->v_sync) {
             return;
+        }
 
         // Enable vSync
         ::glfwSwapInterval(1);
@@ -173,8 +179,9 @@ namespace open_sea::window {
      */
     void center() {
         // Skip if not windowed
-        if (current->state != windowed)
+        if (current->state != windowed) {
             return;
+        }
 
         // Retrieve primary monitor position and size
         int m_pos_x, m_pos_y;
@@ -286,8 +293,9 @@ namespace open_sea::window {
      */
     void size_callback(::GLFWwindow* w, int width, int height) {
         // Skip if not the global window
-        if (w != window)
+        if (w != window) {
             return;
+        }
 
         // Update properties
         ::glfwGetWindowSize(window, &current->width, &current->height);
@@ -305,8 +313,9 @@ namespace open_sea::window {
      */
     void focus_callback(::GLFWwindow* w, int focused) {
         // Skip if not the global window
-        if (w != window)
+        if (w != window) {
             return;
+        }
 
         // Update the flag
         focus_flag = (focused != 0);
@@ -322,8 +331,9 @@ namespace open_sea::window {
      */
     void close_callback(::GLFWwindow* w) {
         // Skip if not the global window
-        if (w != window)
+        if (w != window) {
             return;
+        }
 
         // Fire the signal
         (*close_signal)();
@@ -411,10 +421,11 @@ namespace open_sea::window {
         log::log(lg, log::info, "OpenGL context initialized");
 
         // Initialize with vSync set as in current properties
-        if (current->v_sync)
+        if (current->v_sync) {
             ::glfwSwapInterval(1);
-        else
+        } else {
             ::glfwSwapInterval(0);
+        }
 
         return true;
     }

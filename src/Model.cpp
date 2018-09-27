@@ -48,10 +48,12 @@ namespace open_sea::model {
         }
 
         // Clear the destination vectors
-        if (positions)
+        if (positions) {
             positions->clear();
-        if (UVs)
+        }
+        if (UVs) {
             UVs->clear();
+        }
 
         // Read the vertex descriptions until the first face
         while (!stream.eof()) {
@@ -59,12 +61,14 @@ namespace open_sea::model {
             int peek = stream.peek();
 
             // Stop when next would be a face definition
-            if (peek == 'f')
+            if (peek == 'f') {
                 break;
+            }
 
             // Skip empty or comment lines
-            if (peek == '\n' || peek == '#')
+            if (peek == '\n' || peek == '#') {
                 stream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            }
 
             // Decide based on first two characters
             int start[2]{stream.get(), stream.get()};

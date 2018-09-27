@@ -64,7 +64,9 @@ namespace open_sea::profiler {
      */
     void finish() {
         // Skip if not started
-        if (!in_progress) return;
+        if (!in_progress) {
+            return;
+        }
 
         // Pop root
         pop();
@@ -86,7 +88,9 @@ namespace open_sea::profiler {
      */
     void push(const std::string &label) {
         // Skip if not started
-        if (!in_progress) return;
+        if (!in_progress) {
+            return;
+        }
 
         // Push onto the track
         in_progress->push(Info(label));
@@ -97,7 +101,9 @@ namespace open_sea::profiler {
      */
     void pop() {
         // Skip if not started
-        if (!in_progress) return;
+        if (!in_progress) {
+            return;
+        }
 
         // Compute the duration and pop the track element
         in_progress->top().time = glfwGetTime() - in_progress->top().time;

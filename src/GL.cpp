@@ -158,8 +158,9 @@ namespace open_sea::gl {
             std::vector<GLchar> info(max_length);
             glGetShaderInfoLog(vertex_shader, max_length, nullptr, &info[0]);
 
-            if (info.empty())
+            if (info.empty()) {
                 info = unknown_info;
+            }
 
             log::log(shader_lg, log::error, std::string("Shader compilation failed: ").append(&info[0]));
 
@@ -209,8 +210,9 @@ namespace open_sea::gl {
             std::vector<GLchar> info(max_length);
             glGetShaderInfoLog(geometry_shader, max_length, nullptr, &info[0]);
 
-            if (info.empty())
+            if (info.empty()) {
                 info = unknown_info;
+            }
 
             log::log(shader_lg, log::error, std::string("Shader compilation failed: ").append(&info[0]));
 
@@ -260,8 +262,9 @@ namespace open_sea::gl {
             std::vector<GLchar> info(max_length);
             glGetShaderInfoLog(fragment_shader, max_length, nullptr, &info[0]);
 
-            if (info.empty())
+            if (info.empty()) {
                 info = unknown_info;
+            }
 
             log::log(shader_lg, log::error, std::string("Shader compilation failed: ").append(&info[0]));
 
@@ -319,8 +322,9 @@ namespace open_sea::gl {
             std::vector<GLchar> info(max_length);
             glGetShaderInfoLog(tess_con_shader, max_length, nullptr, &info[0]);
 
-            if (info.empty())
+            if (info.empty()) {
                 info = unknown_info;
+            }
 
             log::log(shader_lg, log::error, std::string("Shader compilation failed: ").append(&info[0]));
 
@@ -378,8 +382,9 @@ namespace open_sea::gl {
             std::vector<GLchar> info(max_length);
             glGetShaderInfoLog(tess_eval_shader, max_length, nullptr, &info[0]);
 
-            if (info.empty())
+            if (info.empty()) {
                 info = unknown_info;
+            }
 
             log::log(shader_lg, log::error, std::string("Shader compilation failed: ").append(&info[0]));
 
@@ -539,8 +544,9 @@ namespace open_sea::gl {
      */
     bool ShaderProgram::link() {
         // Skip if already linked
-        if (linked)
+        if (linked) {
             return true;
+        }
 
         glLinkProgram(program_id);
         GLint status;
@@ -552,8 +558,9 @@ namespace open_sea::gl {
             std::vector<GLchar> info(max_length);
             glGetProgramInfoLog(program_id, max_length, nullptr, &info[0]);
 
-            if (info.empty())
+            if (info.empty()) {
                 info = unknown_info;
+            }
 
             log::log(shader_lg, log::error, std::string("Program linking failed: ").append(&info[0]));
             return false;
@@ -588,8 +595,9 @@ namespace open_sea::gl {
             std::vector<GLchar> info(max_length);
             glGetProgramInfoLog(program_id, max_length, nullptr, &info[0]);
 
-            if (info.empty())
+            if (info.empty()) {
                 info = unknown_info;
+            }
 
             log::log(shader_lg, log::error, std::string("Program validation failed: ").append(&info[0]));
             return false;
@@ -700,12 +708,14 @@ namespace open_sea::gl {
             }
 
             // Link
-            if (modify_attached)
+            if (modify_attached) {
                 modify_linked = link();
+            }
 
             // Validate
-            if (modify_linked)
+            if (modify_linked) {
                 modify_validated = validate();
+            }
         }
 
         // Reset button
@@ -721,14 +731,15 @@ namespace open_sea::gl {
         }
 
         // Save error and success messages
-        if (!modify_attached)
+        if (!modify_attached) {
             ImGui::TextColored(ImVec4(1, 0, 0, 1), "Shader source attachment error");
-        else if(!modify_linked)
+        } else if(!modify_linked) {
             ImGui::TextColored(ImVec4(1, 0, 0, 1), "Shader program link error");
-        else if(!modify_validated)
+        } else if(!modify_validated) {
             ImGui::TextColored(ImVec4(1, 0, 0, 1), "Shader program validation error");
-        else
+        } else {
             ImGui::TextColored(ImVec4(0, 1, 0, 1), "Saved");
+        }
     }
 
     /**

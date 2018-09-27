@@ -12,3 +12,6 @@ cmake-build-debug
 
 # Generated files
 include/open-sea/config.h
+
+# clang-tidy log
+clang-tidy.log

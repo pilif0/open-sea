@@ -3,6 +3,9 @@ project(open_sea)
 
 set(CMAKE_CXX_STANDARD 17)
 
+# Export compile commands for use with LLVM tools
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Set project version
 set(open_sea_VERSION_MAJOR "0")
 set(open_sea_VERSION_MINOR "1")

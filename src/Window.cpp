@@ -84,7 +84,7 @@ namespace open_sea::window {
     std::string process_title() {
         std::ostringstream processed_title;
         processed_title << current->title                                    // Write the title
-                       << " (Open Sea v" << OPEN_SEA_VERSION_FULL << ")";   // Append engine information
+                       << " (Open Sea v" << open_sea::version_full << ")";   // Append engine information
         return processed_title.str();
     }
 

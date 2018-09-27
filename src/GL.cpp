@@ -942,12 +942,6 @@ namespace open_sea::gl {
     Camera::Camera(const glm::mat4 &transformation, const glm::vec2 &size, float near, float far) : near(near), far(far) {
         this->set_transformation(transformation);
         this->size = glm::vec2(size);
-
-        proj_matrix = glm::mat4();
-        proj_view_matrix = glm::mat4();
-
-        recalculate_proj = true;
-        recalculate_pv = true;
     }
 
     /**

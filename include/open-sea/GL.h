@@ -160,14 +160,14 @@ namespace open_sea::gl {
             //! Far clipping plane
             float far;
             //! Projection matrix (changes when camera size or clipping planes change)
-            glm::mat4 proj_matrix;
+            glm::mat4 proj_matrix = glm::mat4();
             //! \c true when projection matrix needs to be recalculated before use
-            bool recalculate_proj;
+            bool recalculate_proj = true;
 
             //! Projection-view matrix (changes when either component matrix changes)
-            glm::mat4 proj_view_matrix;
+            glm::mat4 proj_view_matrix = glm::mat4();
             //! \c true when projection-view matrix needs to be recalculated
-            bool recalculate_pv;
+            bool recalculate_pv = true;
 
             Camera(const glm::mat4& transformation, const glm::vec2& size, float near, float far);
         public:

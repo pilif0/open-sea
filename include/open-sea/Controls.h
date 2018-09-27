@@ -120,7 +120,7 @@ namespace open_sea::controls {
     class FPS : public Controls {
         private:
             //! Current subject's pitch (in degrees)
-            float pitch;
+            float pitch = 0.0f;
             void update_pitch();
 
         public:
@@ -150,7 +150,7 @@ namespace open_sea::controls {
 
             //! Constuct the controls assigning it a pointer to the relevant transformation component manager, subject and config
             FPS(std::shared_ptr<ecs::TransformationComponent> t, ecs::Entity s, Config c)
-                    : transform_mgr(std::move(t)), config(c), pitch(0.0f), Controls(s) { update_pitch(); }
+                    : transform_mgr(std::move(t)), config(c), Controls(s) { update_pitch(); }
 
             void transform() override;
             void set_subject(ecs::Entity newSubject) override;

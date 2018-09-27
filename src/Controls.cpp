@@ -27,10 +27,10 @@ namespace open_sea::controls {
     /**
      * \brief Set a new subject for this control
      *
-     * \param newSubject New subject
+     * \param new_subject New subject
      */
-    void Controls::setSubject(ecs::Entity newSubject) {
-        subject = newSubject;
+    void Controls::set_subject(ecs::Entity new_subject) {
+        subject = new_subject;
     }
 
     /**
@@ -38,19 +38,19 @@ namespace open_sea::controls {
      *
      * \return Current subject
      */
-    ecs::Entity Controls::getSubject() const {
+    ecs::Entity Controls::get_subject() const {
         return subject;
     }
 
     /**
      * \brief Show ImGui debug information for this control
      */
-    void Controls::showDebug() {
+    void Controls::show_debug() {
         ImGui::Text("Subject: %s", subject.str().c_str());
-        ImGui::Text("Last translate: %.3f, %.3f, %.3f", lastTranslate.x, lastTranslate.y, lastTranslate.z);
+        ImGui::Text("Last translate: %.3f, %.3f, %.3f", last_translate.x, last_translate.y, last_translate.z);
         ImGui::TextUnformatted("Last rotate:");
         ImGui::SameLine();
-        debug::show_quat(lastRotate);
+        debug::show_quat(last_rotate);
     }
     //--- end Controls implementation
     //--- start Free implementation
@@ -76,22 +76,22 @@ namespace open_sea::controls {
             // Only translate if needed
             float l = glm::length(local);
             if (l != 0) {
-                int index = transformMgr->lookup(subject);
+                int index = transform_mgr->lookup(subject);
 
                 // Normalise
                 if (l != 0.0f && l != 1.0f)
                     local /= l;
 
                 // Transform and apply
-                glm::vec3 global_translate = glm::rotate(transformMgr->data.orientation[index], local);
+                glm::vec3 global_translate = glm::rotate(transform_mgr->data.orientation[index], local);
                 global_translate.x *= config.speed_x;
                 global_translate.y *= config.speed_y;
                 global_translate.z *= config.speed_z;
                 global_translate *= time::get_delta();
-                transformMgr->translate(&index, &global_translate, 1);
-                lastTranslate = global_translate;
+                transform_mgr->translate(&index, &global_translate, 1);
+                last_translate = global_translate;
             } else {
-                lastTranslate = {};
+                last_translate = {};
             }
         }
 
@@ -102,7 +102,7 @@ namespace open_sea::controls {
                 input::set_cursor_mode(input::cursor_mode::disabled);
 
             // Look up subject transformation
-            int index = transformMgr->lookup(subject);
+            int index = transform_mgr->lookup(subject);
 
             // Retrieve delta
             glm::vec2 cursor_delta = input::cursor_delta();
@@ -124,22 +124,22 @@ namespace open_sea::controls {
             // Compute transformation quaternion and transform
             if (pitch != 0 || yaw != 0 || roll != 0) {
                 // Transform axes of rotation
-                glm::quat original = transformMgr->data.orientation[index];
+                glm::quat original = transform_mgr->data.orientation[index];
                 glm::vec3 tr_pitch_ax = glm::rotate(original,  pitch_axis);
                 glm::vec3 tr_yaw_ax = glm::rotate(original, yaw_axis);
                 glm::vec3 tr_roll_ax = glm::rotate(original, roll_axis);
 
                 // Compute transformation
-                glm::quat pitchQ = glm::angleAxis(glm::radians(pitch), tr_pitch_ax);
-                glm::quat yawQ = glm::angleAxis(glm::radians(yaw), tr_yaw_ax);
-                glm::quat rollQ = glm::angleAxis(glm::radians(roll), tr_roll_ax);
-                glm::quat rotation = rollQ * yawQ * pitchQ;
+                glm::quat pitch_q = glm::angleAxis(glm::radians(pitch), tr_pitch_ax);
+                glm::quat yaw_q = glm::angleAxis(glm::radians(yaw), tr_yaw_ax);
+                glm::quat roll_q = glm::angleAxis(glm::radians(roll), tr_roll_ax);
+                glm::quat rotation = roll_q * yaw_q * pitch_q;
 
                 // Apply
-                transformMgr->rotate(&index, &rotation, 1);
-                lastRotate = rotation;
+                transform_mgr->rotate(&index, &rotation, 1);
+                last_rotate = rotation;
             } else {
-                lastRotate = glm::quat();
+                last_rotate = glm::quat();
             }
         }
     }
@@ -147,8 +147,8 @@ namespace open_sea::controls {
     /**
      * \brief Show ImGui debug information for this control
      */
-    void Free::showDebug() {
-        Controls::showDebug();
+    void Free::show_debug() {
+        Controls::show_debug();
 
         if (ImGui::CollapsingHeader("Bindings")) {
             ImGui::Text("Forward: %s", config.forward.str().c_str());
@@ -188,10 +188,10 @@ namespace open_sea::controls {
 
             // Only translate if actually needed
             if (glm::length(local) != 0) {
-                int index = transformMgr->lookup(subject);
+                int index = transform_mgr->lookup(subject);
 
                 // Transform
-                glm::vec3 global_translate = glm::rotate(transformMgr->data.orientation[index], local);
+                glm::vec3 global_translate = glm::rotate(transform_mgr->data.orientation[index], local);
 
                 // Lock to XZ plane
                 global_translate.y = 0;
@@ -209,11 +209,11 @@ namespace open_sea::controls {
                     global_translate *= time::get_delta();
 
                     // Apply
-                    transformMgr->translate(&index, &global_translate, 1);
-                    lastTranslate = global_translate;
+                    transform_mgr->translate(&index, &global_translate, 1);
+                    last_translate = global_translate;
                 }
             } else {
-                lastTranslate = {};
+                last_translate = {};
             }
         }
 
@@ -224,14 +224,14 @@ namespace open_sea::controls {
                 input::set_cursor_mode(input::cursor_mode::disabled);
 
             // Look up subject transformation
-            int index = transformMgr->lookup(subject);
+            int index = transform_mgr->lookup(subject);
 
             // Retrieve delta
             glm::vec2 cursor_delta = input::cursor_delta();
 
             // Positive pitch is up
             float pitch = cursor_delta.y * (- config.turn_rate);
-            float newPitch = pitch + this->pitch;
+            float new_pitch = pitch + this->pitch;
 
             // Positive yaw is left
             float yaw = cursor_delta.x * (/*-*/ config.turn_rate);
@@ -239,29 +239,29 @@ namespace open_sea::controls {
             // Compute transformation quaternion and transform
             if (pitch != 0 || yaw != 0) {
                 // Clamp pitch
-                if (newPitch > 90)
-                    pitch -= newPitch - 90;
-                else if (newPitch < -90)
-                    pitch -= newPitch - (-90);
+                if (new_pitch > 90)
+                    pitch -= new_pitch - 90;
+                else if (new_pitch < -90)
+                    pitch -= new_pitch - (-90);
 
                 // Transform axes of rotation
-                glm::quat original = transformMgr->data.orientation[index];
+                glm::quat original = transform_mgr->data.orientation[index];
                 glm::vec3 tr_pitch_ax = glm::rotate(original,  pitch_axis);
 
                 // Compute transformation
-                glm::quat pitchQ = glm::angleAxis(glm::radians(pitch), tr_pitch_ax);
-                glm::quat yawQ = glm::angleAxis(glm::radians(yaw), yaw_axis);
-                glm::quat rotation = yawQ * pitchQ;
+                glm::quat pitch_q = glm::angleAxis(glm::radians(pitch), tr_pitch_ax);
+                glm::quat yaw_q = glm::angleAxis(glm::radians(yaw), yaw_axis);
+                glm::quat rotation = yaw_q * pitch_q;
 
                 // Apply
-                transformMgr->rotate(&index, &rotation, 1);
+                transform_mgr->rotate(&index, &rotation, 1);
 
                 // Update stored pitch
                 this->pitch += pitch;
 
-                lastRotate = rotation;
+                last_rotate = rotation;
             } else {
-                lastRotate = glm::quat();
+                last_rotate = glm::quat();
             }
         }
     }
@@ -271,39 +271,39 @@ namespace open_sea::controls {
      *
      * \param newSubject New subject
      */
-    void FPS::setSubject(ecs::Entity newSubject) {
-        Controls::setSubject(newSubject);
-        updatePitch();
+    void FPS::set_subject(ecs::Entity newSubject) {
+        Controls::set_subject(newSubject);
+        update_pitch();
     }
 
     /**
      * \brief Update pitch tracker with value from subject transformation
      */
-    void FPS::updatePitch() {
+    void FPS::update_pitch() {
         // Get the subject's forward vector
-        int index = transformMgr->lookup(subject);
-        glm::quat orientation = transformMgr->data.orientation[index];
+        int index = transform_mgr->lookup(subject);
+        glm::quat orientation = transform_mgr->data.orientation[index];
         glm::vec3 forward = glm::rotate(orientation, glm::vec3{0.0f, 0.0f, -1.0f});
 
         // Project forward onto XZ plane
-        glm::vec3 forwardXZ = forward;
-        forwardXZ.y = 0;
+        glm::vec3 forward_xz = forward;
+        forward_xz.y = 0;
 
         // Pitch is the angle from the projection to forward
         float l = glm::length(forward);
         if (l != 0.0f && l != 1.0f)
             forward /= l;
-        l = glm::length(forwardXZ);
+        l = glm::length(forward_xz);
         if (l != 0.0f && l != 1.0f)
-            forwardXZ /= l;
-        pitch = glm::orientedAngle(forwardXZ, forward, glm::vec3{1.0f, 0.0f, 0.0f});
+            forward_xz /= l;
+        pitch = glm::orientedAngle(forward_xz, forward, glm::vec3{1.0f, 0.0f, 0.0f});
     }
 
     /**
      * \brief Show ImGui debug information for this control
      */
-    void FPS::showDebug() {
-        Controls::showDebug();
+    void FPS::show_debug() {
+        Controls::show_debug();
         ImGui::Text("Pitch: %.3f degrees", pitch);
 
         if (ImGui::CollapsingHeader("Bindings")) {
@@ -340,10 +340,10 @@ namespace open_sea::controls {
 
             // Translate only if needed
             if (glm::length(local) != 0) {
-                int index = transformMgr->lookup(subject);
+                int index = transform_mgr->lookup(subject);
 
                 // Transform
-                glm::vec3 global_translate = glm::rotate(transformMgr->data.orientation[index], local);
+                glm::vec3 global_translate = glm::rotate(transform_mgr->data.orientation[index], local);
 
                 // Lock to XY plane
                 global_translate.z = 0;
@@ -361,13 +361,13 @@ namespace open_sea::controls {
                     global_translate *= time::get_delta();
 
                     // Apply
-                    transformMgr->translate(&index, &global_translate, 1);
-                    lastTranslate = global_translate;
+                    transform_mgr->translate(&index, &global_translate, 1);
+                    last_translate = global_translate;
                 } else {
-                    lastTranslate = {};
+                    last_translate = {};
                 }
             } else {
-                lastTranslate = {};
+                last_translate = {};
             }
         }
 
@@ -375,7 +375,7 @@ namespace open_sea::controls {
         glm::quat rotation{};
         {
             // Look up subject transformation
-            int index = transformMgr->lookup(subject);
+            int index = transform_mgr->lookup(subject);
 
             // Positive roll is counter clockwise
             float roll = 0.0f;
@@ -388,17 +388,17 @@ namespace open_sea::controls {
             // Compute transformation quaternion and transform
             if (roll != 0) {
                 // Transform axes of rotation
-                glm::quat original = transformMgr->data.orientation[index];
+                glm::quat original = transform_mgr->data.orientation[index];
                 glm::vec3 tr_roll_ax = glm::rotate(original, roll_axis);
 
                 // Compute transformation
-                glm::quat rollQ = glm::angleAxis(glm::radians(roll), tr_roll_ax);
+                glm::quat roll_q = glm::angleAxis(glm::radians(roll), tr_roll_ax);
 
                 // Apply
-                transformMgr->rotate(&index, &rollQ, 1);
-                lastRotate = rotation;
+                transform_mgr->rotate(&index, &roll_q, 1);
+                last_rotate = rotation;
             } else {
-                lastRotate = glm::quat();
+                last_rotate = glm::quat();
             }
         }
     }
@@ -406,8 +406,8 @@ namespace open_sea::controls {
     /**
      * \brief Show ImGui debug information for this control
      */
-    void TopDown::showDebug() {
-        Controls::showDebug();
+    void TopDown::show_debug() {
+        Controls::show_debug();
 
         if (ImGui::CollapsingHeader("Bindings")) {
             ImGui::Text("Left: %s", config.left.str().c_str());

@@ -17,14 +17,14 @@ namespace open_sea::window {
     log::severity_logger lg = log::get_logger("Window");
 
     //! Size signal
-    std::unique_ptr<size_signal> size;
+    std::unique_ptr<size_signal_t> size_signal;
     //! Focus signal
-    std::unique_ptr<focus_signal> focus;
+    std::unique_ptr<focus_signal_t> focus_signal;
     //! Close signal
-    std::unique_ptr<close_signal> closeSignal;
+    std::unique_ptr<close_signal_t> close_signal;
 
     //! Current window properties (default values until a window is created)
-    std::unique_ptr<window_properties> current = std::make_unique<window_properties>();
+    std::unique_ptr<WindowProperties> current = std::make_unique<WindowProperties>();
 
     //! Game window
     ::GLFWwindow* window = nullptr;
@@ -37,9 +37,9 @@ namespace open_sea::window {
      */
     void error_callback(int error, const char* description) {
         static log::severity_logger lg = log::get_logger("GLFW");
-        std::ostringstream stringStream;
-        stringStream << "GLFW error " << error << ": " << description;
-        log::log(lg, log::error, stringStream.str());
+        std::ostringstream string_stream;
+        string_stream << "GLFW error " << error << ": " << description;
+        log::log(lg, log::error, string_stream.str());
     }
 
     /**
@@ -63,12 +63,12 @@ namespace open_sea::window {
         log::log(lg, log::info, "GLFW initialized");
 
         // Instantiate signals
-        size = std::make_unique<size_signal>();
-        focus = std::make_unique<focus_signal>();
-        closeSignal = std::make_unique<close_signal>();
+        size_signal = std::make_unique<size_signal_t>();
+        focus_signal = std::make_unique<focus_signal_t>();
+        close_signal = std::make_unique<close_signal_t>();
 
         // Add a slot to update viewport dimensions on each size change
-        size->connect([](float w, float h){ ::glViewport(0, 0, current->fbWidth, current->fbHeight); });
+        size_signal->connect([](float w, float h){ ::glViewport(0, 0, current->fb_width, current->fb_height); });
 
         log::log(lg, log::info, "Window module initialized");
         return true;
@@ -82,10 +82,10 @@ namespace open_sea::window {
      * \return Processed title
      */
     std::string process_title() {
-        std::ostringstream processedTitle;
-        processedTitle << current->title                                    // Write the title
+        std::ostringstream processed_title;
+        processed_title << current->title                                    // Write the title
                        << " (Open Sea v" << OPEN_SEA_VERSION_FULL << ")";   // Append engine information
-        return processedTitle.str();
+        return processed_title.str();
     }
 
     /**
@@ -139,7 +139,7 @@ namespace open_sea::window {
 
         // Write the new sizes
         ::glfwGetWindowSize(window, &current->width, &current->height);
-        ::glfwGetFramebufferSize(window, &current->fbWidth, &current->fbHeight);
+        ::glfwGetFramebufferSize(window, &current->fb_width, &current->fb_height);
 
         // Log the action
         std::ostringstream message;
@@ -153,16 +153,16 @@ namespace open_sea::window {
      * Enable vertical synchronisation (swap interval of 1).
      * Once enabled, cannot be disabled.
      */
-    void enable_vSync() {
+    void enable_v_sync() {
         // Skip if already enabled
-        if (current->vSync)
+        if (current->v_sync)
             return;
 
         // Enable vSync
         ::glfwSwapInterval(1);
 
         // Write the property
-        current->vSync = true;
+        current->v_sync = true;
     }
 
     /**
@@ -177,15 +177,15 @@ namespace open_sea::window {
             return;
 
         // Retrieve primary monitor position and size
-        int mPosX, mPosY;
-        ::glfwGetMonitorPos(::glfwGetPrimaryMonitor(), &mPosX, &mPosY);
+        int m_pos_x, m_pos_y;
+        ::glfwGetMonitorPos(::glfwGetPrimaryMonitor(), &m_pos_x, &m_pos_y);
         const ::GLFWvidmode* videomode = ::glfwGetVideoMode(::glfwGetPrimaryMonitor());
-        int mWidth = videomode->width;
-        int mHeight = videomode->height;
+        int m_width = videomode->width;
+        int m_height = videomode->height;
 
         // Calculate new window position
-        int x = mPosX + (mWidth / 2) - (current->width / 2);
-        int y = mPosY + (mHeight / 2) - (current->height / 2);
+        int x = m_pos_x + (m_width / 2) - (current->width / 2);
+        int y = m_pos_y + (m_height / 2) - (current->height / 2);
 
         // Set the window position
         ::glfwSetWindowPos(window, x, y);
@@ -221,8 +221,8 @@ namespace open_sea::window {
      *
      * \return Current properties
      */
-    window_properties current_properties() {
-        return window_properties(*current);
+    WindowProperties current_properties() {
+        return WindowProperties(*current);
     }
 
     //! Whether the window is focused
@@ -291,10 +291,10 @@ namespace open_sea::window {
 
         // Update properties
         ::glfwGetWindowSize(window, &current->width, &current->height);
-        ::glfwGetFramebufferSize(window, &current->fbWidth, &current->fbHeight);
+        ::glfwGetFramebufferSize(window, &current->fb_width, &current->fb_height);
 
         // Fire the signal
-        (*size)(width, height);
+        (*size_signal)(width, height);
     }
 
     /**
@@ -312,7 +312,7 @@ namespace open_sea::window {
         focus_flag = (focused != 0);
 
         // Fire the signal
-        (*focus)(focused != 0);
+        (*focus_signal)(focused != 0);
     }
 
     /**
@@ -326,7 +326,7 @@ namespace open_sea::window {
             return;
 
         // Fire the signal
-        (*closeSignal)();
+        (*close_signal)();
     }
 
     /**
@@ -353,9 +353,9 @@ namespace open_sea::window {
      * \param slot Slot to connect
      * \return Connection
      */
-    connection connect_size(const size_signal::slot_type& slot) {
+    connection connect_size(const size_signal_t::slot_type& slot) {
         log::log(lg, log::info, "Connecting slot to size signal");
-        return size->connect(slot);
+        return size_signal->connect(slot);
     }
 
     /**
@@ -364,9 +364,9 @@ namespace open_sea::window {
      * \param slot Slot to connect
      * \return Connection
      */
-    connection connect_focus(const focus_signal::slot_type& slot) {
+    connection connect_focus(const focus_signal_t::slot_type& slot) {
         log::log(lg, log::info, "Connecting slot to focus signal");
-        return focus->connect(slot);
+        return focus_signal->connect(slot);
     }
 
     /**
@@ -375,9 +375,9 @@ namespace open_sea::window {
      * \param slot Slot to connect
      * \return Connection
      */
-    connection connect_close(const close_signal::slot_type& slot) {
+    connection connect_close(const close_signal_t::slot_type& slot) {
         log::log(lg, log::info, "Connecting slot to close signal");
-        return closeSignal->connect(slot);
+        return close_signal->connect(slot);
     }
 
     /**
@@ -411,7 +411,7 @@ namespace open_sea::window {
         log::log(lg, log::info, "OpenGL context initialized");
 
         // Initialize with vSync set as in current properties
-        if (current->vSync)
+        if (current->v_sync)
             ::glfwSwapInterval(1);
         else
             ::glfwSwapInterval(0);
@@ -454,7 +454,7 @@ namespace open_sea::window {
 
             // Write new properties
             ::glfwGetWindowSize(window, &current->width, &current->height);
-            ::glfwGetFramebufferSize(window, &current->fbWidth, &current->fbHeight);
+            ::glfwGetFramebufferSize(window, &current->fb_width, &current->fb_height);
             current->state = windowed;
             current->monitor = nullptr;
 
@@ -480,7 +480,7 @@ namespace open_sea::window {
 
             // Write new properties
             ::glfwGetWindowSize(window, &current->width, &current->height);
-            ::glfwGetFramebufferSize(window, &current->fbWidth, &current->fbHeight);
+            ::glfwGetFramebufferSize(window, &current->fb_width, &current->fb_height);
             current->state = windowed;
             current->monitor = nullptr;
 
@@ -532,7 +532,7 @@ namespace open_sea::window {
 
             // Write new properties
             ::glfwGetWindowSize(window, &current->width, &current->height);
-            ::glfwGetFramebufferSize(window, &current->fbWidth, &current->fbHeight);
+            ::glfwGetFramebufferSize(window, &current->fb_width, &current->fb_height);
             current->state = borderless;
             current->monitor = monitor;
 
@@ -560,7 +560,7 @@ namespace open_sea::window {
 
             // Write new properties
             ::glfwGetWindowSize(window, &current->width, &current->height);
-            ::glfwGetFramebufferSize(window, &current->fbWidth, &current->fbHeight);
+            ::glfwGetFramebufferSize(window, &current->fb_width, &current->fb_height);
             current->state = borderless;
             current->monitor = monitor;
 
@@ -608,7 +608,7 @@ namespace open_sea::window {
 
             // Write new properties
             ::glfwGetWindowSize(window, &current->width, &current->height);
-            ::glfwGetFramebufferSize(window, &current->fbWidth, &current->fbHeight);
+            ::glfwGetFramebufferSize(window, &current->fb_width, &current->fb_height);
             current->state = fullscreen;
             current->monitor = monitor;
 
@@ -634,7 +634,7 @@ namespace open_sea::window {
 
             // Write new properties
             ::glfwGetWindowSize(window, &current->width, &current->height);
-            ::glfwGetFramebufferSize(window, &current->fbWidth, &current->fbHeight);
+            ::glfwGetFramebufferSize(window, &current->fb_width, &current->fb_height);
             current->state = fullscreen;
             current->monitor = monitor;
 
@@ -692,7 +692,7 @@ namespace open_sea::window {
     void debug_window(bool *open) {
         if (ImGui::Begin("Window", open)) {
             ImGui::Text("Window size: %d x %d", current->width, current->height);
-            ImGui::Text("Frame buffer size: %d x %d", current->fbWidth, current->fbHeight);
+            ImGui::Text("Frame buffer size: %d x %d", current->fb_width, current->fb_height);
             ImGui::Text("Window title: %s", current->title.c_str());
             ImGui::Text("Processed title: %s", process_title().c_str());
             const char *state;
@@ -712,7 +712,7 @@ namespace open_sea::window {
             ImGui::Text("Window state: %s", state);
             ImGui::Text("Window monitor: %s",
                         (current->monitor == nullptr) ? "none" : ::glfwGetMonitorName(current->monitor));
-            ImGui::Text("Vsync: %s", current->vSync ? "enabled" : "disabled");
+            ImGui::Text("Vsync: %s", current->v_sync ? "enabled" : "disabled");
             if (ImGui::Button("Modify")) {
                 modify_reset_temp();
 

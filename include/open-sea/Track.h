@@ -39,13 +39,13 @@ namespace open_sea::data {
             //! Tree node
             struct Node {
                 //! Value representing invalid index (for example no next sibling)
-                static constexpr unsigned INVALID = static_cast<const unsigned int>(~0);
+                static constexpr unsigned invalid = static_cast<const unsigned int>(~0);
                 //! Parent (\c INVALID means implied root)
                 unsigned parent;
                 //! Next sibling (\c INVALID means none)
-                unsigned next = INVALID;
+                unsigned next = invalid;
                 //! First child (\c INVALID means none)
-                unsigned firstChild = INVALID;
+                unsigned first_child = invalid;
                 //! Node depth (size of stack at that node)
                 size_type depth;
                 //! Node content
@@ -59,7 +59,7 @@ namespace open_sea::data {
             //! Index of current node
             unsigned current;
             //! Index of last child of current node
-            unsigned lastChild;
+            unsigned last_child;
             //! Length of path from implied root to current node
             size_type stack_size;
             //! Number of nodes in store (number of tree nodes without implied root)
@@ -76,12 +76,12 @@ namespace open_sea::data {
             void clear();
 
             //! Get pointer to the tree data
-            std::shared_ptr<std::vector<Node>> getStore() { return store; }
+            std::shared_ptr<std::vector<Node>> get_store() { return store; }
 
-            size_type stackSize() { return stack_size; }
-            size_type treeSize() { return tree_size; }
+            size_type get_stack_size() { return stack_size; }
+            size_type get_tree_size() { return tree_size; }
 
-            std::string toIndentedString();
+            std::string to_indented_string();
     };
 
     /**
@@ -99,8 +99,8 @@ namespace open_sea::data {
     template<class T>
     Track<T>::Track() {
         store = std::make_shared<std::vector<Node>>();
-        current = Node::INVALID;
-        lastChild = Node::INVALID;
+        current = Node::invalid;
+        last_child = Node::invalid;
         stack_size = 0;
         tree_size = 0;
     }
@@ -117,19 +117,19 @@ namespace open_sea::data {
     template<class T>
     void Track<T>::push(T content) {
         // Add as first child if the current node is valid and has no valid first child
-        if (current != Node::INVALID && (*store)[current].firstChild == Node::INVALID)
-            (*store)[current].firstChild = tree_size;
+        if (current != Node::invalid && (*store)[current].first_child == Node::invalid)
+            (*store)[current].first_child = tree_size;
 
         // Add as next child if the last child is valid
-        if (lastChild != Node::INVALID)
-            (*store)[lastChild].next = tree_size;
+        if (last_child != Node::invalid)
+            (*store)[last_child].next = tree_size;
 
         // Increment stack size and add the actual node
         store->emplace_back(current, ++stack_size, content);
 
         // Update state
         current = tree_size;
-        lastChild = Node::INVALID;  // Newly created node has no children
+        last_child = Node::invalid;  // Newly created node has no children
         tree_size++;
     }
 
@@ -145,11 +145,11 @@ namespace open_sea::data {
     template<class T>
     void Track<T>::pop() {
         // Skip if current is invalid
-        if (current == Node::INVALID)
+        if (current == Node::invalid)
             return;
 
         // Point next child to current, current to parent, and decrement stack size
-        lastChild = current;
+        last_child = current;
         current = (*store)[current].parent;
         stack_size--;
     }
@@ -165,8 +165,8 @@ namespace open_sea::data {
     template<class T>
     void Track<T>::clear() {
         store->clear();
-        current = Node::INVALID;
-        lastChild = Node::INVALID;
+        current = Node::invalid;
+        last_child = Node::invalid;
         stack_size = 0;
         tree_size = 0;
     }
@@ -181,7 +181,7 @@ namespace open_sea::data {
      * \return Indented string
      */
     template<class T>
-    std::string Track<T>::toIndentedString() {
+    std::string Track<T>::to_indented_string() {
         // Skip if empty
         if (tree_size == 0)
             return "";

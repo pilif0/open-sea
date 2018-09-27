@@ -32,15 +32,15 @@ namespace open_sea::render {
     class UntexturedRenderer : public debug::Debuggable {
         public:
             //! Model component manager
-            std::shared_ptr<ecs::ModelComponent> modelMgr{};
+            std::shared_ptr<ecs::ModelComponent> model_mgr{};
             //! Transformation component manager
-            std::shared_ptr<ecs::TransformationComponent> transformMgr{};
+            std::shared_ptr<ecs::TransformationComponent> transform_mgr{};
             //! Shader program
             std::unique_ptr<gl::ShaderProgram> shader{};
             //! Projection matrix uniform location
-            GLint pMatLocation;
+            GLint p_mat_location;
             //! World matrix uniform location
-            GLint wMatLocation;
+            GLint w_mat_location;
             UntexturedRenderer(std::shared_ptr<ecs::ModelComponent> m, std::shared_ptr<ecs::TransformationComponent> t);
 
             //! Render information for a single entity
@@ -50,11 +50,11 @@ namespace open_sea::render {
                 //! Vertex Array ID
                 GLuint vao = 0;
                 //! Number of vertices to draw
-                unsigned vertexCount = 0;
+                unsigned vertex_count = 0;
             };
             void render(std::shared_ptr<gl::Camera> camera, ecs::Entity* e, unsigned count);
 
-            void showDebug() override;
+            void show_debug() override;
     };
 
     /**

@@ -41,15 +41,15 @@ namespace open_sea::model {
             //! Default constructor for purposes of inheritance
             Model() {};
             //! ID of the vertex buffer
-            GLuint vertexBuffer;
+            GLuint vertex_buffer;
             //! ID of the index buffer
-            GLuint idxBuffer;
+            GLuint idx_buffer;
             //! ID of the vertex array
-            GLuint vertexArray;
+            GLuint vertex_array;
             //! Number of vertices to draw
-            unsigned int vertexCount;
+            unsigned int vertex_count;
             //! Number of unique vertices
-            unsigned int uniqueVertexCount;
+            unsigned int unique_vertex_count;
         public:
             //! Position and UV coordinates of a vertex
             struct Vertex {
@@ -62,15 +62,15 @@ namespace open_sea::model {
                 bool operator!=(const Vertex &rhs) const { return !(rhs == *this); }
             };
             Model(const std::vector<Model::Vertex>& vertices, const std::vector<unsigned int>& indices);
-            static std::unique_ptr<Model> fromFile(const std::string& path);
+            static std::unique_ptr<Model> from_file(const std::string &path);
 
             void draw() const;
-            virtual void showDebug();
+            virtual void show_debug();
 
             //! Get VAO ID
-            GLuint getVertexArray() { return vertexArray; }
+            GLuint get_vertex_array() { return vertex_array; }
             //! Get vertex count
-            unsigned getVertexCount() { return vertexCount; }
+            unsigned get_vertex_count() { return vertex_count; }
 
             ~Model();
     };
@@ -93,15 +93,17 @@ namespace open_sea::model {
                 static Vertex reduce(Model::Vertex source);
             };
             UntexModel(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices);
-            static std::unique_ptr<UntexModel> fromFile(const std::string& path);
-            void showDebug() override;
+            static std::unique_ptr<UntexModel> from_file(const std::string &path);
+            void show_debug() override;
     };
 
     // OBJ functions
-    bool read_OBJ_vertices(std::ifstream& stream, const std::string& path,
-                           std::shared_ptr<std::vector<glm::vec3>> &positions, std::shared_ptr<std::vector<glm::vec2>> &UVs);
-    bool read_OBJ_faces(std::ifstream& stream, const std::string& path,
-                        std::shared_ptr<std::vector<glm::vec3>> &positions, std::shared_ptr<std::vector<glm::vec2>> &UVs,
+    bool read_obj_vertices(std::ifstream &stream, const std::string &path,
+                           std::shared_ptr<std::vector<glm::vec3>> &positions,
+                           std::shared_ptr<std::vector<glm::vec2>> &UVs);
+    bool read_obj_faces(std::ifstream &stream, const std::string &path,
+                        std::shared_ptr<std::vector<glm::vec3>> &positions,
+                        std::shared_ptr<std::vector<glm::vec2>> &UVs,
                         std::vector<Model::Vertex> &vertices, std::vector<unsigned int> &indices);
 
     /**

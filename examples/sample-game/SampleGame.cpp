@@ -109,14 +109,18 @@ int main() {
             if (windowed) {
                 // Set borderless and update camera
                 window::make_borderless(glfwGetPrimaryMonitor());
-                test_camera_ort->setSize(glm::vec2{window::current_properties().fbWidth, window::current_properties().fbHeight});
-                test_camera_per->setSize(glm::vec2{window::current_properties().fbWidth, window::current_properties().fbHeight});
+                test_camera_ort->set_size(
+                        glm::vec2{window::current_properties().fb_width, window::current_properties().fb_height});
+                test_camera_per->set_size(
+                        glm::vec2{window::current_properties().fb_width, window::current_properties().fb_height});
                 windowed = false;
             } else {
                 // Set windowed and update camera
                 window::make_windowed(window_size.x, window_size.y);
-                test_camera_ort->setSize(glm::vec2{window::current_properties().fbWidth, window::current_properties().fbHeight});
-                test_camera_per->setSize(glm::vec2{window::current_properties().fbWidth, window::current_properties().fbHeight});
+                test_camera_ort->set_size(
+                        glm::vec2{window::current_properties().fb_width, window::current_properties().fb_height});
+                test_camera_per->set_size(
+                        glm::vec2{window::current_properties().fb_width, window::current_properties().fb_height});
                 windowed = true;
             }
         }
@@ -132,10 +136,10 @@ int main() {
     // Prepare and assign model
     std::shared_ptr<ecs::ModelComponent> model_comp_manager = std::make_shared<ecs::ModelComponent>();
     {
-        std::shared_ptr<model::Model> model(model::UntexModel::fromFile("examples/sample-game/data/models/cube.obj"));
+        std::shared_ptr<model::Model> model(model::UntexModel::from_file("examples/sample-game/data/models/cube.obj"));
         if (!model)
             return -1;
-        model_comp_manager->modelToIndex(model);
+        model_comp_manager->model_to_index(model);
         std::vector<int> models(N);   // modelIdx == 0, because it is the first model
 
         model_comp_manager->add(entities, models.data(), N);
@@ -217,14 +221,14 @@ int main() {
     // Prepare controls for the camera guide
     int controls_no = 0;
     controls::Free::Config controls_free_config {
-            .forward = input::unified_input::keyboard(GLFW_KEY_W),
-            .backward = input::unified_input::keyboard(GLFW_KEY_S),
-            .left = input::unified_input::keyboard(GLFW_KEY_A),
-            .right = input::unified_input::keyboard(GLFW_KEY_D),
-            .up = input::unified_input::keyboard(GLFW_KEY_LEFT_SHIFT),
-            .down = input::unified_input::keyboard(GLFW_KEY_LEFT_CONTROL),
-            .clockwise = input::unified_input::keyboard(GLFW_KEY_Q),
-            .counter_clockwise = input::unified_input::keyboard(GLFW_KEY_E),
+            .forward = input::UnifiedInput::keyboard(GLFW_KEY_W),
+            .backward = input::UnifiedInput::keyboard(GLFW_KEY_S),
+            .left = input::UnifiedInput::keyboard(GLFW_KEY_A),
+            .right = input::UnifiedInput::keyboard(GLFW_KEY_D),
+            .up = input::UnifiedInput::keyboard(GLFW_KEY_LEFT_SHIFT),
+            .down = input::UnifiedInput::keyboard(GLFW_KEY_LEFT_CONTROL),
+            .clockwise = input::UnifiedInput::keyboard(GLFW_KEY_Q),
+            .counter_clockwise = input::UnifiedInput::keyboard(GLFW_KEY_E),
             .speed_x = 150.0f,
             .speed_z = 150.0f,
             .speed_y = 150.0f,
@@ -234,10 +238,10 @@ int main() {
     std::shared_ptr<controls::Controls> controls_free = std::make_shared<controls::Free>(trans_comp_manager, camera_guide, controls_free_config);
     debug::add_controls(controls_free, "Free Controls");
     controls::FPS::Config controls_fps_config {
-            .forward = input::unified_input::keyboard(GLFW_KEY_W),
-            .backward = input::unified_input::keyboard(GLFW_KEY_S),
-            .left = input::unified_input::keyboard(GLFW_KEY_A),
-            .right = input::unified_input::keyboard(GLFW_KEY_D),
+            .forward = input::UnifiedInput::keyboard(GLFW_KEY_W),
+            .backward = input::UnifiedInput::keyboard(GLFW_KEY_S),
+            .left = input::UnifiedInput::keyboard(GLFW_KEY_A),
+            .right = input::UnifiedInput::keyboard(GLFW_KEY_D),
             .speed_x = 150.0f,
             .speed_z = 150.0f,
             .turn_rate = 0.3f
@@ -245,12 +249,12 @@ int main() {
     std::shared_ptr<controls::Controls> controls_fps = std::make_shared<controls::FPS>(trans_comp_manager, camera_guide, controls_fps_config);
     debug::add_controls(controls_fps, "FPS Controls");
     controls::TopDown::Config controls_td_config {
-            .left = input::unified_input::keyboard(GLFW_KEY_A),
-            .right = input::unified_input::keyboard(GLFW_KEY_D),
-            .up = input::unified_input::keyboard(GLFW_KEY_LEFT_SHIFT),
-            .down = input::unified_input::keyboard(GLFW_KEY_LEFT_CONTROL),
-            .clockwise = input::unified_input::keyboard(GLFW_KEY_Q),
-            .counter_clockwise = input::unified_input::keyboard(GLFW_KEY_E),
+            .left = input::UnifiedInput::keyboard(GLFW_KEY_A),
+            .right = input::UnifiedInput::keyboard(GLFW_KEY_D),
+            .up = input::UnifiedInput::keyboard(GLFW_KEY_LEFT_SHIFT),
+            .down = input::UnifiedInput::keyboard(GLFW_KEY_LEFT_CONTROL),
+            .clockwise = input::UnifiedInput::keyboard(GLFW_KEY_Q),
+            .counter_clockwise = input::UnifiedInput::keyboard(GLFW_KEY_E),
             .speed_x = 150.0f,
             .speed_y = 150.0f,
             .roll_rate = 30.0f
@@ -260,8 +264,8 @@ int main() {
 
     // Add suspend controls button
     bool suspend_controls = false;
-    const input::unified_input suspend_binding = input::unified_input::keyboard(GLFW_KEY_F1);
-    input::connect_unified([&suspend_controls, suspend_binding](input::unified_input i, input::state a){
+    const input::UnifiedInput suspend_binding = input::UnifiedInput::keyboard(GLFW_KEY_F1);
+    input::connect_unified([&suspend_controls, suspend_binding](input::UnifiedInput i, input::state a){
         if (i == suspend_binding && a == input::press) {
             suspend_controls = !suspend_controls;
         }
@@ -377,7 +381,7 @@ int main() {
             profiler::push("Camera Info");
             if (camera_info) {
                 if (ImGui::Begin("Active Camera")) {
-                    camera->showDebug();
+                    camera->show_debug();
                 }
                 ImGui::End();
             }

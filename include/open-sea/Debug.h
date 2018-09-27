@@ -26,7 +26,7 @@ namespace open_sea::debug {
 
     //! Standard width for debug windows
     // This is to provide some unified appearance and easy arrangement into columns
-    constexpr float STANDARD_WIDTH = 350.0f;
+    constexpr float standard_width = 350.0f;
     void set_standard_width();
     void main_menu();
 

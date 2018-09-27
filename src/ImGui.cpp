@@ -24,13 +24,13 @@ namespace open_sea::imgui {
     //! Different cursors used by ImGui
     GLFWcursor* cursors[ImGuiMouseCursor_Count_] = { 0 };
     //! Flags for mouse button presses
-    bool mouseJustPressed[3] = {false, false, false};
+    bool mouse_just_pressed[3] = {false, false, false};
 
     // OpenGL data
-    static GLuint       fontTexture = 0;
+    static GLuint       font_texture = 0;
     static std::unique_ptr<gl::ShaderProgram> shader_program;
-    static int          attribLocationTex = 0, attribLocationProjMtx = 0;
-    static int          attribLocationPosition = 0, attribLocationUV = 0, attribLocationColor = 0;
+    static int          attrib_location_tex = 0, attrib_location_proj_mtx = 0;
+    static int          attrib_location_position = 0, attrib_location_uv = 0, attrib_location_color = 0;
     static unsigned int vbo = 0, elements = 0;
 
     /**
@@ -68,9 +68,9 @@ namespace open_sea::imgui {
         if (action == input::press) {
             // Set the corresponding flag
             switch (button) {
-                case GLFW_MOUSE_BUTTON_1: mouseJustPressed[0] = true; break;
-                case GLFW_MOUSE_BUTTON_2: mouseJustPressed[1] = true; break;
-                case GLFW_MOUSE_BUTTON_3: mouseJustPressed[2] = true; break;
+                case GLFW_MOUSE_BUTTON_1: mouse_just_pressed[0] = true; break;
+                case GLFW_MOUSE_BUTTON_2: mouse_just_pressed[1] = true; break;
+                case GLFW_MOUSE_BUTTON_3: mouse_just_pressed[2] = true; break;
                 default: break;
             }
         }
@@ -171,15 +171,15 @@ namespace open_sea::imgui {
         glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
 
         // Upload texture to graphics system
-        glGenTextures(1, &fontTexture);
-        glBindTexture(GL_TEXTURE_2D, fontTexture);
+        glGenTextures(1, &font_texture);
+        glBindTexture(GL_TEXTURE_2D, font_texture);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
         // Store our identifier
-        io.Fonts->TexID = (void *)(intptr_t)fontTexture;
+        io.Fonts->TexID = (void *)(intptr_t)font_texture;
 
         // Restore GL state
         glBindTexture(GL_TEXTURE_2D, last_texture);
@@ -201,17 +201,17 @@ namespace open_sea::imgui {
 
         // Define shader
         shader_program = std::make_unique<gl::ShaderProgram>();
-        shader_program->attachVertexFile("data/shaders/ImGui.vshader");
-        shader_program->attachFragmentFile("data/shaders/ImGui.fshader");
+        shader_program->attach_vertex_file("data/shaders/ImGui.vshader");
+        shader_program->attach_fragment_file("data/shaders/ImGui.fshader");
         shader_program->link();
         shader_program->validate();
 
         // Get the uniform locations
-        attribLocationTex = shader_program->getUniformLocation("Texture");
-        attribLocationProjMtx = shader_program->getUniformLocation("ProjMtx");
-        attribLocationPosition = shader_program->getAttributeLocation("Position");
-        attribLocationUV = shader_program->getAttributeLocation("UV");
-        attribLocationColor = shader_program->getAttributeLocation("Color");
+        attrib_location_tex = shader_program->get_uniform_location("Texture");
+        attrib_location_proj_mtx = shader_program->get_uniform_location("ProjMtx");
+        attrib_location_position = shader_program->get_attribute_location("Position");
+        attrib_location_uv = shader_program->get_attribute_location("UV");
+        attrib_location_color = shader_program->get_attribute_location("Color");
 
         // Generate buffers
         glGenBuffers(1, &vbo);
@@ -236,7 +236,7 @@ namespace open_sea::imgui {
      */
     void new_frame() {
         profiler::push("Device objects");
-        if (!fontTexture)
+        if (!font_texture)
             create_device_objects();
         profiler::pop();
 
@@ -244,11 +244,11 @@ namespace open_sea::imgui {
         ImGuiIO& io = ImGui::GetIO();
 
         // Setup display size (every frame to accommodate for window resizing)
-        window::window_properties properties = window::current_properties();
+        window::WindowProperties properties = window::current_properties();
         io.DisplaySize = ImVec2((float) properties.width, (float) properties.height);
         io.DisplayFramebufferScale = ImVec2(
-                properties.width > 0 ? ((float) properties.fbWidth / properties.width) : 0,
-                properties.height > 0 ? ((float) properties.fbHeight / properties.height) : 0
+                properties.width > 0 ? ((float) properties.fb_width / properties.width) : 0,
+                properties.height > 0 ? ((float) properties.fb_height / properties.height) : 0
         );
 
         // Setup time step
@@ -294,8 +294,8 @@ namespace open_sea::imgui {
         for (int i = 0; i < 3; i++) {
             // If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release
             // events that are shorter than 1 frame.
-            io.MouseDown[i] = mouseJustPressed[i] || input::mouse_state(i) == input::press;
-            mouseJustPressed[i] = false;
+            io.MouseDown[i] = mouse_just_pressed[i] || input::mouse_state(i) == input::press;
+            mouse_just_pressed[i] = false;
         }
         profiler::pop();
         profiler::pop();
@@ -382,8 +382,8 @@ namespace open_sea::imgui {
                         {-1.0f,                  1.0f,                   0.0f, 1.0f },
                 };
         shader_program->use();
-        glUniform1i(attribLocationTex, 0);
-        glUniformMatrix4fv(attribLocationProjMtx, 1, GL_FALSE, &ortho_projection[0][0]);
+        glUniform1i(attrib_location_tex, 0);
+        glUniformMatrix4fv(attrib_location_proj_mtx, 1, GL_FALSE, &ortho_projection[0][0]);
         glBindSampler(0, 0); // Rely on combined texture/sampler state.
 
         // Recreate the VAO every time
@@ -393,12 +393,12 @@ namespace open_sea::imgui {
         glGenVertexArrays(1, &vao_handle);
         glBindVertexArray(vao_handle);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glEnableVertexAttribArray(attribLocationPosition);
-        glEnableVertexAttribArray(attribLocationUV);
-        glEnableVertexAttribArray(attribLocationColor);
-        glVertexAttribPointer(attribLocationPosition, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)IM_OFFSETOF(ImDrawVert, pos));
-        glVertexAttribPointer(attribLocationUV, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)IM_OFFSETOF(ImDrawVert, uv));
-        glVertexAttribPointer(attribLocationColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ImDrawVert), (GLvoid*)IM_OFFSETOF(ImDrawVert, col));
+        glEnableVertexAttribArray(attrib_location_position);
+        glEnableVertexAttribArray(attrib_location_uv);
+        glEnableVertexAttribArray(attrib_location_color);
+        glVertexAttribPointer(attrib_location_position, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)IM_OFFSETOF(ImDrawVert, pos));
+        glVertexAttribPointer(attrib_location_uv, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)IM_OFFSETOF(ImDrawVert, uv));
+        glVertexAttribPointer(attrib_location_color, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ImDrawVert), (GLvoid*)IM_OFFSETOF(ImDrawVert, col));
 
         // Draw
         for (int n = 0; n < draw_data->CmdListsCount; n++) {
@@ -465,10 +465,10 @@ namespace open_sea::imgui {
 
         shader_program.reset();
 
-        if (fontTexture) {
-            glDeleteTextures(1, &fontTexture);
+        if (font_texture) {
+            glDeleteTextures(1, &font_texture);
             ImGui::GetIO().Fonts->TexID = 0;
-            fontTexture = 0;
+            font_texture = 0;
         }
 
         log::log(lg, log::info, "Cleaned up");

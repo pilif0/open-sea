@@ -50,7 +50,7 @@ namespace open_sea::input {
     typedef signals::signal<void (unsigned int)> character_signal;
 
     //! Unified input key
-    struct unified_input {
+    struct UnifiedInput {
         //! Device code
         // 0 -> KB, 1 -> Mouse
         unsigned int device : 4;
@@ -58,24 +58,24 @@ namespace open_sea::input {
         // KB -> scancode, Mouse -> button no. (0 based)
         unsigned int code : 28;
 
-        friend bool operator<(const open_sea::input::unified_input &lhs, const open_sea::input::unified_input &rhs) {
+        friend bool operator<(const open_sea::input::UnifiedInput &lhs, const open_sea::input::UnifiedInput &rhs) {
             return ((lhs.device << 28) + lhs.code) < ((rhs.device << 28) + rhs.code);
         }
 
-        friend bool operator==(const unified_input &lhs, const unified_input &rhs) {
+        friend bool operator==(const UnifiedInput &lhs, const UnifiedInput &rhs) {
             return lhs.device == rhs.device && lhs.code == rhs.code;
         }
 
         //! Create unified input from a GLFW keyboard key
-        static unified_input keyboard(int key) { return unified_input{.device = 0, .code = static_cast<unsigned int>(::glfwGetKeyScancode(key))}; }
+        static UnifiedInput keyboard(int key) { return UnifiedInput{.device = 0, .code = static_cast<unsigned int>(::glfwGetKeyScancode(key))}; }
         //! Create unified input from a GLFW mouse button
-        static unified_input mouse(int button) { return unified_input{.device = 1, .code = static_cast<unsigned int>(button)}; }
+        static UnifiedInput mouse(int button) { return UnifiedInput{.device = 1, .code = static_cast<unsigned int>(button)}; }
 
         std::string str() const;
     };
     //! Unified input signal
-    typedef signals::signal<void (unified_input, state)> unified_signal;
-    bool is_held(unified_input input);
+    typedef signals::signal<void (UnifiedInput, state)> unified_signal;
+    bool is_held(UnifiedInput input);
 
     void init();
     void reattach();

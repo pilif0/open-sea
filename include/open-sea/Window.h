@@ -39,24 +39,24 @@ namespace open_sea::window {
     namespace defaults {
         constexpr int16_t width = 1280;             //!< Width
         constexpr int16_t height = 720;             //!< Height
-        constexpr int16_t fbWidth = 1280;           //!< Frame buffer width
-        constexpr int16_t fbHeight = 720;           //!< Frame buffer height
+        constexpr int16_t fb_width = 1280;          //!< Frame buffer width
+        constexpr int16_t fb_height = 720;          //!< Frame buffer height
         constexpr const char* title = "Game";       //!< Title
         constexpr ::GLFWmonitor* monitor = nullptr; //!< Monitor
         constexpr window_state state = windowed;    //!< State
-        constexpr bool vSync = false;               //!< vSync
+        constexpr bool v_sync = false;              //!< vSync
     }
 
     //! Set of window properties
-    struct window_properties {
+    struct WindowProperties {
         int width = defaults::width;                //!< Width
         int height = defaults::height;              //!< Height
-        int fbWidth = defaults::fbWidth;            //!< Frame buffer width (horizontal resolution)
-        int fbHeight = defaults::fbHeight;          //!< Frame buffer height (vertical resolution)
+        int fb_width = defaults::fb_width;          //!< Frame buffer width (horizontal resolution)
+        int fb_height = defaults::fb_height;        //!< Frame buffer height (vertical resolution)
         std::string title = defaults::title;        //!< Title
         ::GLFWmonitor* monitor = defaults::monitor; //!< Monitor or \c nullptr if windowed
         window_state state = defaults::state;       //!< State
-        bool vSync = defaults::vSync;               //!< Whether vSync is on
+        bool v_sync = defaults::v_sync;             //!< Whether vSync is on
     };
 
     //! Alias for the Signals2 connection type
@@ -64,11 +64,11 @@ namespace open_sea::window {
 
     // Signal types
     //! Size signal type
-    typedef signals::signal<void (int, int)> size_signal;
+    typedef signals::signal<void (int, int)> size_signal_t;
     //! Focus signal type
-    typedef signals::signal<void (bool)> focus_signal;
+    typedef signals::signal<void (bool)> focus_signal_t;
     //! Close signal type
-    typedef signals::signal<void ()> close_signal;
+    typedef signals::signal<void ()> close_signal_t;
 
     extern ::GLFWwindow* window;
 
@@ -80,17 +80,17 @@ namespace open_sea::window {
 
     void set_title(const std::string& title);
     void set_size(int width, int height);
-    void enable_vSync();
+    void enable_v_sync();
     void center();
     void show();
     void hide();
     void close();
-    window_properties current_properties();
+    WindowProperties current_properties();
     bool is_focused();
 
-    connection connect_size(const size_signal::slot_type& slot);
-    connection connect_focus(const focus_signal::slot_type& slot);
-    connection connect_close(const close_signal::slot_type& slot);
+    connection connect_size(const size_signal_t::slot_type& slot);
+    connection connect_focus(const focus_signal_t::slot_type& slot);
+    connection connect_close(const close_signal_t::slot_type& slot);
 
     void update();
 

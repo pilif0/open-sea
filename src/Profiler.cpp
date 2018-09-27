@@ -74,7 +74,7 @@ namespace open_sea::profiler {
         in_progress.reset();
 
         // Update maximum if relevant
-        if (!maximum || (*completed->getStore())[0].content.time > (*maximum->getStore())[0].content.time) {
+        if (!maximum || (*completed->get_store())[0].content.time > (*maximum->get_store())[0].content.time) {
             maximum = completed;
         }
     }
@@ -136,7 +136,7 @@ namespace open_sea::profiler {
         // Selected track text
         std::shared_ptr<track> subject = text_show_maximum ? maximum : completed;
         ImGui::TextUnformatted(subject ?
-                               subject->toIndentedString().data() :
+                               subject->to_indented_string().data() :
                                "No completed frame track");
     }
 
@@ -174,8 +174,8 @@ namespace open_sea::profiler {
     void draw_rec(const std::shared_ptr<std::vector<track::Node>> &data, ImDrawList* draw_list, ImVec2 canvas_pos,
                   ImVec2 canvas_size, double root_time, int depth, float x_offset, int node) {
         // Loop over all children of the node
-        int child = (*data)[node].firstChild;
-        while (child != track::Node::INVALID) {
+        int child = (*data)[node].first_child;
+        while (child != track::Node::invalid) {
             // Get content
             track::value_type content = (*data)[child].content;
 
@@ -234,7 +234,7 @@ namespace open_sea::profiler {
             ImGui::TextUnformatted("No completed frame track");
         } else {
             // Retrieve the data
-            std::shared_ptr<std::vector<track::Node>> data = subject->getStore();
+            std::shared_ptr<std::vector<track::Node>> data = subject->get_store();
 
             // Set up regions
             ImDrawList* draw_list = ImGui::GetWindowDrawList();

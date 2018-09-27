@@ -31,7 +31,7 @@ namespace open_sea::ecs {
      */
 
     //! Default starting size of component managers
-    constexpr unsigned DEFAULT_SIZE = 1;
+    constexpr unsigned default_size = 1;
 
     /** \class ModelComponent
      * \brief Associates an entity with a model
@@ -43,7 +43,7 @@ namespace open_sea::ecs {
             //! Models used by components in this manager
             std::vector<std::shared_ptr<model::Model>> models;
         public:
-            ModelComponent() : ModelComponent(DEFAULT_SIZE) {}
+            ModelComponent() : ModelComponent(default_size) {}
             explicit ModelComponent(unsigned size);
 
             // Data
@@ -64,11 +64,11 @@ namespace open_sea::ecs {
             InstanceData data{};
             void allocate(unsigned size);
             //! Size of one record in bytes
-            static constexpr unsigned RECORD_SIZE = sizeof(Entity) + sizeof(int);
+            static constexpr unsigned record_size = sizeof(Entity) + sizeof(int);
             //! Allocator used by the manager
-            std::allocator<unsigned char> ALLOCATOR;
-            int modelToIndex(std::shared_ptr<model::Model> model);
-            std::shared_ptr<model::Model> getModel(int i);
+            std::allocator<unsigned char> allocator;
+            int model_to_index(std::shared_ptr<model::Model> model);
+            std::shared_ptr<model::Model> get_model(int i);
 
             // Access
             //! Map of entities to data indices
@@ -85,10 +85,10 @@ namespace open_sea::ecs {
             void gc(const EntityManager &manager);
             ~ModelComponent();
 
-            void showDebug() override;
-            int queryIdxGen[2] {0, 0};
-            int queryIdx = -1;
-            void showQuery();
+            void show_debug() override;
+            int query_idx_gen[2] {0, 0};
+            int query_idx = -1;
+            void show_query();
     };
 
     /** \class TransformationComponent
@@ -105,7 +105,7 @@ namespace open_sea::ecs {
             void swap(int i, int j);
 
         public:
-            TransformationComponent() : TransformationComponent(DEFAULT_SIZE) {}
+            TransformationComponent() : TransformationComponent(default_size) {}
             TransformationComponent(unsigned size);
 
             // Data
@@ -131,18 +131,18 @@ namespace open_sea::ecs {
                 //! Parent index (-1 if root)
                 int *parent = nullptr;
                 //! Index of first child (-1 if none)
-                int *firstChild = nullptr;
+                int *first_child = nullptr;
                 //! Index of next sibling (-1 if none)
-                int *nextSibling = nullptr;
+                int *next_sibling = nullptr;
                 //! Index of previous sibling (-1 if none)
-                int *prevSibling = nullptr;
+                int *prev_sibling = nullptr;
             };
             InstanceData data{};
             void allocate(unsigned size);
             //! Size of one record in bytes
-            static constexpr unsigned RECORD_SIZE = sizeof(Entity) + 2 * sizeof(glm::vec3) + sizeof(glm::quat) + sizeof(glm::mat4) + 4 * sizeof(int);
+            static constexpr unsigned record_size = sizeof(Entity) + 2 * sizeof(glm::vec3) + sizeof(glm::quat) + sizeof(glm::mat4) + 4 * sizeof(int);
             //! Allocator used by the manager
-            std::allocator<unsigned char> ALLOCATOR;
+            std::allocator<unsigned char> allocator;
 
             // Access
             //! Map of entities to data indices
@@ -152,7 +152,7 @@ namespace open_sea::ecs {
             void add(Entity *e, glm::vec3 *position, glm::quat *orientation, glm::vec3 *scale, unsigned count, int parent = -1);
             void set(int *i, glm::vec3 *position, glm::quat *orientation, glm::vec3 *scale, unsigned count);
             void adopt(int i, int parent = -1);
-            void updateMatrix(int i);
+            void update_matrix(int i);
 
             // Maintenance
             void destroy(int i);
@@ -164,20 +164,20 @@ namespace open_sea::ecs {
             void translate(int *i, glm::vec3 *delta, unsigned count);
             void rotate(int *i, glm::quat *delta, unsigned count);
             void scale(int *i, glm::vec3 *delta, unsigned count);
-            void setPosition(int *i,  glm::vec3 *position, unsigned count);
-            void setOrientation(int *i, glm::quat *orientation, unsigned count);
-            void setScale(int *i, glm::vec3 *scale, unsigned count);
+            void set_position(int *i, glm::vec3 *position, unsigned count);
+            void set_orientation(int *i, glm::quat *orientation, unsigned count);
+            void set_scale(int *i, glm::vec3 *scale, unsigned count);
 
-            void showDebug() override;
-            int queryIdxGen[2] {0, 0};
-            int queryIdx = -1;
-            glm::vec3 queryPos{};
-            glm::quat queryOri;
-            glm::vec3 querySca;
-            glm::vec3 queryPosDelta{};
-            glm::quat queryOriDelta;
-            glm::vec3 queryScaFac{};
-            void showQuery();
+            void show_debug() override;
+            int query_idx_gen[2] {0, 0};
+            int query_idx = -1;
+            glm::vec3 query_pos{};
+            glm::quat query_ori;
+            glm::vec3 query_sca;
+            glm::vec3 query_pos_delta{};
+            glm::quat query_ori_delta;
+            glm::vec3 query_sca_fac{};
+            void show_query();
     };
 
     /** \class CameraComponent
@@ -193,7 +193,7 @@ namespace open_sea::ecs {
             //! Logger for this manager
             log::severity_logger lg = log::get_logger("Camera Component Mgr");
         public:
-            CameraComponent() : CameraComponent(DEFAULT_SIZE) {}
+            CameraComponent() : CameraComponent(default_size) {}
             explicit CameraComponent(unsigned size);
 
             // Data
@@ -214,9 +214,9 @@ namespace open_sea::ecs {
             InstanceData data{};
             void allocate(unsigned size);
             //! Size of one record in bytes
-            static constexpr unsigned RECORD_SIZE = sizeof(Entity) + sizeof(std::shared_ptr<gl::Camera>);
+            static constexpr unsigned record_size = sizeof(Entity) + sizeof(std::shared_ptr<gl::Camera>);
             //! Allocator used by the manager
-            std::allocator<unsigned char> ALLOCATOR;
+            std::allocator<unsigned char> allocator;
 
             // Access
             int lookup(Entity e) const;
@@ -229,10 +229,10 @@ namespace open_sea::ecs {
             void gc(const EntityManager &manager);
             ~CameraComponent();
 
-            void showDebug() override;
-            int queryIdxGen[2] {0, 0};
-            std::vector<std::shared_ptr<gl::Camera>> queryCameras;
-            void showQuery();
+            void show_debug() override;
+            int query_idx_gen[2] {0, 0};
+            std::vector<std::shared_ptr<gl::Camera>> query_cameras;
+            void show_query();
     };
 
     /**

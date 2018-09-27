@@ -35,7 +35,7 @@ namespace open_sea::debug {
      * \brief Set next window width to the standard width
      */
     void set_standard_width() {
-        ImGui::SetNextWindowSize(ImVec2(STANDARD_WIDTH, 0.0f), ImGuiCond_Once);
+        ImGui::SetNextWindowSize(ImVec2(standard_width, 0.0f), ImGuiCond_Once);
     }
 
     /**
@@ -277,7 +277,7 @@ namespace open_sea::debug {
                 set_standard_width();
 
                 if (ImGui::Begin(std::string("Entity Manager - ").append(std::get<1>(i)).c_str(), &std::get<2>(i))) {
-                    (std::get<0>(i))->showDebug();
+                    (std::get<0>(i))->show_debug();
                 }
                 ImGui::End();
             }
@@ -289,7 +289,7 @@ namespace open_sea::debug {
                 set_standard_width();
 
                 if (ImGui::Begin(std::string("Component Manager - ").append(std::get<1>(i)).c_str(), &std::get<2>(i))) {
-                    (std::get<0>(i))->showDebug();
+                    (std::get<0>(i))->show_debug();
                 }
                 ImGui::End();
             }
@@ -301,7 +301,7 @@ namespace open_sea::debug {
                 set_standard_width();
 
                 if (ImGui::Begin(std::string("System - ").append(std::get<1>(i)).c_str(), &std::get<2>(i))) {
-                    (std::get<0>(i))->showDebug();
+                    (std::get<0>(i))->show_debug();
                 }
                 ImGui::End();
             }
@@ -313,7 +313,7 @@ namespace open_sea::debug {
                 set_standard_width();
 
                 if (ImGui::Begin(std::string("Controls - ").append(std::get<1>(i)).c_str(), &std::get<2>(i))) {
-                    (std::get<0>(i))->showDebug();
+                    (std::get<0>(i))->show_debug();
                 }
                 ImGui::End();
             }

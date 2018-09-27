@@ -40,90 +40,90 @@ namespace open_sea::gl {
     class ShaderProgram : public debug::Debuggable {
         private:
             //! Vertex shader reference
-            GLuint vertexShader   = 0;
+            GLuint vertex_shader   = 0;
             //! Geometry shader reference
-            GLuint geometryShader = 0;
+            GLuint geometry_shader = 0;
             //! Fragment shader reference
-            GLuint fragmentShader = 0;
+            GLuint fragment_shader = 0;
             //! Tessellation control shader reference
-            GLuint tessConShader = 0;
+            GLuint tess_con_shader = 0;
             //! Tessellation evaluation shader reference
-            GLuint tessEvalShader = 0;
+            GLuint tess_eval_shader = 0;
             //! Whether the program has been linked since the last shader change
             bool linked = false;
 
             // Debug info
             //! Number of existing vertex shaders
-            static uint vertexCount;
+            static uint vertex_count;
             //! Number of existing geometry shaders
-            static uint geometryCount;
+            static uint geometry_count;
             //! Number of existing fragment shaders
-            static uint fragmentCount;
+            static uint fragment_count;
             //! Number of tessellation control shaders
-            static uint tessConCount;
+            static uint tess_con_count;
             //! Number of tessellation evaluation shaders
-            static uint tessEvalCount;
+            static uint tess_eval_count;
             //! Number of existing shader programs
-            static uint programCount;
+            static uint program_count;
 
         public:
             //! Supported shader types
             enum class type {vertex, geometry, fragment, tessellation_control, tessellation_evaluation};
 
             //! Shader program reference
-            GLuint programID = 0;
+            GLuint program_id = 0;
 
             ShaderProgram();
 
-            bool attachVertexFile(const std::string& path);
-            bool attachGeometryFile(const std::string& path);
-            bool attachFragmentFile(const std::string& path);
-            bool attachTessConFile(const std::string& path);
-            bool attachTessEvalFile(const std::string& path);
+            bool attach_vertex_file(const std::string &path);
+            bool attach_geometry_file(const std::string &path);
+            bool attach_fragment_file(const std::string &path);
+            bool attach_tess_con_file(const std::string &path);
+            bool attach_tess_eval_file(const std::string &path);
 
-            bool attachVertexSource(const std::string& src);
-            bool attachGeometrySource(const std::string& src);
-            bool attachFragmentSource(const std::string& src);
-            bool attachTessConSource(const std::string& src);
-            bool attachTessEvalSource(const std::string& src);
+            bool attach_vertex_source(const std::string &src);
+            bool attach_geometry_source(const std::string &src);
+            bool attach_fragment_source(const std::string &src);
+            bool attach_tess_con_source(const std::string &src);
+            bool attach_tess_eval_source(const std::string &src);
 
-            int getVertexSource(char *dest, unsigned size);
-            int getGeometrySource(char *dest, unsigned size);
-            int getFragmentSource(char *dest, unsigned size);
-            int getTessConSource(char *dest, unsigned size);
-            int getTessEvalSource(char *dest, unsigned size);
+            int get_vertex_source(char *dest, unsigned size);
+            int get_geometry_source(char *dest, unsigned size);
+            int get_fragment_source(char *dest, unsigned size);
+            int get_tess_con_source(char *dest, unsigned size);
+            int get_tess_eval_source(char *dest, unsigned size);
 
-            void detachVertex();
-            void detachGeometry();
-            void detachFragment();
-            void detachTessCon();
-            void detachTessEval();
+            void detach_vertex();
+            void detach_geometry();
+            void detach_fragment();
+            void detach_tess_con();
+            void detach_tess_eval();
 
             bool link();
-            bool isLinked() const;
+            bool is_linked() const;
             bool validate();
             void use() const;
             static void unset();
 
-            GLint getUniformLocation(const std::string& name);
-            GLint getAttributeLocation(const std::string& name);
+            GLint get_uniform_location(const std::string &name);
+            GLint get_attribute_location(const std::string &name);
 
             ~ShaderProgram();
             //! Size of the buffer for shader source modification
-            static constexpr unsigned SOURCE_BUFFER_SIZE = 1 << 16;
+            static constexpr unsigned source_buffer_size = 1 << 16;
             //! Pointer to the buffer for shader source modification
-            std::unique_ptr<char[]> modifySource{};
+            std::unique_ptr<char[]> modify_source{};
             //! Type of the shader being modified
-            type modifyType;
+            type modify_type;
             //! Whether modified shader was successfully attached
-            bool modifyAttached = true;
+            bool modify_attached = true;
             //! Whether modified shader was successfully linked
-            bool modifyLinked = true;
+            bool modify_linked = true;
             //! Whether modified shader was successfully validated
-            bool modifyValidated = true;
-            void modifyPopup();
-            void showDebug() override;
-            static void debugWidget();
+            bool modify_validated = true;
+            void modify_popup();
+            void show_debug() override;
+            static void debug_widget();
 
             bool operator==(const ShaderProgram &rhs) const;
             bool operator!=(const ShaderProgram &rhs) const;
@@ -151,7 +151,7 @@ namespace open_sea::gl {
     class Camera : public debug::Debuggable {
         protected:
             //! View matrix (inverse of transformation)
-            glm::mat4 viewMatrix;
+            glm::mat4 view_matrix;
 
             //! Width and height of the camera view
             glm::vec2 size;
@@ -160,14 +160,14 @@ namespace open_sea::gl {
             //! Far clipping plane
             float far;
             //! Projection matrix (changes when camera size or clipping planes change)
-            glm::mat4 projMatrix;
+            glm::mat4 proj_matrix;
             //! \c true when projection matrix needs to be recalculated before use
-            bool recalculateProj;
+            bool recalculate_proj;
 
             //! Projection-view matrix (changes when either component matrix changes)
-            glm::mat4 projViewMatrix;
+            glm::mat4 proj_view_matrix;
             //! \c true when projection-view matrix needs to be recalculated
-            bool recalculatePV;
+            bool recalculate_pv;
 
             Camera(const glm::mat4& transformation, const glm::vec2& size, float near, float far);
         public:
@@ -176,18 +176,18 @@ namespace open_sea::gl {
              *
              * \return Current projection-view matrix
              */
-            virtual glm::mat4 getProjViewMatrix() = 0;
+            virtual glm::mat4 get_proj_view_matrix() = 0;
 
-            void setTransformation(const glm::mat4 &transformation);
+            void set_transformation(const glm::mat4 &transformation);
 
-            void setSize(const glm::vec2& newValue);
-            glm::vec2 getSize() const;
-            void setNear(float newValue);
-            float getNear() const;
-            void setFar(float newValue);
-            float getFar() const;
+            void set_size(const glm::vec2 &newValue);
+            glm::vec2 get_size() const;
+            void set_near(float newValue);
+            float get_near() const;
+            void set_far(float newValue);
+            float get_far() const;
 
-            void showDebug() override;
+            void show_debug() override;
     };
 
     /** \class OrthographicCamera
@@ -199,7 +199,7 @@ namespace open_sea::gl {
     class OrthographicCamera : public Camera {
         public:
             OrthographicCamera(const glm::mat4 &transformation, const glm::vec2 &size, float near, float far);
-            glm::mat4 getProjViewMatrix() override;
+            glm::mat4 get_proj_view_matrix() override;
     };
 
     /** \class PerspectiveCamera
@@ -214,11 +214,11 @@ namespace open_sea::gl {
             float fov;
         public:
             PerspectiveCamera(const glm::mat4 &transformation, const glm::vec2& size, float near, float far, float fov);
-            glm::mat4 getProjViewMatrix() override;
-            void showDebug() override;
+            glm::mat4 get_proj_view_matrix() override;
+            void show_debug() override;
 
-            void setFOV(float newValue);
-            float getFOV() const;
+            void set_fov(float new_value);
+            float get_fov() const;
     };
 
     void log_errors();

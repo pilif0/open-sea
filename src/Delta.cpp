@@ -27,7 +27,7 @@ namespace open_sea::time {
     //! Number of frames since last average FPS update
     int frames;
     //! Last finished average FPS value
-    double average_FPS;
+    double average_fps;
 
     // Debug data
     //! Length of debug history
@@ -47,7 +47,7 @@ namespace open_sea::time {
         last_update = ::glfwGetTime();
         fps_elapsed = 0;
         frames = 0;
-        average_FPS = 0;
+        average_fps = 0;
         history.clear();
 
         log::log(lg, log::info, "Started delta time tracking");
@@ -69,14 +69,14 @@ namespace open_sea::time {
 
         // Compute average FPS
         if (fps_elapsed >= 1) {
-            average_FPS = frames / fps_elapsed;
+            average_fps = frames / fps_elapsed;
 
             // Reset the counters
             fps_elapsed = 0;
             frames = 0;
 
             /* Alternative:
-            average_FPS = frames;
+            average_fps = frames;
 
             // Reset the counters
             fps_elapsed -= 1;
@@ -105,7 +105,7 @@ namespace open_sea::time {
      *
      * \return Immediate FPS
      */
-    double get_FPS_immediate() {
+    double get_fps_immediate() {
         return 1 / delta_time;
     }
 
@@ -116,8 +116,8 @@ namespace open_sea::time {
      *
      * \return Average FPS
      */
-    double get_FPS_average() {
-        return average_FPS;
+    double get_fps_average() {
+        return average_fps;
     }
 
     /**
@@ -146,7 +146,7 @@ namespace open_sea::time {
             ImGui::Text("Delta time\n(%.3f ms)", get_delta() * 1000);
 
             // Plot the FPS
-            ImGui::Text("FPS: %.1f (%.1f avg)", get_FPS_immediate(), get_FPS_average());
+            ImGui::Text("FPS: %.1f (%.1f avg)", get_fps_immediate(), get_fps_average());
         }
         ImGui::End();
     }

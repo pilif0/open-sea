@@ -31,7 +31,7 @@ namespace open_sea::input {
 
     // Unified input
     //! Set of held down unified inputs
-    std::set<unified_input> unified_state;
+    std::set<UnifiedInput> unified_state;
 
     // Callbacks
     /**
@@ -52,7 +52,7 @@ namespace open_sea::input {
         state state = (action == GLFW_PRESS) ? press : (action == GLFW_REPEAT) ? repeat : release;
 
         // Update unified input state
-        unified_input ui{.device = 0, .code = static_cast<unsigned int>(scancode)};
+        UnifiedInput ui{.device = 0, .code = static_cast<unsigned int>(scancode)};
         if (action == GLFW_PRESS) {
             // Press -> insert
             unified_state.insert(ui);
@@ -117,7 +117,7 @@ namespace open_sea::input {
         state state = (action == GLFW_PRESS) ? press : (action == GLFW_REPEAT) ? repeat : release;
 
         // Update unified input state
-        unified_input ui{.device = 1, .code = static_cast<unsigned int>(button)};
+        UnifiedInput ui{.device = 1, .code = static_cast<unsigned int>(button)};
         if (action == GLFW_PRESS) {
             // Press -> insert
             unified_state.insert(ui);
@@ -178,7 +178,7 @@ namespace open_sea::input {
      * \param input Unified input to check
      * \return Whether the input is held down
      */
-    bool is_held(unified_input input) {
+    bool is_held(UnifiedInput input) {
         return unified_state.count(input) != 0;
     }
 
@@ -204,22 +204,22 @@ namespace open_sea::input {
      *
      * \return String representation
      */
-    std::string unified_input::str() const {
-        std::string deviceStr;
+    std::string UnifiedInput::str() const {
+        std::string device_str;
         switch (device) {
             case 0:
-                deviceStr = "Keyboard";
+                device_str = "Keyboard";
                 break;
             case 1:
-                deviceStr = "Mouse";
+                device_str = "Mouse";
                 break;
             default:
-                deviceStr = "Unknown - ";
-                deviceStr.append(std::to_string(device));
+                device_str = "Unknown - ";
+                device_str.append(std::to_string(device));
         }
 
         std::ostringstream result;
-        result << "(" << deviceStr << ") " << code;
+        result << "(" << device_str << ") " << code;
         return result.str();
     }
 

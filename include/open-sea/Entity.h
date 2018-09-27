@@ -34,13 +34,13 @@ namespace open_sea::ecs {
     typedef uint32_t handle;
 
     //! Number of bits in entity index
-    constexpr unsigned ENTITY_INDEX_BITS = 22;
+    constexpr unsigned entity_index_bits = 22;
     //! Mask for extracting entity index from handle
-    constexpr handle ENTITY_INDEX_MASK = (1 << ENTITY_INDEX_BITS) - 1;    // 22 1s, padded to left with 0s
+    constexpr handle entity_index_mask = (1 << entity_index_bits) - 1;    // 22 1s, padded to left with 0s
     //! Number of bits in entity generation
-    constexpr unsigned ENTITY_GENERATION_BITS = 10;
+    constexpr unsigned entity_generation_bits = 10;
     //! Mask for extracting entity generation from handle (after shifting away the index)
-    constexpr handle ENTITY_GENERATION_MASK = (1 << ENTITY_GENERATION_BITS) - 1;  // 10 1s, padded to left with 0s
+    constexpr handle entity_generation_mask = (1 << entity_generation_bits) - 1;  // 10 1s, padded to left with 0s
 
     //! Entity represented by its handle
     struct Entity {
@@ -50,12 +50,12 @@ namespace open_sea::ecs {
         Entity() {}
 
         //! Construct an entity from index and generation
-        Entity(unsigned index, unsigned generation) { id = (generation << ENTITY_INDEX_BITS) + index; }
+        Entity(unsigned index, unsigned generation) { id = (generation << entity_index_bits) + index; }
 
         //! Get index of this entity
-        unsigned index() const { return id & ENTITY_INDEX_MASK; }
+        unsigned index() const { return id & entity_index_mask; }
         //! Get generation of this entity
-        unsigned generation() const { return (id >> ENTITY_INDEX_BITS) & ENTITY_GENERATION_MASK; }
+        unsigned generation() const { return (id >> entity_index_bits) & entity_generation_mask; }
 
         bool operator==(const Entity &rhs) const { return id == rhs.id; }
         bool operator!=(const Entity &rhs) const { return !(rhs == *this); }
@@ -81,22 +81,22 @@ namespace open_sea::ecs {
         public:
             // Debug info
             //! Number of entities alive
-            unsigned livingEntities = 0;
+            unsigned living_entities = 0;
             //! Maximum current generation
-            uint16_t  maxGeneration = 0;
+            uint16_t  max_generation = 0;
             //! Maximum current index
-            unsigned maxIndex = 0;
+            unsigned max_index = 0;
 
             //! Minimum number of free indices in the queue before reusing from the queue
             // This means reuse of indices will be much more spread out and IDs will reappear much more rarely
-            static constexpr unsigned MINIMUM_FREE_INDICES = 1024;
+            static constexpr unsigned minimum_free_indices = 1024;
 
             Entity create();
             void create(Entity* dest, unsigned count);
             bool alive(Entity e) const;
             void kill(Entity e);
 
-            void showDebug() override;
+            void show_debug() override;
     };
 
     /**

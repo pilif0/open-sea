@@ -54,22 +54,25 @@ int main() {
     os_log::log(lg, os_log::info, "Working directory set to outside the example directory");
 
     // Initialize window module
-    if (!window::init())
+    if (!window::init()) {
         return -1;
+    }
 
     // Create window
     glm::ivec2 window_size{1280, 720};
     window::set_title("Sample Game");
-    if (!window::make_windowed(window_size.x, window_size.y))
+    if (!window::make_windowed(window_size.x, window_size.y)) {
         return -1;
+    }
 
     // Initialize input
     input::init();
 
     // Add close action to ESC
     input::connect_key([](int k, int c, input::state s, int m) {
-        if (s == input::press && k == GLFW_KEY_ESCAPE)
+        if (s == input::press && k == GLFW_KEY_ESCAPE) {
             window::close();
+        }
     });
 
     // Start OpenGL error handling
@@ -127,22 +130,23 @@ int main() {
     });
 
     // Generate test entities
-    unsigned N = 1024;
+    unsigned n = 1024;
     std::shared_ptr<ecs::EntityManager> test_manager = std::make_shared<ecs::EntityManager>();
-    ecs::Entity entities[N];
-    test_manager->create(entities, N);
+    ecs::Entity entities[n];
+    test_manager->create(entities, n);
     debug::add_entity_manager(test_manager, "Test Manager");
 
     // Prepare and assign model
     std::shared_ptr<ecs::ModelComponent> model_comp_manager = std::make_shared<ecs::ModelComponent>();
     {
         std::shared_ptr<model::Model> model(model::UntexModel::from_file("examples/sample-game/data/models/cube.obj"));
-        if (!model)
+        if (!model) {
             return -1;
+        }
         model_comp_manager->model_to_index(model);
-        std::vector<int> models(N);   // modelIdx == 0, because it is the first model
+        std::vector<int> models(n);   // modelIdx == 0, because it is the first model
 
-        model_comp_manager->add(entities, models.data(), N);
+        model_comp_manager->add(entities, models.data(), n);
     }
     debug::add_component_manager(model_comp_manager, "Model");
 
@@ -153,9 +157,9 @@ int main() {
         std::random_device device;
         std::mt19937_64 generator;
 
-        std::uniform_int_distribution<int> posX(-640, 640);
-        std::uniform_int_distribution<int> posY(-360, 360);
-        std::uniform_int_distribution<int> posZ(0, 750);
+        std::uniform_int_distribution<int> pos_x(-640, 640);
+        std::uniform_int_distribution<int> pos_y(-360, 360);
+        std::uniform_int_distribution<int> pos_z(0, 750);
 
         std::uniform_real_distribution<float> angle(0.0f, 360.0f);
         glm::vec3 axis{0.0f, 0.0f, 1.0f};
@@ -163,16 +167,16 @@ int main() {
         std::uniform_real_distribution<float> scale(1.0f, 20.0f);
 
         // Prepare data arrays
-        std::vector<glm::vec3> positions(N);
-        std::vector<glm::quat> orientations(N);
-        std::vector<glm::vec3> scales(N);
+        std::vector<glm::vec3> positions(n);
+        std::vector<glm::quat> orientations(n);
+        std::vector<glm::vec3> scales(n);
 
         // Randomise the data
         glm::vec3 *p = positions.data();
         glm::quat *o = orientations.data();
         glm::vec3 *s = scales.data();
-        for (int i = 0; i < N; i++, p++, o++, s++) {
-            *p = glm::vec3(posX(generator), posY(generator), posZ(generator));
+        for (int i = 0; i < n; i++, p++, o++, s++) {
+            *p = glm::vec3(pos_x(generator), pos_y(generator), pos_z(generator));
             *o = glm::angleAxis(angle(generator), axis);
             float f = scale(generator);
             *s = glm::vec3(f, f, f);
@@ -181,7 +185,7 @@ int main() {
         os_log::log(lg, os_log::info, "Transformations generated");
 
         // Add the components
-        trans_comp_manager->add(entities, positions.data(), orientations.data(), scales.data(), N);
+        trans_comp_manager->add(entities, positions.data(), orientations.data(), scales.data(), n);
         os_log::log(lg, os_log::info, "Transformations set");
     }
     debug::add_component_manager(trans_comp_manager, "Transformation");
@@ -319,7 +323,9 @@ int main() {
     open_sea::time::start_delta();
     while (!window::should_close()) {
         // Start profiling
-        if (profiler_toggle) profiler::start();
+        if (profiler_toggle) {
+            profiler::start();
+        }
 
         // Clear
         profiler::push("glClear");
@@ -340,8 +346,9 @@ int main() {
                 case 2: controls_td->transform(); break;
                 default: return -1;
             }
-        } else
+        } else {
             input::set_cursor_mode(input::cursor_mode::normal);
+        }
         profiler::pop();
 
         // Update cameras based on associated guides
@@ -354,7 +361,7 @@ int main() {
         std::shared_ptr<gl::Camera> camera = (use_per_camera) ? test_camera_per : test_camera_ort;
 
         // Draw the entities
-        renderer->render(camera, entities, N);
+        renderer->render(camera, entities, n);
         profiler::pop();
 
         // Maintain components

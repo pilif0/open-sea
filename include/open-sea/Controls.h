@@ -6,12 +6,18 @@
 #ifndef OPEN_SEA_CONTROLS_H
 #define OPEN_SEA_CONTROLS_H
 
-#include <open-sea/Controls.h>
-#include <open-sea/Log.h>
 #include <open-sea/Entity.h>
-#include <open-sea/Components.h>
+#include <open-sea/Log.h>
 #include <open-sea/Input.h>
 #include <open-sea/Debuggable.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+
+// Forward declarations
+namespace open_sea::ecs {
+    class TransformationComponent;
+}
 
 //! %Controls that allow for transforming of an entity based on user input
 namespace open_sea::controls {

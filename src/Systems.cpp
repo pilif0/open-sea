@@ -6,6 +6,8 @@
 
 #include <open-sea/Systems.h>
 #include <open-sea/ImGui.h>
+#include <open-sea/Components.h>
+#include <open-sea/GL.h>
 
 #include <vector>
 

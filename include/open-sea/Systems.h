@@ -6,9 +6,21 @@
 #ifndef OPEN_SEA_SYSTEMS_H
 #define OPEN_SEA_SYSTEMS_H
 
-#include <open-sea/Components.h>
-#include <open-sea/GL.h>
 #include <open-sea/Debuggable.h>
+
+#include <memory>
+
+// Forward declarations
+namespace open_sea {
+    namespace ecs {
+        class TransformationComponent;
+        class CameraComponent;
+    }
+
+    namespace gl {
+        class Camera;
+    }
+}
 
 namespace open_sea::ecs {
     /**

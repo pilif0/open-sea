@@ -7,9 +7,7 @@
 #define OPEN_SEA_COMPONENTS_H
 
 #include <open-sea/Entity.h>
-#include <open-sea/Model.h>
 #include <open-sea/Log.h>
-#include <open-sea/GL.h>
 #include <open-sea/Debuggable.h>
 
 #include <glm/glm.hpp>
@@ -17,6 +15,17 @@
 
 #include <memory>
 #include <unordered_map>
+
+// Forward declarations
+namespace open_sea {
+    namespace model {
+        class Model;
+    }
+
+    namespace gl {
+        class Camera;
+    }
+}
 
 namespace open_sea::ecs {
     /**

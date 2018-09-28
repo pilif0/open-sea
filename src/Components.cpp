@@ -6,6 +6,8 @@
 
 #include <open-sea/Components.h>
 #include <open-sea/Debug.h>
+#include <open-sea/Model.h>
+#include <open-sea/GL.h>
 
 #include <imgui.h>
 

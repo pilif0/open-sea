@@ -5,6 +5,7 @@
  */
 
 #include <open-sea/Controls.h>
+#include <open-sea/Components.h>
 #include <open-sea/Delta.h>
 #include <open-sea/Window.h>
 #include <open-sea/Debug.h>

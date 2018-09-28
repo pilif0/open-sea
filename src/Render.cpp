@@ -8,6 +8,8 @@
 #include <open-sea/Model.h>
 #include <open-sea/ImGui.h>
 #include <open-sea/Profiler.h>
+#include <open-sea/GL.h>
+#include <open-sea/Components.h>
 
 #include <vector>
 

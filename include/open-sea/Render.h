@@ -6,13 +6,27 @@
 #ifndef OPEN_SEA_RENDER_H
 #define OPEN_SEA_RENDER_H
 
-#include <open-sea/Entity.h>
-#include <open-sea/Components.h>
-#include <open-sea/GL.h>
+#include <glad/glad.h>
+
 #include <open-sea/Debuggable.h>
 
 #include <memory>
 #include <utility>
+
+// Forward declarations
+namespace open_sea {
+    namespace ecs {
+        struct Entity;
+        class EntityManager;
+        class ModelComponent;
+        class TransformationComponent;
+    }
+
+    namespace gl {
+        class ShaderProgram;
+        class Camera;
+    }
+}
 
 //! Renderer systems and related functions
 namespace open_sea::render {

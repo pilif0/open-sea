@@ -6,7 +6,9 @@ Checks: >
     readability-braces-around-statements,
     modernize-concat-nested-namespaces,
     misc-definitions-in-headers,
-    boost-use-to-string
+    boost-use-to-string,
+    modernize-make-unique,
+    modernize-make-shared
 CheckOptions:
   - { key: readability-identifier-naming.NamespaceCase,     value: lower_case }
   - { key: readability-identifier-naming.ClassCase,         value: CamelCase  }

@@ -38,6 +38,8 @@ namespace open_sea::ecs {
      *
      * @{
      */
+    // The -1 index is used instead of exceptions (contrary to code standard) to support actions on many entities at
+    //  once.
 
     //! Default starting size of component managers
     constexpr unsigned default_size = 1;

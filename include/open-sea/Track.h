@@ -72,14 +72,14 @@ namespace open_sea::data {
             void pop();
             //! Get reference to the top element of the stack
             // Reference to allow a way to change contents
-            value_type& top() { return (*store)[current].content; }
+            value_type& top() const { return (*store)[current].content; }
             void clear();
 
             //! Get pointer to the tree data
-            std::shared_ptr<std::vector<Node>> get_store() { return store; }
+            std::shared_ptr<std::vector<Node>> get_store() const { return store; }
 
-            size_type get_stack_size() { return stack_size; }
-            size_type get_tree_size() { return tree_size; }
+            size_type get_stack_size() const { return stack_size; }
+            size_type get_tree_size() const { return tree_size; }
 
             std::string to_indented_string();
     };

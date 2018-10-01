@@ -68,9 +68,9 @@ namespace open_sea::model {
             virtual void show_debug();
 
             //! Get VAO ID
-            GLuint get_vertex_array() { return vertex_array; }
+            GLuint get_vertex_array() const { return vertex_array; }
             //! Get vertex count
-            unsigned get_vertex_count() { return vertex_count; }
+            unsigned get_vertex_count() const { return vertex_count; }
 
             ~Model();
     };

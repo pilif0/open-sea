@@ -626,7 +626,7 @@ namespace open_sea::gl {
      * \param name Name of the uniform
      * \return Location of the uniform or \c -1 if the parameter is not a valid name or the uniform is not present
      */
-    GLint ShaderProgram::get_uniform_location(const std::string &name) {
+    GLint ShaderProgram::get_uniform_location(const std::string &name) const {
         return glGetUniformLocation(program_id, name.c_str());
     }
 
@@ -636,7 +636,7 @@ namespace open_sea::gl {
      * \param name Name of the attribute
      * \return Location of the attribute or \c -1 if the parameter is not a valid name or the attribute is not present
      */
-    GLint ShaderProgram::get_attribute_location(const std::string &name) {
+    GLint ShaderProgram::get_attribute_location(const std::string &name) const {
         return glGetAttribLocation(program_id, name.c_str());
     }
 

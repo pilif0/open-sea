@@ -79,7 +79,7 @@ namespace open_sea::ecs {
             //! Allocator used by the manager
             std::allocator<unsigned char> allocator;
             int model_to_index(std::shared_ptr<model::Model> model);
-            std::shared_ptr<model::Model> get_model(int i);
+            std::shared_ptr<model::Model> get_model(int i) const;
 
             // Access
             //! Map of entities to data indices

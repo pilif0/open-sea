@@ -146,7 +146,7 @@ namespace open_sea::ecs {
      * \param i Index
      * \return Model pointer
      */
-    std::shared_ptr<model::Model> ModelComponent::get_model(int i) {
+    std::shared_ptr<model::Model> ModelComponent::get_model(int i) const {
         return std::shared_ptr<model::Model>(models[i]);
     }
 

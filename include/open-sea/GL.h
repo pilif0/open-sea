@@ -103,8 +103,8 @@ namespace open_sea::gl {
             void use() const;
             static void unset();
 
-            GLint get_uniform_location(const std::string &name);
-            GLint get_attribute_location(const std::string &name);
+            GLint get_uniform_location(const std::string &name) const;
+            GLint get_attribute_location(const std::string &name) const;
 
             ~ShaderProgram();
             //! Size of the buffer for shader source modification

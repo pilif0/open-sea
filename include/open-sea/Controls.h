@@ -45,7 +45,7 @@ namespace open_sea::controls {
             glm::quat last_rotate;
 
         public:
-            Controls(ecs::Entity s) : subject(s), last_rotate(glm::quat()) {}
+            explicit Controls(ecs::Entity s) : subject(s), last_rotate(glm::quat()) {}
             //! Transform the subject according to input
             virtual void transform() = 0;
             virtual void set_subject(ecs::Entity new_subject);

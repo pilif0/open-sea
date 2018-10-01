@@ -117,7 +117,7 @@ namespace open_sea::ecs {
 
         public:
             TransformationComponent() : TransformationComponent(default_size) {}
-            TransformationComponent(unsigned size);
+            explicit TransformationComponent(unsigned size);
 
             // Data
             //! Data of component instances

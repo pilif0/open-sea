@@ -72,7 +72,7 @@ namespace open_sea::model {
             //! Get vertex count
             unsigned get_vertex_count() const { return vertex_count; }
 
-            ~Model();
+            virtual ~Model();
     };
 
     /** \class UntexModel

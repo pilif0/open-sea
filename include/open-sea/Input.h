@@ -67,9 +67,13 @@ namespace open_sea::input {
         }
 
         //! Create unified input from a GLFW keyboard key
-        static UnifiedInput keyboard(int key) { return UnifiedInput{.device = 0, .code = static_cast<unsigned int>(::glfwGetKeyScancode(key))}; }
+        static UnifiedInput keyboard(int key) {
+            return UnifiedInput{0, static_cast<unsigned int>(::glfwGetKeyScancode(key))};
+        }
         //! Create unified input from a GLFW mouse button
-        static UnifiedInput mouse(int button) { return UnifiedInput{.device = 1, .code = static_cast<unsigned int>(button)}; }
+        static UnifiedInput mouse(int button) {
+            return UnifiedInput{1, static_cast<unsigned int>(button)};
+        }
 
         std::string str() const;
     };

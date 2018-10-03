@@ -53,7 +53,7 @@ namespace open_sea::input {
         state state = (action == GLFW_PRESS) ? press : (action == GLFW_REPEAT) ? repeat : release;
 
         // Update unified input state
-        UnifiedInput ui{.device = 0, .code = static_cast<unsigned int>(scancode)};
+        UnifiedInput ui{0, static_cast<unsigned int>(scancode)};
         if (action == GLFW_PRESS) {
             // Press -> insert
             unified_state.insert(ui);
@@ -124,7 +124,7 @@ namespace open_sea::input {
         state state = (action == GLFW_PRESS) ? press : (action == GLFW_REPEAT) ? repeat : release;
 
         // Update unified input state
-        UnifiedInput ui{.device = 1, .code = static_cast<unsigned int>(button)};
+        UnifiedInput ui{1, static_cast<unsigned int>(button)};
         if (action == GLFW_PRESS) {
             // Press -> insert
             unified_state.insert(ui);

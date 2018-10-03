@@ -228,7 +228,7 @@ namespace open_sea::model {
                 }
 
                 // Construct the vertex
-                Model::Vertex vertex{.position = p, .UV = t};
+                Model::Vertex vertex{p, t};
 
                 // Try to find the vertex in already used ones
                 auto i = std::find(vertices.begin(), vertices.end(), vertex);
@@ -361,7 +361,7 @@ namespace open_sea::model {
      * \return Untextured vertex
      */
     UntexModel::Vertex UntexModel::Vertex::reduce(const Model::Vertex source) {
-        return UntexModel::Vertex{.position = source.position};
+        return UntexModel::Vertex{source.position};
     }
 
     /**

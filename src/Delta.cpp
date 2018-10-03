@@ -129,7 +129,7 @@ namespace open_sea::time {
      * \param i Index
      * \return Delta time \c i far in history
      */
-    float debug_history_get(void* data, int i) {
+    float debug_history_get(void* /*data*/, int i) {
         return history[i];
     }
 

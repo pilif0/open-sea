@@ -1131,8 +1131,8 @@ namespace open_sea::gl {
      * \param message Message contents
      * \param userParam User parameter
      */
-    void error_callback(GLenum source, GLenum type, GLuint id, GLenum severity,
-                        GLsizei length, const GLchar* message, const void* userParam) {
+    void error_callback(GLenum source, GLenum /*type*/, GLuint /*id*/, GLenum severity,
+                        GLsizei /*length*/, const GLchar* message, const void* /*userParam*/) {
         // Log only errors and performance issues
         if (severity >= GL_DEBUG_SEVERITY_LOW) {
             // Use special logger for shader errors

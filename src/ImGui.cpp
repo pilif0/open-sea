@@ -41,7 +41,7 @@ namespace open_sea::imgui {
      * \param action Relevant action
      * \param mods Bitfield of applied modifier keys
      */
-    void key_callback(int key, int scancode, int action, int mods) {
+    void key_callback(int key, int /*scancode*/, int action, int /*mods*/) {
         ImGuiIO& io = ImGui::GetIO();
 
         // Set key state
@@ -66,7 +66,7 @@ namespace open_sea::imgui {
      * \param action Relevan action
      * \param mods Bitfield of applied modifier keys
      */
-    void mouse_callback(int button, int action, int mods) {
+    void mouse_callback(int button, int action, int /*mods*/) {
         if (action == input::press) {
             // Set the corresponding flag
             switch (button) {
@@ -84,7 +84,7 @@ namespace open_sea::imgui {
      * \param xoffset Horizontal scroll offset
      * \param yoffset Vertical scroll offset
      */
-    void scroll_callback(double xoffset, double yoffset) {
+    void scroll_callback(double /*xoffset*/, double yoffset) {
         ImGuiIO& io = ImGui::GetIO();
         io.MouseWheel = (float) yoffset;
     }
@@ -133,8 +133,8 @@ namespace open_sea::imgui {
         io.KeyMap[ImGuiKey_Y]           = GLFW_KEY_Y;
         io.KeyMap[ImGuiKey_Z]           = GLFW_KEY_Z;
 
-        io.SetClipboardTextFn = [](void* u, const char* in){input::set_clipboard(in);};
-        io.GetClipboardTextFn = [](void* u){return input::get_clipboard();};
+        io.SetClipboardTextFn = [](void* /*u*/, const char* in){input::set_clipboard(in);};
+        io.GetClipboardTextFn = [](void* /*u*/){return input::get_clipboard();};
 #ifdef _WIN32
         io.ImeWindowHandle = glfwGetWin32Window(g_Window);
 #endif

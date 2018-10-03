@@ -1393,8 +1393,6 @@ namespace open_sea::ecs {
 
         // Move last record into i-th place
         int last_idx = data.n - 1;
-        Entity e = data.entity[i];
-        Entity last = data.entity[last_idx];
         data.entity[i] = data.entity[last_idx];
         data.camera[i] = data.camera[last_idx];
 

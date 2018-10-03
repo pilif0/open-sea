@@ -105,7 +105,7 @@ namespace open_sea::controls {
 
             //! Constuct the controls assigning it a pointer to the relevant transformation component manager, subject and config
             Free(std::shared_ptr<ecs::TransformationComponent> t, ecs::Entity s, Config c)
-                    : transform_mgr(std::move(t)), config(c), Controls(s) {}
+                    : Controls(s), transform_mgr(std::move(t)), config(c) {}
 
             void transform() override;
 
@@ -156,7 +156,7 @@ namespace open_sea::controls {
 
             //! Constuct the controls assigning it a pointer to the relevant transformation component manager, subject and config
             FPS(std::shared_ptr<ecs::TransformationComponent> t, ecs::Entity s, Config c)
-                    : transform_mgr(std::move(t)), config(c), Controls(s) { update_pitch(); }
+                    : Controls(s), transform_mgr(std::move(t)), config(c) { update_pitch(); }
 
             void transform() override;
             void set_subject(ecs::Entity newSubject) override;
@@ -205,7 +205,7 @@ namespace open_sea::controls {
 
             //! Constuct the controls assigning it a pointer to the relevant transformation component manager, subject and config
             TopDown(std::shared_ptr<ecs::TransformationComponent> t, ecs::Entity s, Config c)
-                    : transform_mgr(std::move(t)), config(c), Controls(s) {}
+                    : Controls(s), transform_mgr(std::move(t)), config(c) {}
 
             void transform() override;
 

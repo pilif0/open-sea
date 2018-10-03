@@ -253,12 +253,12 @@ namespace open_sea::ecs {
      */
     void ModelComponent::set(int *i, int *m, unsigned count) {
         // For every index, set the value
-        for (int j = 0; j < count; j++, i++, m++) {
+        for (unsigned j = 0; j < count; j++, i++, m++) {
             int index = *i;
 
             // Check the index is in range
-            if (index >= data.n) {
-                // Setting value of destroyed records should not have any effect
+            if (index < 0 || static_cast<unsigned>(index) >= data.n) {
+                // Setting value of records out of range should not have any effect
                 return;
             }
 
@@ -278,7 +278,7 @@ namespace open_sea::ecs {
      */
     void ModelComponent::destroy(int i) {
         // Check index is in range
-        if (i >= data.n) {
+        if (i < 0 || static_cast<unsigned>(i) >= data.n) {
             // Records out of range are considered already destroyed
             return;
         }
@@ -610,12 +610,12 @@ namespace open_sea::ecs {
     void TransformationComponent::set(int *i, glm::vec3 *position, glm::quat *orientation, glm::vec3 *scale,
                                       unsigned count) {
         // For every index, set the value
-        for (int j = 0; j < count; j++, i++, position++, orientation++, scale++) {
+        for (unsigned j = 0; j < count; j++, i++, position++, orientation++, scale++) {
             int index = *i;
 
             // Check the index is in range
-            if (index >= data.n) {
-                // Setting value of destroyed records should not have any effect
+            if (index < 0 || static_cast<unsigned>(index) >= data.n) {
+                // Setting value of records out of range should not have any effect
                 return;
             }
 
@@ -823,7 +823,7 @@ namespace open_sea::ecs {
     // Depth-first recursive
     void TransformationComponent::destroy(int i) {
         // Check index is in range
-        if (i >= data.n) {
+        if (i < 0 || static_cast<unsigned>(i) >= data.n) {
             // Records out of range are considered already destroyed
             return;
         }
@@ -930,12 +930,12 @@ namespace open_sea::ecs {
      */
     void TransformationComponent::translate(int *i, glm::vec3 *delta, unsigned count) {
         // For every index, set the value
-        for (int j = 0; j < count; j++, i++, delta++) {
+        for (unsigned j = 0; j < count; j++, i++, delta++) {
             int index = *i;
 
             // Check the index is in range
-            if (index >= data.n) {
-                // Setting value of destroyed records should not have any effect
+            if (index < 0 || static_cast<unsigned>(index) >= data.n) {
+                // Setting value of records out of range should not have any effect
                 return;
             }
 
@@ -957,12 +957,12 @@ namespace open_sea::ecs {
      */
     void TransformationComponent::rotate(int *i, glm::quat *delta, unsigned count) {
         // For every index, set the value
-        for (int j = 0; j < count; j++, i++, delta++) {
+        for (unsigned j = 0; j < count; j++, i++, delta++) {
             int index = *i;
 
             // Check the index is in range
-            if (index >= data.n) {
-                // Setting value of destroyed records should not have any effect
+            if (index < 0 || static_cast<unsigned>(index) >= data.n) {
+                // Setting value of records out of range should not have any effect
                 return;
             }
 
@@ -985,12 +985,12 @@ namespace open_sea::ecs {
      */
     void TransformationComponent::scale(int *i, glm::vec3 *delta, unsigned count) {
         // For every index, set the value
-        for (int j = 0; j < count; j++, i++, delta++) {
+        for (unsigned j = 0; j < count; j++, i++, delta++) {
             int index = *i;
 
             // Check the index is in range
-            if (index >= data.n) {
-                // Setting value of destroyed records should not have any effect
+            if (index < 0 || static_cast<unsigned>(index) >= data.n) {
+                // Setting value of records out of range should not have any effect
                 return;
             }
 
@@ -1012,12 +1012,12 @@ namespace open_sea::ecs {
      */
     void TransformationComponent::set_position(int *i, glm::vec3 *position, unsigned count) {
         // For every index, set the value
-        for (int j = 0; j < count; j++, i++, position++) {
+        for (unsigned j = 0; j < count; j++, i++, position++) {
             int index = *i;
 
             // Check the index is in range
-            if (index >= data.n) {
-                // Setting value of destroyed records should not have any effect
+            if (index < 0 || static_cast<unsigned>(index) >= data.n) {
+                // Setting value of records out of range should not have any effect
                 return;
             }
 
@@ -1039,12 +1039,12 @@ namespace open_sea::ecs {
      */
     void TransformationComponent::set_orientation(int *i, glm::quat *orientation, unsigned count) {
         // For every index, set the value
-        for (int j = 0; j < count; j++, i++, orientation++) {
+        for (unsigned j = 0; j < count; j++, i++, orientation++) {
             int index = *i;
 
             // Check the index is in range
-            if (index >= data.n) {
-                // Setting value of destroyed records should not have any effect
+            if (index < 0 || static_cast<unsigned>(index) >= data.n) {
+                // Setting value of records out of range should not have any effect
                 return;
             }
 
@@ -1066,12 +1066,12 @@ namespace open_sea::ecs {
      */
     void TransformationComponent::set_scale(int *i, glm::vec3 *scale, unsigned count) {
         // For every index, set the value
-        for (int j = 0; j < count; j++, i++, scale++) {
+        for (unsigned j = 0; j < count; j++, i++, scale++) {
             int index = *i;
 
             // Check the index is in range
-            if (index >= data.n) {
-                // Setting value of destroyed records should not have any effect
+            if (index < 0 || static_cast<unsigned>(index) >= data.n) {
+                // Setting value of records out of range should not have any effect
                 return;
             }
 
@@ -1289,7 +1289,7 @@ namespace open_sea::ecs {
      */
     int CameraComponent::lookup(Entity e) const {
         Entity *d = data.entity;
-        for (int i = 0; i < data.n; i++, d++) {
+        for (unsigned i = 0; i < data.n; i++, d++) {
             if (e == *d) {
                 return i;
             }
@@ -1361,12 +1361,12 @@ namespace open_sea::ecs {
      */
     void CameraComponent::set(int *i, std::shared_ptr<gl::Camera> *c, unsigned count) {
         // For every index, set the value
-        for (int j = 0; j < count; j++, i++, c++) {
+        for (unsigned j = 0; j < count; j++, i++, c++) {
             int index = *i;
 
             // Check the index is in range
-            if (index >= data.n) {
-                // Setting value of destroyed records should not have any effect
+            if (index < 0 || static_cast<unsigned>(index) >= data.n) {
+                // Setting value of records out of range should not have any effect
                 return;
             }
 
@@ -1386,7 +1386,7 @@ namespace open_sea::ecs {
      */
     void CameraComponent::destroy(int i) {
         // Check index is in range
-        if (i >= data.n) {
+        if (i < 0 || static_cast<unsigned>(i) >= data.n) {
             // Records out of range are considered already destroyed
             return;
         }
@@ -1437,7 +1437,7 @@ namespace open_sea::ecs {
     CameraComponent::~CameraComponent() {
         // Destroy all pointers
         std::shared_ptr<gl::Camera> *c = data.camera;
-        for (int i = 0; i < data.n; i++, c++) {
+        for (unsigned i = 0; i < data.n; i++, c++) {
             c->~shared_ptr<gl::Camera>();
         }
 

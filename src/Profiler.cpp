@@ -180,7 +180,7 @@ namespace open_sea::profiler {
     void draw_rec(const std::shared_ptr<std::vector<track::Node>> &data, ImDrawList* draw_list, ImVec2 canvas_pos,
                   ImVec2 canvas_size, double root_time, int depth, float x_offset, int node) {
         // Loop over all children of the node
-        int child = (*data)[node].first_child;
+        unsigned child = (*data)[node].first_child;
         while (child != track::Node::invalid) {
             // Get content
             track::value_type content = (*data)[child].content;

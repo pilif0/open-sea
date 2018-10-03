@@ -74,7 +74,7 @@ namespace open_sea::ecs {
      * \param count Number of entities to create
      */
     void EntityManager::create(Entity *dest, unsigned count) {
-        for (int i = 0; i < count; i++, dest++) {
+        for (unsigned i = 0; i < count; i++, dest++) {
             *dest = create();
         }
     }

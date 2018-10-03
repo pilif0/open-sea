@@ -165,7 +165,7 @@ namespace open_sea::model {
                 boost::split(refs, parts[v], boost::is_any_of("/"), boost::token_compress_off);
 
                 // Parse position index and get the position
-                int i_p;
+                unsigned i_p;
                 if (refs.empty() || refs[0].empty()) {
                     // Position reference not present
                     std::ostringstream message;
@@ -174,7 +174,7 @@ namespace open_sea::model {
                     return false;
                 } else {
                     try {
-                        i_p = std::stoi(refs[0]);
+                        i_p = static_cast<unsigned>(std::stoi(refs[0]));
                     } catch (std::exception &e) {
                         // Position reference not a valid number
                         std::ostringstream message;
@@ -197,13 +197,13 @@ namespace open_sea::model {
                 }
 
                 // Parse the UV index and get the UV
-                int i_uv;
+                unsigned i_uv;
                 if (refs.size() < 2 || refs[1].empty()) {
                     // UV reference not present -> Set index as 0 and use [0,0] as UV
                     i_uv = 0;
                 } else {
                     try {
-                        i_uv = std::stoi(refs[1]);
+                        i_uv = static_cast<unsigned>(std::stoi(refs[1]));
                     } catch (std::exception &e) {
                         // UV reference not a valid number
                         std::ostringstream message;

@@ -62,7 +62,7 @@ namespace open_sea::render {
         transform_mgr->lookup(e, indices.data(), count);
         int *i = indices.data();
         RenderInfo *r = infos.data();
-        for (int j = 0; j < count; j++, i++, r++) {
+        for (unsigned j = 0; j < count; j++, i++, r++) {
             if (*i != -1) {
                 r->matrix = &transform_mgr->data.matrix[*i][0][0];
             }
@@ -74,7 +74,7 @@ namespace open_sea::render {
         model_mgr->lookup(e, indices.data(), count);
         i = indices.data();
         r = infos.data();
-        for (int j = 0; j < count; j++, i++, r++) {
+        for (unsigned j = 0; j < count; j++, i++, r++) {
             // Skip invalid indices
             if (*i != -1) {
                 std::shared_ptr<model::Model> model = model_mgr->get_model(model_mgr->data.model[*i]);
@@ -87,7 +87,7 @@ namespace open_sea::render {
         // Render the information
         profiler::push("Render");
         r = infos.data();
-        for (int j = 0; j < count; j++, r++) {
+        for (unsigned j = 0; j < count; j++, r++) {
             // Skip invalid entities
             if (r->matrix != nullptr) {
                 glUniformMatrix4fv(w_mat_location, 1, GL_FALSE, r->matrix);

@@ -27,7 +27,7 @@ namespace open_sea::ecs {
         // Apply transformation for each entity-camera pair
         std::shared_ptr<gl::Camera> *c = camera_mgr->data.camera;
         int *i = indices.data();
-        for (int j = 0; j < n; j++, i++, c++) {
+        for (unsigned j = 0; j < n; j++, i++, c++) {
             if (*i == -1) {
                 (*c)->set_transformation(glm::mat4(1.0f));
             } else {
@@ -46,9 +46,9 @@ namespace open_sea::ecs {
         // Gather relevant entities
         std::vector<ecs::Entity> entities(count);
         std::shared_ptr<gl::Camera> *c_loc = cameras;
-        for (int j = 0; j < count; j++, c_loc++) {
+        for (unsigned j = 0; j < count; j++, c_loc++) {
             std::shared_ptr<gl::Camera> *c_com = camera_mgr->data.camera;
-            for (int i = 0; i < camera_mgr->data.n; i++, c_com++) {
+            for (unsigned i = 0; i < camera_mgr->data.n; i++, c_com++) {
                 if (*c_loc == *c_com) {
                     entities.push_back(camera_mgr->data.entity[i]);
                 }
@@ -62,7 +62,7 @@ namespace open_sea::ecs {
         // Apply transformation for each entity-camera pair
         std::shared_ptr<gl::Camera> *c = camera_mgr->data.camera;
         int *i = indices.data();
-        for (int j = 0; j < count; j++, i++, c++) {
+        for (unsigned j = 0; j < count; j++, i++, c++) {
             if (*i == -1) {
                 (*c)->set_transformation(glm::mat4(1.0f));
             } else {

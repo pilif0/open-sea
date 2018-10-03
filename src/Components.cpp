@@ -164,12 +164,12 @@ namespace open_sea::ecs {
      */
     void ModelComponent::add(Entity *e, std::shared_ptr<model::Model> *m, unsigned count) {
         // Convert pointers to indices
-        int indices[count];
-        for (int *i = indices; i - indices < count; i++, m++) {
-            *i = model_to_index(*m);
+        std::vector<int> indices(count);
+        for (unsigned j = 0; j < count; j++, m++) {
+            indices.push_back(model_to_index(*m));
         }
 
-        return add(e, indices, count);
+        return add(e, indices.data(), count);
     }
 
     /**
@@ -230,12 +230,12 @@ namespace open_sea::ecs {
      */
     void ModelComponent::set(int *i, std::shared_ptr<model::Model> *m, unsigned count) {
         // Convert pointers to indices
-        int indices[count];
-        for (int *j = indices; j - indices < count; j++, m++) {
-            *j = model_to_index(*m);
+        std::vector<int> indices(count);
+        for (unsigned j = 0; j < count; j++, m++) {
+            indices.push_back(model_to_index(*m));
         }
 
-        set(i, indices, count);
+        set(i, indices.data(), count);
     }
 
     /**

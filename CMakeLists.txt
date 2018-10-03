@@ -3,6 +3,10 @@ project(open_sea)
 
 set(CMAKE_CXX_STANDARD 17)
 
+# Set compiler flags
+set(CLANG_COMPILER_FLAGS "-Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CLANG_COMPILER_FLAGS}")
+
 # Export compile commands for use with LLVM tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 

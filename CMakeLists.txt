@@ -61,6 +61,7 @@ set(ImGui "${ImGui_DIR}/imgui.h"
         "${ImGui_DIR}/imgui_demo.cpp"
         "${ImGui_DIR}/imgui_widgets.cpp"
         "${ImGui_DIR}/imgui_internal.h")
+add_library(imgui ${ImGui})
 
 # Doxygen
 if (open_sea_BUILD_DOC)

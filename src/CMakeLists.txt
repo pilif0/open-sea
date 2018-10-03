@@ -1,6 +1,7 @@
 # Link common libraries and include relevant directories
-link_libraries(glfw ${GLFW_LIBRARIES} glad)
-include_directories(${INCL_DIR} "${GLFW_DIR}/include" "${GLAD_DIR}/include" ${GLM_DIR} ${ImGui_DIR} ${Boost_INCLUDE_DIRS})
+link_libraries(glfw ${GLFW_LIBRARIES} glad imgui)
+include_directories(SYSTEM "${GLFW_DIR}/include" "${GLAD_DIR}/include" ${GLM_DIR} ${ImGui_DIR} ${Boost_INCLUDE_DIRS})
+include_directories(${INCL_DIR})
 
 # Set up source and header lists
 set(open_sea_HEADERS
@@ -42,4 +43,4 @@ set(open_sea_HEADERS ${open_sea_HEADERS} PARENT_SCOPE)
 set(open_sea_SOURCES ${open_sea_SOURCES} PARENT_SCOPE)
 
 # Add the library
-add_library(open_sea ${open_sea_SOURCES} ${open_sea_HEADERS} ${ImGui})
+add_library(open_sea ${open_sea_SOURCES} ${open_sea_HEADERS})

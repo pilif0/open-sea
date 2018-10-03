@@ -6,9 +6,6 @@
 #ifndef OPEN_SEA_CONFIG_H
 #define OPEN_SEA_CONFIG_H
 
-// Debug flag
-#cmakedefine OPEN_SEA_DEBUG_LOG
-
 #include <string>
 
 namespace open_sea {
@@ -24,6 +21,9 @@ namespace open_sea {
     constexpr char version_version[] = "@open_sea_VERSION@";
     //! Full version string (\c major.minor.patchextra)
     constexpr char version_full[] = "@open_sea_VERSION_FULL@";
+
+    //! Whether debug logging should be enabled
+    constexpr bool debug_log = @open_sea_DEBUG_LOG_VALUE@;
 }
 
 #endif //OPEN_SEA_CONFIG_H

@@ -73,7 +73,11 @@ if (open_sea_BUILD_DOC)
 endif()
 
 # Configure header
-set(OPEN_SEA_DEBUG_LOG ${open_sea_DEBUG_LOG})
+if (open_sea_DEBUG_LOG)
+    set(open_sea_DEBUG_LOG_VALUE "true")
+else (open_sea_DEBUG_LOG)
+    set(open_sea_DEBUG_LOG_VALUE "false")
+endif()
 configure_file(
         "${INCL_DIR}/open-sea/config.h.in"
         "${INCL_DIR}/open-sea/config.h"

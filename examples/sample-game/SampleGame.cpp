@@ -7,6 +7,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <open-sea/config.h>
 #include <open-sea/Log.h>
 #include <open-sea/Window.h>
 #include <open-sea/Input.h>
@@ -76,9 +77,9 @@ int main() {
     });
 
     // Start OpenGL error handling
-#if !defined(OPEN_SEA_DEBUG_LOG)
-    gl::log_errors();
-#endif
+    if (open_sea::debug_log) {
+        gl::log_errors();
+    }
 
     // Initialize ImGui
     imgui::init();

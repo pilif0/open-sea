@@ -469,12 +469,12 @@ namespace open_sea::input {
         if (ImGui::Begin("Input", open)) {
             glm::dvec2 cur_pos = cursor_position();
             ImGui::Text("Cursor position: %.2f, %.2f", cur_pos.x, cur_pos.y);
-            ImGui::Text("Number of key slots: %d", keyboard->num_slots());
-            ImGui::Text("Number of enter slots: %d", enter->num_slots());
-            ImGui::Text("Number of mouse slots: %d", mouse->num_slots());
-            ImGui::Text("Number of scroll slots: %d", scroll->num_slots());
-            ImGui::Text("Number of character slots: %d", character->num_slots());
-            ImGui::Text("Number of unified input slots: %d", unified->num_slots());
+            ImGui::Text("Number of key slots: %d", static_cast<int>(keyboard->num_slots()));
+            ImGui::Text("Number of enter slots: %d", static_cast<int>(enter->num_slots()));
+            ImGui::Text("Number of mouse slots: %d", static_cast<int>(mouse->num_slots()));
+            ImGui::Text("Number of scroll slots: %d", static_cast<int>(scroll->num_slots()));
+            ImGui::Text("Number of character slots: %d", static_cast<int>(character->num_slots()));
+            ImGui::Text("Number of unified input slots: %d", static_cast<int>(unified->num_slots()));
             ImGui::Spacing();
 
             ImGui::Text("Cursor delta: %.2f, %.2f", cursor_d.x, cursor_d.y);

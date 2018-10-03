@@ -341,7 +341,8 @@ namespace open_sea::model {
      */
     void Model::show_debug() {
         ImGui::Text("Vertices (unique): %i (%i)", vertex_count, unique_vertex_count);
-        ImGui::Text("Memory size: %i B", sizeof(unsigned int) * vertex_count + sizeof(Vertex) * unique_vertex_count);
+        ImGui::Text("Memory size: %i B", static_cast<int>(
+                sizeof(unsigned int) * vertex_count + sizeof(Vertex) * unique_vertex_count));
     }
 
     Model::~Model() {
@@ -439,7 +440,8 @@ namespace open_sea::model {
      */
     void UntexModel::show_debug() {
         ImGui::Text("Vertices (unique): %i (%i)", vertex_count, unique_vertex_count);
-        ImGui::Text("Memory size: %i B", sizeof(unsigned int) * vertex_count + sizeof(Vertex) * unique_vertex_count);
+        ImGui::Text("Memory size: %i B", static_cast<int>(
+                sizeof(unsigned int) * vertex_count + sizeof(Vertex) * unique_vertex_count));
     }
     //--- end UntexModel implementation
 }

@@ -112,7 +112,7 @@ namespace open_sea::ecs {
         ImGui::Text("Living entities: %i", living_entities);
         ImGui::Text("Maximum generation: %i", max_generation);
         ImGui::Text("Maximum index: %i", max_index);
-        ImGui::Text("Free indices: %i", freeIndices.size());
+        ImGui::Text("Free indices: %i", static_cast<int>(freeIndices.size()));
     }
     //--- end EntityManager implementation
 }

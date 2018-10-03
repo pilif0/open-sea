@@ -344,7 +344,7 @@ namespace open_sea::ecs {
     void ModelComponent::show_debug() {
         ImGui::Text("Record size: %i bytes", record_size);
         ImGui::Text("Records (allocated): %i (%i)", data.n, data.allocated);
-        ImGui::Text("Stored models: %i", models.size());
+        ImGui::Text("Stored models: %i", static_cast<int>(models.size()));
         ImGui::Text("Size data arrays (allocated): %i (%i) bytes", record_size * data.n, record_size * data.allocated);
         if (ImGui::Button("Query")) {
             ImGui::OpenPopup("Component Manager Query");
@@ -1488,7 +1488,7 @@ namespace open_sea::ecs {
         if (query_cameras.empty()) {
             ImGui::TextUnformatted("No record found");
         } else {
-            ImGui::Text("Camera count: %i", query_cameras.size());
+            ImGui::Text("Camera count: %i", static_cast<int>(query_cameras.size()));
             for (unsigned i = 0; i < query_cameras.size(); i++) {
                 std::ostringstream label;
                 label << "Camera #" << (i + 1);

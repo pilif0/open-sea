@@ -50,6 +50,10 @@ Before committing check for unnecessary whitespace with `git diff --check`.
 
 For further recommendations, see [Pro Git Commit Guidelines](https://git-scm.com/book/en/v2/Distributed-Git-Contributing-to-a-Project#Commit-Guidelines "Pro Git Commit Guidelines").
 
+### Code Standard
+All code submitted should follow the project's [Code Standard](https://github.com/pilif0/open-sea/wiki/Code-Standard).
+This is mainly to maintain a consistent style throughout the project and avoid potential bugs.
+
 ## Submitting Changes
 
 ### Pull Request Guidelines

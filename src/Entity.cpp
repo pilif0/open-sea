@@ -34,13 +34,13 @@ namespace open_sea::ecs {
         unsigned index;
 
         // Find appropriate index
-        if (freeIndices.size() > MINIMUM_FREE_INDICES) {
+        if (freeIndices.size() > minimum_free_indices) {
             // Reuse a freed index
             index = freeIndices.front();
             freeIndices.pop();
         } else {
             // Check there is at least one more available index
-            if (generation.size() < (1 << ENTITY_INDEX_BITS)) {
+            if (generation.size() < (1 << entity_index_bits)) {
                 // Index available -> use the next one
                 generation.push_back(0);
                 index = generation.size() - 1;
@@ -59,10 +59,10 @@ namespace open_sea::ecs {
         }
 
         // Update debug information
-        livingEntities++;
-        maxIndex = (index > maxIndex) ? index : maxIndex;
+        living_entities++;
+        max_index = (index > max_index) ? index : max_index;
         auto gen = generation[index];
-        maxGeneration = (gen > maxGeneration) ? gen : maxGeneration;
+        max_generation = (gen > max_generation) ? gen : max_generation;
 
         return Entity(index, gen);
     }
@@ -74,7 +74,7 @@ namespace open_sea::ecs {
      * \param count Number of entities to create
      */
     void EntityManager::create(Entity *dest, unsigned count) {
-        for (int i = 0; i < count; i++, dest++) {
+        for (unsigned i = 0; i < count; i++, dest++) {
             *dest = create();
         }
     }
@@ -102,17 +102,17 @@ namespace open_sea::ecs {
         const unsigned index = e.index();
         generation[index]++;
         freeIndices.push(index);
-        livingEntities--;
+        living_entities--;
     }
 
     /**
      * \brief Show ImGui debug information
      */
-    void EntityManager::showDebug() {
-        ImGui::Text("Living entities: %i", livingEntities);
-        ImGui::Text("Maximum generation: %i", maxGeneration);
-        ImGui::Text("Maximum index: %i", maxIndex);
-        ImGui::Text("Free indices: %i", freeIndices.size());
+    void EntityManager::show_debug() {
+        ImGui::Text("Living entities: %i", living_entities);
+        ImGui::Text("Maximum generation: %i", max_generation);
+        ImGui::Text("Maximum index: %i", max_index);
+        ImGui::Text("Free indices: %i", static_cast<int>(freeIndices.size()));
     }
     //--- end EntityManager implementation
 }

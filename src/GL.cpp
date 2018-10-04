@@ -24,16 +24,16 @@ namespace open_sea::gl {
     //! Module logger
     log::severity_logger lg = log::get_logger("OpenGL");
     //! Shader specific logger
-    log::severity_logger shaderLG = log::get_logger("OpenGL Shaders");
+    log::severity_logger shader_lg = log::get_logger("OpenGL Shaders");
 
 //--- start ShaderProgram implementation
     // Initailize counters
-    uint ShaderProgram::programCount = 0;
-    uint ShaderProgram::vertexCount = 0;
-    uint ShaderProgram::geometryCount = 0;
-    uint ShaderProgram::fragmentCount = 0;
-    uint ShaderProgram::tessConCount = 0;
-    uint ShaderProgram::tessEvalCount = 0;
+    uint ShaderProgram::program_count = 0;
+    uint ShaderProgram::vertex_count = 0;
+    uint ShaderProgram::geometry_count = 0;
+    uint ShaderProgram::fragment_count = 0;
+    uint ShaderProgram::tess_con_count = 0;
+    uint ShaderProgram::tess_eval_count = 0;
 
     //! String to use when Info Log is empty
     constexpr std::initializer_list<GLchar> unknown_info = {'u','n','k','n','o','w','n'};
@@ -44,8 +44,8 @@ namespace open_sea::gl {
      * Create a shader program with no shaders attached.
      */
     ShaderProgram::ShaderProgram() {
-        programID = glCreateProgram();
-        programCount++;
+        program_id = glCreateProgram();
+        program_count++;
     }
 
     /**
@@ -74,8 +74,8 @@ namespace open_sea::gl {
      * \param path Path to the source file
      * \return \c false on failure, \c true otherwise
      */
-    bool ShaderProgram::attachVertexFile(const std::string& path) {
-        return attachVertexSource(read_file(path));
+    bool ShaderProgram::attach_vertex_file(const std::string &path) {
+        return attach_vertex_source(read_file(path));
     }
 
     /**
@@ -86,8 +86,8 @@ namespace open_sea::gl {
      * \param path Path to the source file
      * \return \c false on failure, \c true otherwise
      */
-    bool ShaderProgram::attachGeometryFile(const std::string& path) {
-        return attachGeometrySource(read_file(path));
+    bool ShaderProgram::attach_geometry_file(const std::string &path) {
+        return attach_geometry_source(read_file(path));
     }
 
     /**
@@ -98,8 +98,8 @@ namespace open_sea::gl {
      * \param path Path to the source file
      * \return \c false on failure, \c true otherwise
      */
-    bool ShaderProgram::attachFragmentFile(const std::string& path) {
-        return attachFragmentSource(read_file(path));
+    bool ShaderProgram::attach_fragment_file(const std::string &path) {
+        return attach_fragment_source(read_file(path));
     }
 
     /**
@@ -110,8 +110,8 @@ namespace open_sea::gl {
      * \param path Path to the source file
      * \return \c false on failure, \c true otherwise
      */
-    bool ShaderProgram::attachTessConFile(const std::string& path) {
-        return attachTessConSource(read_file(path));
+    bool ShaderProgram::attach_tess_con_file(const std::string &path) {
+        return attach_tess_con_source(read_file(path));
     }
 
     /**
@@ -122,8 +122,8 @@ namespace open_sea::gl {
      * \param path Path to the source file
      * \return \c false on failure, \c true otherwise
      */
-    bool ShaderProgram::attachTessEvalFile(const std::string& path) {
-        return attachTessEvalSource(read_file(path));
+    bool ShaderProgram::attach_tess_eval_file(const std::string &path) {
+        return attach_tess_eval_source(read_file(path));
     }
 
     /**
@@ -134,44 +134,45 @@ namespace open_sea::gl {
      * \param src Shader source
      * \return \c false on failure, \c true otherwise
      */
-    bool ShaderProgram::attachVertexSource(const std::string& src) {
+    bool ShaderProgram::attach_vertex_source(const std::string &src) {
         // Create the shader if needed
-        if (vertexShader == 0) {
-            vertexShader = glCreateShader(GL_VERTEX_SHADER);
-            vertexCount++;
+        if (vertex_shader == 0) {
+            vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+            vertex_count++;
         }
 
         // Set the source
         const char* source = src.c_str();
-        glShaderSource(vertexShader, 1, &source, nullptr);
+        glShaderSource(vertex_shader, 1, &source, nullptr);
 
         // Compile
-        glCompileShader(vertexShader);
+        glCompileShader(vertex_shader);
 
         // Check for compile errors
         GLint status;
-        glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &status);
+        glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &status);
         if (status == GL_FALSE) {
-            GLint maxLength = 0;
-            glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &maxLength);
+            GLint max_length = 0;
+            glGetShaderiv(vertex_shader, GL_INFO_LOG_LENGTH, &max_length);
 
-            std::vector<GLchar> info(maxLength);
-            glGetShaderInfoLog(vertexShader, maxLength, nullptr, &info[0]);
+            std::vector<GLchar> info(max_length);
+            glGetShaderInfoLog(vertex_shader, max_length, nullptr, &info[0]);
 
-            if (info.empty())
+            if (info.empty()) {
                 info = unknown_info;
+            }
 
-            log::log(shaderLG, log::error, std::string("Shader compilation failed: ").append(&info[0]));
+            log::log(shader_lg, log::error, std::string("Shader compilation failed: ").append(&info[0]));
 
             // Delete the shader
-            glDeleteShader(vertexShader);
-            vertexCount--;
+            glDeleteShader(vertex_shader);
+            vertex_count--;
 
             return false;
         }
 
         // Attach
-        glAttachShader(programID, vertexShader);
+        glAttachShader(program_id, vertex_shader);
 
         linked = false;
         return true;
@@ -185,44 +186,45 @@ namespace open_sea::gl {
      * \param src Shader source
      * \return \c false on failure, \c true otherwise
      */
-    bool ShaderProgram::attachGeometrySource(const std::string& src) {
+    bool ShaderProgram::attach_geometry_source(const std::string &src) {
         // Create the shader if needed
-        if (geometryShader == 0) {
-            geometryShader = glCreateShader(GL_GEOMETRY_SHADER);
-            geometryCount++;
+        if (geometry_shader == 0) {
+            geometry_shader = glCreateShader(GL_GEOMETRY_SHADER);
+            geometry_count++;
         }
 
         // Set the source
         const char* source = src.c_str();
-        glShaderSource(geometryShader, 1, &source, nullptr);
+        glShaderSource(geometry_shader, 1, &source, nullptr);
 
         // Compile
-        glCompileShader(geometryShader);
+        glCompileShader(geometry_shader);
 
         // Check for compile errors
         GLint status;
-        glGetShaderiv(geometryShader, GL_COMPILE_STATUS, &status);
+        glGetShaderiv(geometry_shader, GL_COMPILE_STATUS, &status);
         if (status == GL_FALSE) {
-            GLint maxLength = 0;
-            glGetShaderiv(geometryShader, GL_INFO_LOG_LENGTH, &maxLength);
+            GLint max_length = 0;
+            glGetShaderiv(geometry_shader, GL_INFO_LOG_LENGTH, &max_length);
 
-            std::vector<GLchar> info(maxLength);
-            glGetShaderInfoLog(geometryShader, maxLength, nullptr, &info[0]);
+            std::vector<GLchar> info(max_length);
+            glGetShaderInfoLog(geometry_shader, max_length, nullptr, &info[0]);
 
-            if (info.empty())
+            if (info.empty()) {
                 info = unknown_info;
+            }
 
-            log::log(shaderLG, log::error, std::string("Shader compilation failed: ").append(&info[0]));
+            log::log(shader_lg, log::error, std::string("Shader compilation failed: ").append(&info[0]));
 
             // Delete the shader
-            glDeleteShader(geometryShader);
-            geometryCount--;
+            glDeleteShader(geometry_shader);
+            geometry_count--;
 
             return false;
         }
 
         // Attach
-        glAttachShader(programID, geometryShader);
+        glAttachShader(program_id, geometry_shader);
 
         linked = false;
         return true;
@@ -236,44 +238,45 @@ namespace open_sea::gl {
      * \param src Shader source
      * \return \c false on failure, \c true otherwise
      */
-    bool ShaderProgram::attachFragmentSource(const std::string& src) {
+    bool ShaderProgram::attach_fragment_source(const std::string &src) {
         // Create the shader if needed
-        if (fragmentShader == 0) {
-            fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-            fragmentCount++;
+        if (fragment_shader == 0) {
+            fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+            fragment_count++;
         }
 
         // Set the source
         const char* source = src.c_str();
-        glShaderSource(fragmentShader, 1, &source, nullptr);
+        glShaderSource(fragment_shader, 1, &source, nullptr);
 
         // Compile
-        glCompileShader(fragmentShader);
+        glCompileShader(fragment_shader);
 
         // Check for compile errors
         GLint status;
-        glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &status);
+        glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &status);
         if (status == GL_FALSE) {
-            GLint maxLength = 0;
-            glGetShaderiv(fragmentShader, GL_INFO_LOG_LENGTH, &maxLength);
+            GLint max_length = 0;
+            glGetShaderiv(fragment_shader, GL_INFO_LOG_LENGTH, &max_length);
 
-            std::vector<GLchar> info(maxLength);
-            glGetShaderInfoLog(fragmentShader, maxLength, nullptr, &info[0]);
+            std::vector<GLchar> info(max_length);
+            glGetShaderInfoLog(fragment_shader, max_length, nullptr, &info[0]);
 
-            if (info.empty())
+            if (info.empty()) {
                 info = unknown_info;
+            }
 
-            log::log(shaderLG, log::error, std::string("Shader compilation failed: ").append(&info[0]));
+            log::log(shader_lg, log::error, std::string("Shader compilation failed: ").append(&info[0]));
 
             // Delete the shader
-            glDeleteShader(fragmentShader);
-            fragmentCount--;
+            glDeleteShader(fragment_shader);
+            fragment_count--;
 
             return false;
         }
 
         // Attach
-        glAttachShader(programID, fragmentShader);
+        glAttachShader(program_id, fragment_shader);
 
         linked = false;
         return true;
@@ -288,51 +291,52 @@ namespace open_sea::gl {
      * \param src Shader source
      * \return \c false on failure, \c true otherwise
      */
-    bool ShaderProgram::attachTessConSource(const std::string& src) {
+    bool ShaderProgram::attach_tess_con_source(const std::string &src) {
         // Skip if context version too low
         int major;
         glGetIntegerv(GL_MAJOR_VERSION, &major);
         if (major < 4) {
-            log::log(shaderLG, log::warning, "Tessellation control shader skipped, because context version is too low");
+            log::log(shader_lg, log::warning, "Tessellation control shader skipped, because context version is too low");
         }
 
         // Create the shader if needed
-        if (tessConShader == 0) {
-            tessConShader = glCreateShader(GL_TESS_CONTROL_SHADER);
-            tessConCount++;
+        if (tess_con_shader == 0) {
+            tess_con_shader = glCreateShader(GL_TESS_CONTROL_SHADER);
+            tess_con_count++;
         }
 
         // Set the source
         const char* source = src.c_str();
-        glShaderSource(tessConShader, 1, &source, nullptr);
+        glShaderSource(tess_con_shader, 1, &source, nullptr);
 
         // Compile
-        glCompileShader(tessConShader);
+        glCompileShader(tess_con_shader);
 
         // Check for compile errors
         GLint status;
-        glGetShaderiv(tessConShader, GL_COMPILE_STATUS, &status);
+        glGetShaderiv(tess_con_shader, GL_COMPILE_STATUS, &status);
         if (status == GL_FALSE) {
-            GLint maxLength = 0;
-            glGetShaderiv(tessConShader, GL_INFO_LOG_LENGTH, &maxLength);
+            GLint max_length = 0;
+            glGetShaderiv(tess_con_shader, GL_INFO_LOG_LENGTH, &max_length);
 
-            std::vector<GLchar> info(maxLength);
-            glGetShaderInfoLog(tessConShader, maxLength, nullptr, &info[0]);
+            std::vector<GLchar> info(max_length);
+            glGetShaderInfoLog(tess_con_shader, max_length, nullptr, &info[0]);
 
-            if (info.empty())
+            if (info.empty()) {
                 info = unknown_info;
+            }
 
-            log::log(shaderLG, log::error, std::string("Shader compilation failed: ").append(&info[0]));
+            log::log(shader_lg, log::error, std::string("Shader compilation failed: ").append(&info[0]));
 
             // Delete the shader
-            glDeleteShader(tessConShader);
-            tessConCount--;
+            glDeleteShader(tess_con_shader);
+            tess_con_count--;
 
             return false;
         }
 
         // Attach
-        glAttachShader(programID, tessConShader);
+        glAttachShader(program_id, tess_con_shader);
 
         linked = false;
         return true;
@@ -347,51 +351,52 @@ namespace open_sea::gl {
      * \param src Shader source
      * \return \c false on failure, \c true otherwise
      */
-    bool ShaderProgram::attachTessEvalSource(const std::string& src) {
+    bool ShaderProgram::attach_tess_eval_source(const std::string &src) {
         // Skip if context version too low
         int major;
         glGetIntegerv(GL_MAJOR_VERSION, &major);
         if (major < 4) {
-            log::log(shaderLG, log::warning, "Tessellation evaluation shader skipped, because context version is too low");
+            log::log(shader_lg, log::warning, "Tessellation evaluation shader skipped, because context version is too low");
         }
 
         // Create the shader if needed
-        if (tessEvalShader == 0) {
-            tessEvalShader = glCreateShader(GL_TESS_EVALUATION_SHADER);
-            tessEvalCount++;
+        if (tess_eval_shader == 0) {
+            tess_eval_shader = glCreateShader(GL_TESS_EVALUATION_SHADER);
+            tess_eval_count++;
         }
 
         // Set the source
         const char* source = src.c_str();
-        glShaderSource(tessEvalShader, 1, &source, nullptr);
+        glShaderSource(tess_eval_shader, 1, &source, nullptr);
 
         // Compile
-        glCompileShader(tessEvalShader);
+        glCompileShader(tess_eval_shader);
 
         // Check for compile errors
         GLint status;
-        glGetShaderiv(tessEvalShader, GL_COMPILE_STATUS, &status);
+        glGetShaderiv(tess_eval_shader, GL_COMPILE_STATUS, &status);
         if (status == GL_FALSE) {
-            GLint maxLength = 0;
-            glGetShaderiv(tessEvalShader, GL_INFO_LOG_LENGTH, &maxLength);
+            GLint max_length = 0;
+            glGetShaderiv(tess_eval_shader, GL_INFO_LOG_LENGTH, &max_length);
 
-            std::vector<GLchar> info(maxLength);
-            glGetShaderInfoLog(tessEvalShader, maxLength, nullptr, &info[0]);
+            std::vector<GLchar> info(max_length);
+            glGetShaderInfoLog(tess_eval_shader, max_length, nullptr, &info[0]);
 
-            if (info.empty())
+            if (info.empty()) {
                 info = unknown_info;
+            }
 
-            log::log(shaderLG, log::error, std::string("Shader compilation failed: ").append(&info[0]));
+            log::log(shader_lg, log::error, std::string("Shader compilation failed: ").append(&info[0]));
 
             // Delete the shader
-            glDeleteShader(tessEvalShader);
-            tessEvalCount--;
+            glDeleteShader(tess_eval_shader);
+            tess_eval_count--;
 
             return false;
         }
 
         // Attach
-        glAttachShader(programID, tessEvalShader);
+        glAttachShader(program_id, tess_eval_shader);
 
         linked = false;
         return true;
@@ -404,9 +409,9 @@ namespace open_sea::gl {
      * \param size Size of the destination buffer
      * \return Length of the actual source code string
      */
-    int ShaderProgram::getVertexSource(char *dest, unsigned size) {
+    int ShaderProgram::get_vertex_source(char *dest, unsigned size) {
         GLsizei l;
-        glGetShaderSource(vertexShader, size, &l, dest);
+        glGetShaderSource(vertex_shader, size, &l, dest);
         return l;
     }
 
@@ -417,9 +422,9 @@ namespace open_sea::gl {
      * \param size Size of the destination buffer
      * \return Length of the actual source code string
      */
-    int ShaderProgram::getGeometrySource(char *dest, unsigned size) {
+    int ShaderProgram::get_geometry_source(char *dest, unsigned size) {
         GLsizei l;
-        glGetShaderSource(geometryShader, size, &l, dest);
+        glGetShaderSource(geometry_shader, size, &l, dest);
         return l;
     }
 
@@ -430,9 +435,9 @@ namespace open_sea::gl {
      * \param size Size of the destination buffer
      * \return Length of the actual source code string
      */
-    int ShaderProgram::getFragmentSource(char *dest, unsigned size) {
+    int ShaderProgram::get_fragment_source(char *dest, unsigned size) {
         GLsizei l;
-        glGetShaderSource(fragmentShader, size, &l, dest);
+        glGetShaderSource(fragment_shader, size, &l, dest);
         return l;
     }
 
@@ -443,9 +448,9 @@ namespace open_sea::gl {
      * \param size Size of the destination buffer
      * \return Length of the actual source code string
      */
-    int ShaderProgram::getTessConSource(char *dest, unsigned size) {
+    int ShaderProgram::get_tess_con_source(char *dest, unsigned size) {
         GLsizei l;
-        glGetShaderSource(tessConShader, size, &l, dest);
+        glGetShaderSource(tess_con_shader, size, &l, dest);
         return l;
     }
 
@@ -456,9 +461,9 @@ namespace open_sea::gl {
      * \param size Size of the destination buffer
      * \return Length of the actual source code string
      */
-    int ShaderProgram::getTessEvalSource(char *dest, unsigned size) {
+    int ShaderProgram::get_tess_eval_source(char *dest, unsigned size) {
         GLsizei l;
-        glGetShaderSource(tessEvalShader, size, &l, dest);
+        glGetShaderSource(tess_eval_shader, size, &l, dest);
         return l;
     }
 
@@ -466,12 +471,12 @@ namespace open_sea::gl {
      * \brief Detach the vertex shader
      * Detach and delete the vertex shader
      */
-    void ShaderProgram::detachVertex() {
-        if (vertexShader) {
-            glDetachShader(programID, vertexShader);
-            glDeleteShader(vertexShader);
-            vertexShader = 0;
-            vertexCount--;
+    void ShaderProgram::detach_vertex() {
+        if (vertex_shader) {
+            glDetachShader(program_id, vertex_shader);
+            glDeleteShader(vertex_shader);
+            vertex_shader = 0;
+            vertex_count--;
             linked = false;
         }
     }
@@ -480,12 +485,12 @@ namespace open_sea::gl {
      * \brief Detach the geometry shader
      * Detach and delete the geometry shader
      */
-    void ShaderProgram::detachGeometry() {
-        if (geometryShader) {
-            glDetachShader(programID, geometryShader);
-            glDeleteShader(geometryShader);
-            geometryShader = 0;
-            geometryCount--;
+    void ShaderProgram::detach_geometry() {
+        if (geometry_shader) {
+            glDetachShader(program_id, geometry_shader);
+            glDeleteShader(geometry_shader);
+            geometry_shader = 0;
+            geometry_count--;
             linked = false;
         }
     }
@@ -494,12 +499,12 @@ namespace open_sea::gl {
      * \brief Detach the fragment shader
      * Detach and delete the fragment shader
      */
-    void ShaderProgram::detachFragment() {
-        if (fragmentShader) {
-            glDetachShader(programID, fragmentShader);
-            glDeleteShader(fragmentShader);
-            fragmentShader = 0;
-            fragmentCount--;
+    void ShaderProgram::detach_fragment() {
+        if (fragment_shader) {
+            glDetachShader(program_id, fragment_shader);
+            glDeleteShader(fragment_shader);
+            fragment_shader = 0;
+            fragment_count--;
             linked = false;
         }
     }
@@ -508,12 +513,12 @@ namespace open_sea::gl {
      * \brief Detach the tessellation control shader
      * Detach and delete the tessellation control shader
      */
-    void ShaderProgram::detachTessCon() {
-        if (tessConShader) {
-            glDetachShader(programID, tessConShader);
-            glDeleteShader(tessConShader);
-            tessConShader = 0;
-            fragmentCount--;
+    void ShaderProgram::detach_tess_con() {
+        if (tess_con_shader) {
+            glDetachShader(program_id, tess_con_shader);
+            glDeleteShader(tess_con_shader);
+            tess_con_shader = 0;
+            fragment_count--;
             linked = false;
         }
     }
@@ -522,12 +527,12 @@ namespace open_sea::gl {
      * \brief Detach the tessellation evaluation shader
      * Detach and delete the tessellation evaluation shader
      */
-    void ShaderProgram::detachTessEval() {
-        if (tessEvalShader) {
-            glDetachShader(programID, tessEvalShader);
-            glDeleteShader(tessEvalShader);
-            tessEvalShader = 0;
-            fragmentCount--;
+    void ShaderProgram::detach_tess_eval() {
+        if (tess_eval_shader) {
+            glDetachShader(program_id, tess_eval_shader);
+            glDeleteShader(tess_eval_shader);
+            tess_eval_shader = 0;
+            fragment_count--;
             linked = false;
         }
     }
@@ -539,23 +544,25 @@ namespace open_sea::gl {
      */
     bool ShaderProgram::link() {
         // Skip if already linked
-        if (linked)
+        if (linked) {
             return true;
+        }
 
-        glLinkProgram(programID);
+        glLinkProgram(program_id);
         GLint status;
-        glGetProgramiv(programID, GL_LINK_STATUS, &status);
+        glGetProgramiv(program_id, GL_LINK_STATUS, &status);
         if (status == GL_FALSE) {
-            GLint maxLength = 0;
-            glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &maxLength);
+            GLint max_length = 0;
+            glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &max_length);
 
-            std::vector<GLchar> info(maxLength);
-            glGetProgramInfoLog(programID, maxLength, nullptr, &info[0]);
+            std::vector<GLchar> info(max_length);
+            glGetProgramInfoLog(program_id, max_length, nullptr, &info[0]);
 
-            if (info.empty())
+            if (info.empty()) {
                 info = unknown_info;
+            }
 
-            log::log(shaderLG, log::error, std::string("Program linking failed: ").append(&info[0]));
+            log::log(shader_lg, log::error, std::string("Program linking failed: ").append(&info[0]));
             return false;
         }
 
@@ -568,7 +575,7 @@ namespace open_sea::gl {
      *
      * \return Whether the program has been linked
      */
-    bool ShaderProgram::isLinked() const {
+    bool ShaderProgram::is_linked() const {
         return linked;
     }
 
@@ -578,20 +585,21 @@ namespace open_sea::gl {
      * \return \c false on failure, \c true otherwise
      */
     bool ShaderProgram::validate() {
-        glValidateProgram(programID);
+        glValidateProgram(program_id);
         GLint status;
-        glGetProgramiv(programID, GL_VALIDATE_STATUS, &status);
+        glGetProgramiv(program_id, GL_VALIDATE_STATUS, &status);
         if (status == GL_FALSE) {
-            GLint maxLength = 0;
-            glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &maxLength);
+            GLint max_length = 0;
+            glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &max_length);
 
-            std::vector<GLchar> info(maxLength);
-            glGetProgramInfoLog(programID, maxLength, nullptr, &info[0]);
+            std::vector<GLchar> info(max_length);
+            glGetProgramInfoLog(program_id, max_length, nullptr, &info[0]);
 
-            if (info.empty())
+            if (info.empty()) {
                 info = unknown_info;
+            }
 
-            log::log(shaderLG, log::error, std::string("Program validation failed: ").append(&info[0]));
+            log::log(shader_lg, log::error, std::string("Program validation failed: ").append(&info[0]));
             return false;
         }
         return true;
@@ -601,7 +609,7 @@ namespace open_sea::gl {
      * \brief Start using this shader program
      */
     void ShaderProgram::use() const {
-        glUseProgram(programID);
+        glUseProgram(program_id);
     }
 
     /**
@@ -618,8 +626,8 @@ namespace open_sea::gl {
      * \param name Name of the uniform
      * \return Location of the uniform or \c -1 if the parameter is not a valid name or the uniform is not present
      */
-    GLint ShaderProgram::getUniformLocation(const std::string &name) {
-        return glGetUniformLocation(programID, name.c_str());
+    GLint ShaderProgram::get_uniform_location(const std::string &name) const {
+        return glGetUniformLocation(program_id, name.c_str());
     }
 
     /**
@@ -628,8 +636,8 @@ namespace open_sea::gl {
      * \param name Name of the attribute
      * \return Location of the attribute or \c -1 if the parameter is not a valid name or the attribute is not present
      */
-    GLint ShaderProgram::getAttributeLocation(const std::string &name) {
-        return glGetAttribLocation(programID, name.c_str());
+    GLint ShaderProgram::get_attribute_location(const std::string &name) const {
+        return glGetAttribLocation(program_id, name.c_str());
     }
 
     /**
@@ -637,16 +645,16 @@ namespace open_sea::gl {
      */
     ShaderProgram::~ShaderProgram() {
         // Destroy all the shaders
-        detachVertex();
-        detachGeometry();
-        detachFragment();
-        detachTessCon();
-        detachTessEval();
+        detach_vertex();
+        detach_geometry();
+        detach_fragment();
+        detach_tess_con();
+        detach_tess_eval();
 
         // Destroy the program
-        glDeleteProgram(programID);
-        programID = 0;
-        programCount--;
+        glDeleteProgram(program_id);
+        program_id = 0;
+        program_count--;
     }
 
     /**
@@ -658,7 +666,7 @@ namespace open_sea::gl {
      * \return \c true when equal, \c false otherwise
      */
     bool ShaderProgram::operator==(const ShaderProgram &rhs) const {
-        return programID == rhs.programID;
+        return program_id == rhs.program_id;
     }
 
     /**
@@ -674,85 +682,88 @@ namespace open_sea::gl {
     /**
      * \brief Show the source edit popup
      */
-    void ShaderProgram::modifyPopup() {
+    void ShaderProgram::modify_popup() {
         // Source input field
-        ImGui::InputTextMultiline("source", modifySource.get(), SOURCE_BUFFER_SIZE, ImVec2(2 * debug::STANDARD_WIDTH, 0));
+        ImGui::InputTextMultiline("source", modify_source.get(), source_buffer_size, ImVec2(2 * debug::standard_width, 0));
 
         // Close button
         ImGui::Separator();
         if (ImGui::Button("Close")) {
-            modifySource.reset();
+            modify_source.reset();
             ImGui::CloseCurrentPopup();
         }
 
         // Save button
         ImGui::SameLine();
         if (ImGui::Button("Save")) {
-            std::string src(modifySource.get());
+            std::string src(modify_source.get());
 
             // Attach
-            switch (modifyType) {
-                case type::vertex: modifyAttached = attachVertexSource(src); break;
-                case type::geometry: modifyAttached = attachGeometrySource(src); break;
-                case type::fragment: modifyAttached = attachFragmentSource(src); break;
-                case type::tessellation_control: modifyAttached = attachTessConSource(src); break;
-                case type::tessellation_evaluation: modifyAttached = attachTessEvalSource(src); break;
+            switch (modify_type) {
+                case type::vertex: modify_attached = attach_vertex_source(src); break;
+                case type::geometry: modify_attached = attach_geometry_source(src); break;
+                case type::fragment: modify_attached = attach_fragment_source(src); break;
+                case type::tessellation_control: modify_attached = attach_tess_con_source(src); break;
+                case type::tessellation_evaluation: modify_attached = attach_tess_eval_source(src); break;
             }
 
             // Link
-            if (modifyAttached)
-                modifyLinked = link();
+            if (modify_attached) {
+                modify_linked = link();
+            }
 
             // Validate
-            if (modifyLinked)
-                modifyValidated = validate();
+            if (modify_linked) {
+                modify_validated = validate();
+            }
         }
 
         // Reset button
         ImGui::SameLine();
         if (ImGui::Button("Reset")) {
-            switch (modifyType) {
-                case type::vertex: getVertexSource(modifySource.get(), SOURCE_BUFFER_SIZE); break;
-                case type::geometry: getGeometrySource(modifySource.get(), SOURCE_BUFFER_SIZE); break;
-                case type::fragment: getFragmentSource(modifySource.get(), SOURCE_BUFFER_SIZE); break;
-                case type::tessellation_control: getTessConSource(modifySource.get(), SOURCE_BUFFER_SIZE); break;
-                case type::tessellation_evaluation: getTessEvalSource(modifySource.get(), SOURCE_BUFFER_SIZE); break;
+            switch (modify_type) {
+                case type::vertex: get_vertex_source(modify_source.get(), source_buffer_size); break;
+                case type::geometry: get_geometry_source(modify_source.get(), source_buffer_size); break;
+                case type::fragment: get_fragment_source(modify_source.get(), source_buffer_size); break;
+                case type::tessellation_control: get_tess_con_source(modify_source.get(), source_buffer_size); break;
+                case type::tessellation_evaluation: get_tess_eval_source(modify_source.get(), source_buffer_size); break;
             }
         }
 
         // Save error and success messages
-        if (!modifyAttached)
+        if (!modify_attached) {
             ImGui::TextColored(ImVec4(1, 0, 0, 1), "Shader source attachment error");
-        else if(!modifyLinked)
+        } else if(!modify_linked) {
             ImGui::TextColored(ImVec4(1, 0, 0, 1), "Shader program link error");
-        else if(!modifyValidated)
+        } else if(!modify_validated) {
             ImGui::TextColored(ImVec4(1, 0, 0, 1), "Shader program validation error");
-        else
+        } else {
             ImGui::TextColored(ImVec4(0, 1, 0, 1), "Saved");
+        }
     }
 
     /**
      * \brief Show shader program information
      */
     // Note: ## in button name needed for them to detect clicks (need unique labels)
-    void ShaderProgram::showDebug() {
+    void ShaderProgram::show_debug() {
         // Vertex shader info
-        if (vertexShader > 0) {
+        if (vertex_shader > 0) {
             ImGui::TextUnformatted("Vertex Shader - ");
 
             // View and modify source button
             ImGui::SameLine();
             if (ImGui::SmallButton("source##0")) {
-                modifySource = std::make_unique<char[]>(SOURCE_BUFFER_SIZE);
-                getVertexSource(modifySource.get(), SOURCE_BUFFER_SIZE);
-                modifyType = type::vertex;
+                modify_source = std::make_unique<char[]>(source_buffer_size);
+                get_vertex_source(modify_source.get(), source_buffer_size);
+                modify_type = type::vertex;
                 ImGui::OpenPopup("modify");
             }
 
             // Detach shader button
             ImGui::SameLine();
             if (ImGui::SmallButton("detach##0")) {
-                detachVertex();
+                detach_vertex();
                 link();
             }
         } else {
@@ -761,30 +772,30 @@ namespace open_sea::gl {
             // Add shader button (view and modify empty source)
             ImGui::SameLine();
             if (ImGui::SmallButton("add##0")) {
-                modifySource = std::make_unique<char[]>(SOURCE_BUFFER_SIZE);
-                modifySource.get()[0] = '\0';
-                modifyType = type::vertex;
+                modify_source = std::make_unique<char[]>(source_buffer_size);
+                modify_source.get()[0] = '\0';
+                modify_type = type::vertex;
                 ImGui::OpenPopup("modify");
             }
         }
 
         // Geometry shader info
-        if (geometryShader > 0) {
+        if (geometry_shader > 0) {
             ImGui::TextUnformatted("Geometry Shader - ");
 
             // View and modify source button
             ImGui::SameLine();
             if (ImGui::SmallButton("source##1")) {
-                modifySource = std::make_unique<char[]>(SOURCE_BUFFER_SIZE);
-                getGeometrySource(modifySource.get(), SOURCE_BUFFER_SIZE);
-                modifyType = type::geometry;
+                modify_source = std::make_unique<char[]>(source_buffer_size);
+                get_geometry_source(modify_source.get(), source_buffer_size);
+                modify_type = type::geometry;
                 ImGui::OpenPopup("modify");
             }
 
             // Detach shader button
             ImGui::SameLine();
             if (ImGui::SmallButton("detach##1")) {
-                detachGeometry();
+                detach_geometry();
                 link();
             }
         } else {
@@ -793,30 +804,30 @@ namespace open_sea::gl {
             // Add shader button (view and modify empty source)
             ImGui::SameLine();
             if (ImGui::SmallButton("add##1")) {
-                modifySource = std::make_unique<char[]>(SOURCE_BUFFER_SIZE);
-                modifySource.get()[0] = '\0';
-                modifyType = type::geometry;
+                modify_source = std::make_unique<char[]>(source_buffer_size);
+                modify_source.get()[0] = '\0';
+                modify_type = type::geometry;
                 ImGui::OpenPopup("modify");
             }
         }
 
         // Fragment shader info
-        if (fragmentShader > 0) {
+        if (fragment_shader > 0) {
             ImGui::TextUnformatted("Fragment Shader - ");
 
             // View and modify source button
             ImGui::SameLine();
             if (ImGui::SmallButton("source##2")) {
-                modifySource = std::make_unique<char[]>(SOURCE_BUFFER_SIZE);
-                getFragmentSource(modifySource.get(), SOURCE_BUFFER_SIZE);
-                modifyType = type::fragment;
+                modify_source = std::make_unique<char[]>(source_buffer_size);
+                get_fragment_source(modify_source.get(), source_buffer_size);
+                modify_type = type::fragment;
                 ImGui::OpenPopup("modify");
             }
 
             // Detach shader button
             ImGui::SameLine();
             if (ImGui::SmallButton("detach##2")) {
-                detachFragment();
+                detach_fragment();
                 link();
             }
         } else {
@@ -825,30 +836,30 @@ namespace open_sea::gl {
             // Add shader button (view and modify empty source)
             ImGui::SameLine();
             if (ImGui::SmallButton("add##2")) {
-                modifySource = std::make_unique<char[]>(SOURCE_BUFFER_SIZE);
-                modifySource.get()[0] = '\0';
-                modifyType = type::fragment;
+                modify_source = std::make_unique<char[]>(source_buffer_size);
+                modify_source.get()[0] = '\0';
+                modify_type = type::fragment;
                 ImGui::OpenPopup("modify");
             }
         }
 
         // Tessellation control shader info
-        if (tessConShader > 0) {
+        if (tess_con_shader > 0) {
             ImGui::TextUnformatted("Tessellation Control Shader - ");
 
             // View and modify source button
             ImGui::SameLine();
             if (ImGui::SmallButton("source##3")) {
-                modifySource = std::make_unique<char[]>(SOURCE_BUFFER_SIZE);
-                getTessConSource(modifySource.get(), SOURCE_BUFFER_SIZE);
-                modifyType = type::tessellation_control;
+                modify_source = std::make_unique<char[]>(source_buffer_size);
+                get_tess_con_source(modify_source.get(), source_buffer_size);
+                modify_type = type::tessellation_control;
                 ImGui::OpenPopup("modify");
             }
 
             // Detach shader button
             ImGui::SameLine();
             if (ImGui::SmallButton("detach##3")) {
-                detachTessCon();
+                detach_tess_con();
                 link();
             }
         } else {
@@ -857,30 +868,30 @@ namespace open_sea::gl {
             // Add shader button (view and modify empty source)
             ImGui::SameLine();
             if (ImGui::SmallButton("add##3")) {
-                modifySource = std::make_unique<char[]>(SOURCE_BUFFER_SIZE);
-                modifySource.get()[0] = '\0';
-                modifyType = type::tessellation_control;
+                modify_source = std::make_unique<char[]>(source_buffer_size);
+                modify_source.get()[0] = '\0';
+                modify_type = type::tessellation_control;
                 ImGui::OpenPopup("modify");
             }
         }
 
         // Tessellation evaluation shader info
-        if (tessEvalShader > 0) {
+        if (tess_eval_shader > 0) {
             ImGui::TextUnformatted("Tessellation Evaluation Shader - ");
 
             // View and modify source button
             ImGui::SameLine();
             if (ImGui::SmallButton("source##4")) {
-                modifySource = std::make_unique<char[]>(SOURCE_BUFFER_SIZE);
-                getTessEvalSource(modifySource.get(), SOURCE_BUFFER_SIZE);
-                modifyType = type::tessellation_evaluation;
+                modify_source = std::make_unique<char[]>(source_buffer_size);
+                get_tess_eval_source(modify_source.get(), source_buffer_size);
+                modify_type = type::tessellation_evaluation;
                 ImGui::OpenPopup("modify");
             }
 
             // Detach shader button
             ImGui::SameLine();
             if (ImGui::SmallButton("detach##4")) {
-                detachTessEval();
+                detach_tess_eval();
                 link();
             }
         } else {
@@ -889,16 +900,16 @@ namespace open_sea::gl {
             // Add shader button (view and modify empty source)
             ImGui::SameLine();
             if (ImGui::SmallButton("add##4")) {
-                modifySource = std::make_unique<char[]>(SOURCE_BUFFER_SIZE);
-                modifySource.get()[0] = '\0';
-                modifyType = type::tessellation_evaluation;
+                modify_source = std::make_unique<char[]>(source_buffer_size);
+                modify_source.get()[0] = '\0';
+                modify_type = type::tessellation_evaluation;
                 ImGui::OpenPopup("modify");
             }
         }
 
         // Show the view and modify dialog
         if (ImGui::BeginPopupModal("modify", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-            modifyPopup();
+            modify_popup();
             
             ImGui::EndPopup();
         }
@@ -907,13 +918,13 @@ namespace open_sea::gl {
     /**
      * \brief Show the ImGui debug widget
      */
-    void ShaderProgram::debugWidget() {
-        ImGui::Text("Shader programs: %d", programCount);
-        ImGui::Text("Vertex shaders: %d", vertexCount);
-        ImGui::Text("Geometry shaders: %d", geometryCount);
-        ImGui::Text("Fragment shaders: %d", fragmentCount);
-        ImGui::Text("Tessellation control shaders: %d", tessConCount);
-        ImGui::Text("Tessellation evaluation shaders: %d", tessEvalCount);
+    void ShaderProgram::debug_widget() {
+        ImGui::Text("Shader programs: %d", program_count);
+        ImGui::Text("Vertex shaders: %d", vertex_count);
+        ImGui::Text("Geometry shaders: %d", geometry_count);
+        ImGui::Text("Fragment shaders: %d", fragment_count);
+        ImGui::Text("Tessellation control shaders: %d", tess_con_count);
+        ImGui::Text("Tessellation evaluation shaders: %d", tess_eval_count);
     }
 //--- end ShaderProgram implementation
 
@@ -929,14 +940,8 @@ namespace open_sea::gl {
      * \param far Far clipping plane
      */
     Camera::Camera(const glm::mat4 &transformation, const glm::vec2 &size, float near, float far) : near(near), far(far) {
-        this->setTransformation(transformation);
+        this->set_transformation(transformation);
         this->size = glm::vec2(size);
-
-        projMatrix = glm::mat4();
-        projViewMatrix = glm::mat4();
-
-        recalculateProj = true;
-        recalculatePV = true;
     }
 
     /**
@@ -944,57 +949,57 @@ namespace open_sea::gl {
      *
      * \param transformation Transformation to use
      */
-    void Camera::setTransformation(const glm::mat4 &transformation) {
-        viewMatrix = glm::inverse(transformation);
-        recalculatePV = true;
+    void Camera::set_transformation(const glm::mat4 &transformation) {
+        view_matrix = glm::inverse(transformation);
+        recalculate_pv = true;
     }
 
-    void Camera::setSize(const glm::vec2& newValue) {
+    void Camera::set_size(const glm::vec2 &newValue) {
         size = newValue;
-        recalculateProj = true;
+        recalculate_proj = true;
     }
 
-    glm::vec2 Camera::getSize() const {
+    glm::vec2 Camera::get_size() const {
         return glm::vec2(size);
     }
 
-    void Camera::setNear(float newValue) {
+    void Camera::set_near(float newValue) {
         near = newValue;
-        recalculateProj = true;
+        recalculate_proj = true;
     }
 
-    float Camera::getNear() const {
+    float Camera::get_near() const {
         return near;
     }
 
-    void Camera::setFar(float newValue) {
+    void Camera::set_far(float newValue) {
         far = newValue;
-        recalculateProj = true;
+        recalculate_proj = true;
     }
 
-    float Camera::getFar() const {
+    float Camera::get_far() const {
         return far;
     }
 
     /**
      * \brief Show camera information
      */
-    void Camera::showDebug() {
+    void Camera::show_debug() {
         ImGui::InputFloat2("size", &size[0], "%.0f");
         ImGui::InputFloat("near", &near, 0, 0);
         ImGui::InputFloat("far", &far, 0, 0);
         if (ImGui::Button("Recalculate")) {
-            recalculateProj = true;
-            getProjViewMatrix();
+            recalculate_proj = true;
+            get_proj_view_matrix();
         }
         ImGui::Spacing();
 
         ImGui::TextUnformatted("Projection-view Matrix");
-        debug::show_matrix(projViewMatrix);
+        debug::show_matrix(proj_view_matrix);
         ImGui::Spacing();
 
         ImGui::TextUnformatted("View Matrix");
-        debug::show_matrix(viewMatrix);
+        debug::show_matrix(view_matrix);
     }
 
 //--- end Camera implementation
@@ -1014,28 +1019,28 @@ namespace open_sea::gl {
     OrthographicCamera::OrthographicCamera(const glm::mat4 &transformation, const glm::vec2& size,float near, float far)
             : Camera(transformation, size, near, far) {}
 
-    glm::mat4 OrthographicCamera::getProjViewMatrix() {
-        if (recalculateProj) {
+    glm::mat4 OrthographicCamera::get_proj_view_matrix() {
+        if (recalculate_proj) {
             // Projection assumes origin in centre
-            projMatrix = glm::ortho(
+            proj_matrix = glm::ortho(
                     -size.x / 2, size.x / 2,
                     -size.y / 2, size.y / 2,
                     near, far);
 
             // Update flag
-            recalculateProj = false;
-            recalculatePV = true;
+            recalculate_proj = false;
+            recalculate_pv = true;
         }
 
-        if (recalculatePV) {
-            projViewMatrix = projMatrix;
-            projViewMatrix *= viewMatrix;
+        if (recalculate_pv) {
+            proj_view_matrix = proj_matrix;
+            proj_view_matrix *= view_matrix;
 
             // Reset flag
-            recalculatePV = false;
+            recalculate_pv = false;
         }
 
-        return projViewMatrix;
+        return proj_view_matrix;
     }
 
 //--- end OrthographicCamera implementation
@@ -1055,44 +1060,44 @@ namespace open_sea::gl {
     PerspectiveCamera::PerspectiveCamera(const glm::mat4 &transformation, const glm::vec2 &size,float near, float far, float fov)
             : Camera(transformation, size, near, far), fov(fov) {}
 
-    glm::mat4 PerspectiveCamera::getProjViewMatrix() {
-        if (recalculateProj) {
-            projMatrix = glm::perspectiveFov(
+    glm::mat4 PerspectiveCamera::get_proj_view_matrix() {
+        if (recalculate_proj) {
+            proj_matrix = glm::perspectiveFov(
                     glm::radians(fov),
                     size.x, size.y,
                     near, far);
 
-            projViewMatrix = projMatrix;
-            projViewMatrix *= viewMatrix;
+            proj_view_matrix = proj_matrix;
+            proj_view_matrix *= view_matrix;
 
             // Update flag
-            recalculateProj = false;
-            recalculatePV = true;
+            recalculate_proj = false;
+            recalculate_pv = true;
         }
 
-        if (recalculatePV) {
-            projViewMatrix = projMatrix;
-            projViewMatrix *= viewMatrix;
+        if (recalculate_pv) {
+            proj_view_matrix = proj_matrix;
+            proj_view_matrix *= view_matrix;
 
             // Reset flag
-            recalculatePV = false;
+            recalculate_pv = false;
         }
 
-        return projViewMatrix;
+        return proj_view_matrix;
     }
 
-    void PerspectiveCamera::setFOV(float newValue) {
-        fov = newValue;
-        recalculateProj = true;
+    void PerspectiveCamera::set_fov(float new_value) {
+        fov = new_value;
+        recalculate_proj = true;
     }
 
-    float PerspectiveCamera::getFOV() const {
+    float PerspectiveCamera::get_fov() const {
         return fov;
     }
 
-    void PerspectiveCamera::showDebug() {
+    void PerspectiveCamera::show_debug() {
         ImGui::InputFloat("FOV", &fov);
-        Camera::showDebug();
+        Camera::show_debug();
     }
 
 //--- end PerspectiveCamera implementation
@@ -1108,7 +1113,7 @@ namespace open_sea::gl {
         if (ImGui::Begin("OpenGL", open)) {
             if (ImGui::CollapsingHeader("Shaders", ImGuiTreeNodeFlags_DefaultOpen)) {
                 ImGui::Indent();
-                ShaderProgram::debugWidget();
+                ShaderProgram::debug_widget();
                 ImGui::Unindent();
             }
         }
@@ -1126,13 +1131,13 @@ namespace open_sea::gl {
      * \param message Message contents
      * \param userParam User parameter
      */
-    void error_callback(GLenum source, GLenum type, GLuint id, GLenum severity,
-                        GLsizei length, const GLchar* message, const void* userParam) {
+    void error_callback(GLenum source, GLenum /*type*/, GLuint /*id*/, GLenum severity,
+                        GLsizei /*length*/, const GLchar* message, const void* /*userParam*/) {
         // Log only errors and performance issues
         if (severity >= GL_DEBUG_SEVERITY_LOW) {
             // Use special logger for shader errors
             if (source == GL_DEBUG_SOURCE_SHADER_COMPILER) {
-                log::log(shaderLG, log::error, message);
+                log::log(shader_lg, log::error, message);
                 return;
             }
 

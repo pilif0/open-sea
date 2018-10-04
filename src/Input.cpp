@@ -31,7 +31,7 @@ namespace open_sea::input {
 
     // Unified input
     //! Set of held down unified inputs
-    std::set<unified_input> unified_state;
+    std::set<UnifiedInput> unified_state;
 
     // Callbacks
     /**
@@ -45,14 +45,15 @@ namespace open_sea::input {
      */
     void key_callback(::GLFWwindow* window, int key, int scancode, int action, int mods) {
         // Skip if not the global window
-        if (window != w::window)
+        if (window != w::window) {
             return;
+        }
 
         // Transform values
         state state = (action == GLFW_PRESS) ? press : (action == GLFW_REPEAT) ? repeat : release;
 
         // Update unified input state
-        unified_input ui{.device = 0, .code = static_cast<unsigned int>(scancode)};
+        UnifiedInput ui{0, static_cast<unsigned int>(scancode)};
         if (action == GLFW_PRESS) {
             // Press -> insert
             unified_state.insert(ui);
@@ -70,8 +71,12 @@ namespace open_sea::input {
             // Let ImGui take all input when it wants it
             open_sea::imgui::key_callback(key, scancode, state, mods);
 
-            if (key == GLFW_KEY_ESCAPE && state == press) imgui_waits_esc = true;
-            if (key == GLFW_KEY_ENTER && state == press) imgui_waits_ent = true;
+            if (key == GLFW_KEY_ESCAPE && state == press) {
+                imgui_waits_esc = true;
+            }
+            if (key == GLFW_KEY_ENTER && state == press) {
+                imgui_waits_ent = true;
+            }
         } else {
             if (imgui_waits_esc && key == GLFW_KEY_ESCAPE && state == release) {
                 open_sea::imgui::key_callback(key, scancode, state, mods);
@@ -93,8 +98,9 @@ namespace open_sea::input {
      */
     void cursor_enter_callback(::GLFWwindow* window, int entered) {
         // Skip if not the global window
-        if (window != w::window)
+        if (window != w::window) {
             return;
+        }
 
         // Fire the signal
         (*enter)(entered == GLFW_TRUE);
@@ -110,14 +116,15 @@ namespace open_sea::input {
      */
     void mouse_button_callback(::GLFWwindow* window, int button, int action, int mods) {
         // Skip if not the global window
-        if (window != w::window)
+        if (window != w::window) {
             return;
+        }
 
         // Transform values
         state state = (action == GLFW_PRESS) ? press : (action == GLFW_REPEAT) ? repeat : release;
 
         // Update unified input state
-        unified_input ui{.device = 1, .code = static_cast<unsigned int>(button)};
+        UnifiedInput ui{1, static_cast<unsigned int>(button)};
         if (action == GLFW_PRESS) {
             // Press -> insert
             unified_state.insert(ui);
@@ -129,10 +136,11 @@ namespace open_sea::input {
         }
 
         // Fire a signal
-        if (ImGui::GetIO().WantCaptureMouse)
+        if (ImGui::GetIO().WantCaptureMouse) {
             open_sea::imgui::mouse_callback(button, state, mods);
-        else
+        } else {
             (*mouse)(button, state, mods);
+        }
     }
 
     /**
@@ -144,14 +152,16 @@ namespace open_sea::input {
      */
     void scroll_callback(::GLFWwindow* window, double xoffset, double yoffset) {
         // Skip if not the global window
-        if (window != w::window)
+        if (window != w::window) {
             return;
+        }
 
         // Fire a signal
-        if (ImGui::GetIO().WantCaptureMouse)
+        if (ImGui::GetIO().WantCaptureMouse) {
             open_sea::imgui::scroll_callback(xoffset, yoffset);
-        else
+        } else {
             (*scroll)(xoffset, yoffset);
+        }
     }
 
     /**
@@ -162,14 +172,16 @@ namespace open_sea::input {
      */
     void character_callback(::GLFWwindow* window, unsigned int codepoint) {
         // Skip if not the global window
-        if (window != w::window)
+        if (window != w::window) {
             return;
+        }
 
         // Fire a signal
-        if (ImGui::GetIO().WantCaptureKeyboard)
+        if (ImGui::GetIO().WantCaptureKeyboard) {
             open_sea::imgui::char_callback(codepoint);
-        else
+        } else {
             (*character)(codepoint);
+        }
     }
 
     /**
@@ -178,7 +190,7 @@ namespace open_sea::input {
      * \param input Unified input to check
      * \return Whether the input is held down
      */
-    bool is_held(unified_input input) {
+    bool is_held(UnifiedInput input) {
         return unified_state.count(input) != 0;
     }
 
@@ -204,22 +216,22 @@ namespace open_sea::input {
      *
      * \return String representation
      */
-    std::string unified_input::str() const {
-        std::string deviceStr;
+    std::string UnifiedInput::str() const {
+        std::string device_str;
         switch (device) {
             case 0:
-                deviceStr = "Keyboard";
+                device_str = "Keyboard";
                 break;
             case 1:
-                deviceStr = "Mouse";
+                device_str = "Mouse";
                 break;
             default:
-                deviceStr = "Unknown - ";
-                deviceStr.append(std::to_string(device));
+                device_str = "Unknown - ";
+                device_str.append(std::to_string(device));
         }
 
         std::ostringstream result;
-        result << "(" << deviceStr << ") " << code;
+        result << "(" << device_str << ") " << code;
         return result.str();
     }
 
@@ -323,8 +335,9 @@ namespace open_sea::input {
      */
     std::string key_name(int key, int scancode) {
         const char* cs = ::glfwGetKeyName(key, scancode);
-        if (cs == nullptr)
+        if (cs == nullptr) {
             return std::string("undefined");
+        }
 
         return std::string(cs);
     }
@@ -456,12 +469,12 @@ namespace open_sea::input {
         if (ImGui::Begin("Input", open)) {
             glm::dvec2 cur_pos = cursor_position();
             ImGui::Text("Cursor position: %.2f, %.2f", cur_pos.x, cur_pos.y);
-            ImGui::Text("Number of key slots: %d", keyboard->num_slots());
-            ImGui::Text("Number of enter slots: %d", enter->num_slots());
-            ImGui::Text("Number of mouse slots: %d", mouse->num_slots());
-            ImGui::Text("Number of scroll slots: %d", scroll->num_slots());
-            ImGui::Text("Number of character slots: %d", character->num_slots());
-            ImGui::Text("Number of unified input slots: %d", unified->num_slots());
+            ImGui::Text("Number of key slots: %d", static_cast<int>(keyboard->num_slots()));
+            ImGui::Text("Number of enter slots: %d", static_cast<int>(enter->num_slots()));
+            ImGui::Text("Number of mouse slots: %d", static_cast<int>(mouse->num_slots()));
+            ImGui::Text("Number of scroll slots: %d", static_cast<int>(scroll->num_slots()));
+            ImGui::Text("Number of character slots: %d", static_cast<int>(character->num_slots()));
+            ImGui::Text("Number of unified input slots: %d", static_cast<int>(unified->num_slots()));
             ImGui::Spacing();
 
             ImGui::Text("Cursor delta: %.2f, %.2f", cursor_d.x, cursor_d.y);

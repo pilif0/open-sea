@@ -7,6 +7,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <open-sea/config.h>
 #include <open-sea/Log.h>
 #include <open-sea/Window.h>
 #include <open-sea/Input.h>
@@ -54,35 +55,38 @@ int main() {
     os_log::log(lg, os_log::info, "Working directory set to outside the example directory");
 
     // Initialize window module
-    if (!window::init())
+    if (!window::init()) {
         return -1;
+    }
 
     // Create window
     glm::ivec2 window_size{1280, 720};
     window::set_title("Sample Game");
-    if (!window::make_windowed(window_size.x, window_size.y))
+    if (!window::make_windowed(window_size.x, window_size.y)) {
         return -1;
+    }
 
     // Initialize input
     input::init();
 
     // Add close action to ESC
-    input::connect_key([](int k, int c, input::state s, int m) {
-        if (s == input::press && k == GLFW_KEY_ESCAPE)
+    input::connect_key([](int k, int /*c*/, input::state s, int /*m*/) {
+        if (s == input::press && k == GLFW_KEY_ESCAPE) {
             window::close();
+        }
     });
 
     // Start OpenGL error handling
-#if !defined(OPEN_SEA_DEBUG_LOG)
-    gl::log_errors();
-#endif
+    if (open_sea::debug_log) {
+        gl::log_errors();
+    }
 
     // Initialize ImGui
     imgui::init();
 
     // Add ImGui display toggle to F3
     bool show_imgui = false;
-    input::connect_key([&show_imgui](int k, int c, input::state s, int m) {
+    input::connect_key([&show_imgui](int k, int /*c*/, input::state s, int /*m*/) {
         if (s == input::press && k == GLFW_KEY_F3) {
             // Toggle the display flag
             show_imgui = !show_imgui;
@@ -104,41 +108,46 @@ int main() {
     // Add borderless fullscreen control to F11
     bool windowed = true;
     input::connection borderless_toggle = input::connect_key([test_camera_ort, test_camera_per, window_size, &windowed]
-                                                                     (int k, int c, input::state s, int m){
+                                                                     (int k, int /*c*/, input::state s, int /*m*/){
         if (k == GLFW_KEY_F11 && s == input::press) {
             if (windowed) {
                 // Set borderless and update camera
                 window::make_borderless(glfwGetPrimaryMonitor());
-                test_camera_ort->setSize(glm::vec2{window::current_properties().fbWidth, window::current_properties().fbHeight});
-                test_camera_per->setSize(glm::vec2{window::current_properties().fbWidth, window::current_properties().fbHeight});
+                test_camera_ort->set_size(
+                        glm::vec2{window::current_properties().fb_width, window::current_properties().fb_height});
+                test_camera_per->set_size(
+                        glm::vec2{window::current_properties().fb_width, window::current_properties().fb_height});
                 windowed = false;
             } else {
                 // Set windowed and update camera
                 window::make_windowed(window_size.x, window_size.y);
-                test_camera_ort->setSize(glm::vec2{window::current_properties().fbWidth, window::current_properties().fbHeight});
-                test_camera_per->setSize(glm::vec2{window::current_properties().fbWidth, window::current_properties().fbHeight});
+                test_camera_ort->set_size(
+                        glm::vec2{window::current_properties().fb_width, window::current_properties().fb_height});
+                test_camera_per->set_size(
+                        glm::vec2{window::current_properties().fb_width, window::current_properties().fb_height});
                 windowed = true;
             }
         }
     });
 
     // Generate test entities
-    unsigned N = 1024;
+    unsigned n = 1024;
     std::shared_ptr<ecs::EntityManager> test_manager = std::make_shared<ecs::EntityManager>();
-    ecs::Entity entities[N];
-    test_manager->create(entities, N);
+    std::vector<ecs::Entity> entities(n);
+    test_manager->create(entities.data(), n);
     debug::add_entity_manager(test_manager, "Test Manager");
 
     // Prepare and assign model
     std::shared_ptr<ecs::ModelComponent> model_comp_manager = std::make_shared<ecs::ModelComponent>();
     {
-        std::shared_ptr<model::Model> model(model::UntexModel::fromFile("examples/sample-game/data/models/cube.obj"));
-        if (!model)
+        std::shared_ptr<model::Model> model(model::UntexModel::from_file("examples/sample-game/data/models/cube.obj"));
+        if (!model) {
             return -1;
-        model_comp_manager->modelToIndex(model);
-        std::vector<int> models(N);   // modelIdx == 0, because it is the first model
+        }
+        model_comp_manager->model_to_index(model);
+        std::vector<int> models(n);   // modelIdx == 0, because it is the first model
 
-        model_comp_manager->add(entities, models.data(), N);
+        model_comp_manager->add(entities.data(), models.data(), n);
     }
     debug::add_component_manager(model_comp_manager, "Model");
 
@@ -149,9 +158,9 @@ int main() {
         std::random_device device;
         std::mt19937_64 generator;
 
-        std::uniform_int_distribution<int> posX(-640, 640);
-        std::uniform_int_distribution<int> posY(-360, 360);
-        std::uniform_int_distribution<int> posZ(0, 750);
+        std::uniform_int_distribution<int> pos_x(-640, 640);
+        std::uniform_int_distribution<int> pos_y(-360, 360);
+        std::uniform_int_distribution<int> pos_z(0, 750);
 
         std::uniform_real_distribution<float> angle(0.0f, 360.0f);
         glm::vec3 axis{0.0f, 0.0f, 1.0f};
@@ -159,16 +168,16 @@ int main() {
         std::uniform_real_distribution<float> scale(1.0f, 20.0f);
 
         // Prepare data arrays
-        std::vector<glm::vec3> positions(N);
-        std::vector<glm::quat> orientations(N);
-        std::vector<glm::vec3> scales(N);
+        std::vector<glm::vec3> positions(n);
+        std::vector<glm::quat> orientations(n);
+        std::vector<glm::vec3> scales(n);
 
         // Randomise the data
         glm::vec3 *p = positions.data();
         glm::quat *o = orientations.data();
         glm::vec3 *s = scales.data();
-        for (int i = 0; i < N; i++, p++, o++, s++) {
-            *p = glm::vec3(posX(generator), posY(generator), posZ(generator));
+        for (unsigned i = 0; i < n; i++, p++, o++, s++) {
+            *p = glm::vec3(pos_x(generator), pos_y(generator), pos_z(generator));
             *o = glm::angleAxis(angle(generator), axis);
             float f = scale(generator);
             *s = glm::vec3(f, f, f);
@@ -177,7 +186,7 @@ int main() {
         os_log::log(lg, os_log::info, "Transformations generated");
 
         // Add the components
-        trans_comp_manager->add(entities, positions.data(), orientations.data(), scales.data(), N);
+        trans_comp_manager->add(entities.data(), positions.data(), orientations.data(), scales.data(), n);
         os_log::log(lg, os_log::info, "Transformations set");
     }
     debug::add_component_manager(trans_comp_manager, "Transformation");
@@ -217,51 +226,51 @@ int main() {
     // Prepare controls for the camera guide
     int controls_no = 0;
     controls::Free::Config controls_free_config {
-            .forward = input::unified_input::keyboard(GLFW_KEY_W),
-            .backward = input::unified_input::keyboard(GLFW_KEY_S),
-            .left = input::unified_input::keyboard(GLFW_KEY_A),
-            .right = input::unified_input::keyboard(GLFW_KEY_D),
-            .up = input::unified_input::keyboard(GLFW_KEY_LEFT_SHIFT),
-            .down = input::unified_input::keyboard(GLFW_KEY_LEFT_CONTROL),
-            .clockwise = input::unified_input::keyboard(GLFW_KEY_Q),
-            .counter_clockwise = input::unified_input::keyboard(GLFW_KEY_E),
-            .speed_x = 150.0f,
-            .speed_z = 150.0f,
-            .speed_y = 150.0f,
-            .turn_rate = 0.3f,
-            .roll_rate = 30.0f
+            /*forward*/ input::UnifiedInput::keyboard(GLFW_KEY_W),
+            /*backward*/ input::UnifiedInput::keyboard(GLFW_KEY_S),
+            /*left*/ input::UnifiedInput::keyboard(GLFW_KEY_A),
+            /*right*/ input::UnifiedInput::keyboard(GLFW_KEY_D),
+            /*up*/ input::UnifiedInput::keyboard(GLFW_KEY_LEFT_SHIFT),
+            /*down*/ input::UnifiedInput::keyboard(GLFW_KEY_LEFT_CONTROL),
+            /*clockwise*/ input::UnifiedInput::keyboard(GLFW_KEY_Q),
+            /*counter_clockwise*/ input::UnifiedInput::keyboard(GLFW_KEY_E),
+            /*speed_x*/ 150.0f,
+            /*speed_z*/ 150.0f,
+            /*speed_y*/ 150.0f,
+            /*turn_rate*/ 0.3f,
+            /*roll_rate*/ 30.0f
     };
     std::shared_ptr<controls::Controls> controls_free = std::make_shared<controls::Free>(trans_comp_manager, camera_guide, controls_free_config);
     debug::add_controls(controls_free, "Free Controls");
     controls::FPS::Config controls_fps_config {
-            .forward = input::unified_input::keyboard(GLFW_KEY_W),
-            .backward = input::unified_input::keyboard(GLFW_KEY_S),
-            .left = input::unified_input::keyboard(GLFW_KEY_A),
-            .right = input::unified_input::keyboard(GLFW_KEY_D),
-            .speed_x = 150.0f,
-            .speed_z = 150.0f,
-            .turn_rate = 0.3f
+            /*forward*/ input::UnifiedInput::keyboard(GLFW_KEY_W),
+            /*backward*/ input::UnifiedInput::keyboard(GLFW_KEY_S),
+            /*left*/ input::UnifiedInput::keyboard(GLFW_KEY_A),
+            /*right*/ input::UnifiedInput::keyboard(GLFW_KEY_D),
+            /*speed_x*/ 150.0f,
+            /*speed_z*/ 150.0f,
+            /*turn_rate*/ 0.3f
     };
     std::shared_ptr<controls::Controls> controls_fps = std::make_shared<controls::FPS>(trans_comp_manager, camera_guide, controls_fps_config);
     debug::add_controls(controls_fps, "FPS Controls");
     controls::TopDown::Config controls_td_config {
-            .left = input::unified_input::keyboard(GLFW_KEY_A),
-            .right = input::unified_input::keyboard(GLFW_KEY_D),
-            .up = input::unified_input::keyboard(GLFW_KEY_LEFT_SHIFT),
-            .down = input::unified_input::keyboard(GLFW_KEY_LEFT_CONTROL),
-            .clockwise = input::unified_input::keyboard(GLFW_KEY_Q),
-            .counter_clockwise = input::unified_input::keyboard(GLFW_KEY_E),
-            .speed_x = 150.0f,
-            .speed_y = 150.0f,
-            .roll_rate = 30.0f
+            /*up*/ input::UnifiedInput::keyboard(GLFW_KEY_LEFT_SHIFT),
+            /*down*/ input::UnifiedInput::keyboard(GLFW_KEY_LEFT_CONTROL),
+            /*left*/ input::UnifiedInput::keyboard(GLFW_KEY_A),
+            /*right*/ input::UnifiedInput::keyboard(GLFW_KEY_D),
+            /*clockwise*/ input::UnifiedInput::keyboard(GLFW_KEY_Q),
+            /*counter_clockwise*/ input::UnifiedInput::keyboard(GLFW_KEY_E),
+            /*speed_x*/ 150.0f,
+            /*speed_y*/ 150.0f,
+            /*roll_rate*/ 30.0f
     };
     std::shared_ptr<controls::Controls> controls_td = std::make_shared<controls::TopDown>(trans_comp_manager, camera_guide, controls_td_config);
     debug::add_controls(controls_td, "Top Down Controls");
 
     // Add suspend controls button
     bool suspend_controls = false;
-    const input::unified_input suspend_binding = input::unified_input::keyboard(GLFW_KEY_F1);
-    input::connect_unified([&suspend_controls, suspend_binding](input::unified_input i, input::state a){
+    const input::UnifiedInput suspend_binding = input::UnifiedInput::keyboard(GLFW_KEY_F1);
+    input::connect_unified([&suspend_controls, suspend_binding](input::UnifiedInput i, input::state a){
         if (i == suspend_binding && a == input::press) {
             suspend_controls = !suspend_controls;
         }
@@ -315,7 +324,9 @@ int main() {
     open_sea::time::start_delta();
     while (!window::should_close()) {
         // Start profiling
-        if (profiler_toggle) profiler::start();
+        if (profiler_toggle) {
+            profiler::start();
+        }
 
         // Clear
         profiler::push("glClear");
@@ -336,8 +347,9 @@ int main() {
                 case 2: controls_td->transform(); break;
                 default: return -1;
             }
-        } else
+        } else {
             input::set_cursor_mode(input::cursor_mode::normal);
+        }
         profiler::pop();
 
         // Update cameras based on associated guides
@@ -350,7 +362,7 @@ int main() {
         std::shared_ptr<gl::Camera> camera = (use_per_camera) ? test_camera_per : test_camera_ort;
 
         // Draw the entities
-        renderer->render(camera, entities, N);
+        renderer->render(camera, entities.data(), n);
         profiler::pop();
 
         // Maintain components
@@ -377,7 +389,7 @@ int main() {
             profiler::push("Camera Info");
             if (camera_info) {
                 if (ImGui::Begin("Active Camera")) {
-                    camera->showDebug();
+                    camera->show_debug();
                 }
                 ImGui::End();
             }

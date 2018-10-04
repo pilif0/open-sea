@@ -1,15 +1,29 @@
-/*
+/** \file config.h
  * Header file configurated by CMake
  *
- * Author: Filip Smola (smola.filip@hotmail.com)
+ * \author Filip Smola
  */
-// Version
-#define OPEN_SEA_VERSION_MAJOR @open_sea_VERSION_MAJOR@
-#define OPEN_SEA_VERSION_MINOR @open_sea_VERSION_MINOR@
-#define OPEN_SEA_VERSION_PATCH @open_sea_VERSION_PATCH@
-#define OPEN_SEA_VERSION_EXTRA "@open_sea_VERSION_EXTRA@"
-#define OPEN_SEA_VERSION "@open_sea_VERSION@"
-#define OPEN_SEA_VERSION_FULL "@open_sea_VERSION_FULL@"
+#ifndef OPEN_SEA_CONFIG_H
+#define OPEN_SEA_CONFIG_H
 
-// Debug flag
-#cmakedefine OPEN_SEA_DEBUG_LOG
+#include <string>
+
+namespace open_sea {
+    //! Major version number
+    constexpr int version_major = @open_sea_VERSION_MAJOR@;
+    //! Minor version number
+    constexpr int version_minor = @open_sea_VERSION_MINOR@;
+    //! Patch version number
+    constexpr int version_patch = @open_sea_VERSION_PATCH@;
+    //! Extra version string
+    constexpr char version_extra[] = "@open_sea_VERSION_EXTRA@";
+    //! Version string (\c major.minor.patch)
+    constexpr char version_version[] = "@open_sea_VERSION@";
+    //! Full version string (\c major.minor.patchextra)
+    constexpr char version_full[] = "@open_sea_VERSION_FULL@";
+
+    //! Whether debug logging should be enabled
+    constexpr bool debug_log = @open_sea_DEBUG_LOG_VALUE@;
+}
+
+#endif //OPEN_SEA_CONFIG_H

@@ -38,8 +38,9 @@ namespace open_sea::model {
      * \param positions Positions destination vector
      * \param UVs UV coordinates destination vector (can be empty)
      */
-    bool read_OBJ_vertices(std::ifstream& stream, const std::string& path,
-                           std::shared_ptr<std::vector<glm::vec3>> &positions, std::shared_ptr<std::vector<glm::vec2>> &UVs) {
+    bool read_obj_vertices(std::ifstream &stream, const std::string &path,
+                           std::shared_ptr<std::vector<glm::vec3>> &positions,
+                           std::shared_ptr<std::vector<glm::vec2>> &UVs) {
         // Check positions is present
         if (!positions) {
             log::log(lg, log::error, std::string("Positions not present when reading vertices from ").append(path));
@@ -47,10 +48,12 @@ namespace open_sea::model {
         }
 
         // Clear the destination vectors
-        if (positions)
+        if (positions) {
             positions->clear();
-        if (UVs)
+        }
+        if (UVs) {
             UVs->clear();
+        }
 
         // Read the vertex descriptions until the first face
         while (!stream.eof()) {
@@ -58,12 +61,14 @@ namespace open_sea::model {
             int peek = stream.peek();
 
             // Stop when next would be a face definition
-            if (peek == 'f')
+            if (peek == 'f') {
                 break;
+            }
 
             // Skip empty or comment lines
-            if (peek == '\n' || peek == '#')
+            if (peek == '\n' || peek == '#') {
                 stream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            }
 
             // Decide based on first two characters
             int start[2]{stream.get(), stream.get()};
@@ -113,8 +118,9 @@ namespace open_sea::model {
      * \param indices Indices destination
      * \return \c false on failure, \c true otherwise
      */
-    bool read_OBJ_faces(std::ifstream& stream, const std::string& path,
-                        std::shared_ptr<std::vector<glm::vec3>> &positions, std::shared_ptr<std::vector<glm::vec2>> &UVs,
+    bool read_obj_faces(std::ifstream &stream, const std::string &path,
+                        std::shared_ptr<std::vector<glm::vec3>> &positions,
+                        std::shared_ptr<std::vector<glm::vec2>> &UVs,
                         std::vector<Model::Vertex> &vertices, std::vector<unsigned int> &indices) {
         // Check positions is present
         if (!positions) {
@@ -159,7 +165,7 @@ namespace open_sea::model {
                 boost::split(refs, parts[v], boost::is_any_of("/"), boost::token_compress_off);
 
                 // Parse position index and get the position
-                int iP;
+                unsigned i_p;
                 if (refs.empty() || refs[0].empty()) {
                     // Position reference not present
                     std::ostringstream message;
@@ -168,7 +174,7 @@ namespace open_sea::model {
                     return false;
                 } else {
                     try {
-                        iP = std::stoi(refs[0]);
+                        i_p = static_cast<unsigned>(std::stoi(refs[0]));
                     } catch (std::exception &e) {
                         // Position reference not a valid number
                         std::ostringstream message;
@@ -179,7 +185,7 @@ namespace open_sea::model {
                     }
                 }
                 glm::vec3 p{};
-                if (iP < 1 || iP > positions->size()) {
+                if (i_p < 1 || i_p > positions->size()) {
                     // Undeclared position
                     std::ostringstream message;
                     message << "Face " << f << " referencing unknown vertex " << v <<" position ('" << refs[0]
@@ -187,17 +193,17 @@ namespace open_sea::model {
                     log::log(lg, log::error, message.str());
                     return false;
                 } else {
-                    p = (*positions)[iP - 1];
+                    p = (*positions)[i_p - 1];
                 }
 
                 // Parse the UV index and get the UV
-                int iUV;
+                unsigned i_uv;
                 if (refs.size() < 2 || refs[1].empty()) {
                     // UV reference not present -> Set index as 0 and use [0,0] as UV
-                    iUV = 0;
+                    i_uv = 0;
                 } else {
                     try {
-                        iUV = std::stoi(refs[1]);
+                        i_uv = static_cast<unsigned>(std::stoi(refs[1]));
                     } catch (std::exception &e) {
                         // UV reference not a valid number
                         std::ostringstream message;
@@ -208,9 +214,9 @@ namespace open_sea::model {
                     }
                 }
                 glm::vec2 t{};
-                if (iUV == 0 || !UVs) {
+                if (i_uv == 0 || !UVs) {
                     // Leave t as [0,0]
-                } else if(iUV < 1 || iUV > UVs->size()) {
+                } else if(i_uv < 1 || i_uv > UVs->size()) {
                     // Undeclared UV
                     std::ostringstream message;
                     message << "Face " << f << " referencing unknown vertex " << v <<" UV ('" << refs[1]
@@ -218,11 +224,11 @@ namespace open_sea::model {
                     log::log(lg, log::error, message.str());
                     return false;
                 } else {
-                    t = (*UVs)[iUV - 1];
+                    t = (*UVs)[i_uv - 1];
                 }
 
                 // Construct the vertex
-                Model::Vertex vertex{.position = p, .UV = t};
+                Model::Vertex vertex{p, t};
 
                 // Try to find the vertex in already used ones
                 auto i = std::find(vertices.begin(), vertices.end(), vertex);
@@ -256,25 +262,25 @@ namespace open_sea::model {
      * \param indices Indices of vertices
      */
     Model::Model(const std::vector<Model::Vertex>& vertices, const std::vector<unsigned int>& indices) {
-        vertexCount = static_cast<unsigned int>(indices.size());
-        uniqueVertexCount = static_cast<unsigned int>(vertices.size());
+        vertex_count = static_cast<unsigned int>(indices.size());
+        unique_vertex_count = static_cast<unsigned int>(vertices.size());
 
         // Create vertex array and enable attributes
-        glGenVertexArrays(1, &vertexArray);
-        glBindVertexArray(vertexArray);
+        glGenVertexArrays(1, &vertex_array);
+        glBindVertexArray(vertex_array);
         glEnableVertexAttribArray(0);   // position
         glEnableVertexAttribArray(1);   // UV
 
         // Create and fill the vertex buffer
-        glGenBuffers(1, &vertexBuffer);
-        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+        glGenBuffers(1, &vertex_buffer);
+        glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), nullptr);
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) sizeof(Vertex::position));
         glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex)*vertices.size(), &vertices[0], GL_STATIC_DRAW);
 
         // Create and fill the index buffer
-        glGenBuffers(1, &idxBuffer);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, idxBuffer);
+        glGenBuffers(1, &idx_buffer);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, idx_buffer);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*indices.size(), &indices[0], GL_STATIC_DRAW);
 
         glBindVertexArray(0);
@@ -288,7 +294,7 @@ namespace open_sea::model {
      * \param path Path to the file
      * \return Unique pointer to \c nullptr on file read failure, or to \c Model object otherwise
      */
-    std::unique_ptr<Model> Model::fromFile(const std::string &path) {
+    std::unique_ptr<Model> Model::from_file(const std::string &path) {
         // Verify the file exists and is readable
         std::ifstream stream(path);
         if (stream.fail()) {
@@ -298,13 +304,13 @@ namespace open_sea::model {
 
         // Read the vertex descriptions until the first face
         std::shared_ptr<std::vector<glm::vec3>> positions = std::make_shared<std::vector<glm::vec3>>();
-        std::shared_ptr<std::vector<glm::vec2>> UVs = std::make_shared<std::vector<glm::vec2>>();
-        read_OBJ_vertices(stream, path, positions, UVs);
+        std::shared_ptr<std::vector<glm::vec2>> uvs = std::make_shared<std::vector<glm::vec2>>();
+        read_obj_vertices(stream, path, positions, uvs);
 
         // Read the face descriptions
         std::vector<Vertex> vertices;
         std::vector<unsigned int> indices;
-        if (!read_OBJ_faces(stream, path, positions, UVs, vertices, indices)) {
+        if (!read_obj_faces(stream, path, positions, uvs, vertices, indices)) {
             log::log(lg, log::info, std::string("Failed to read faces from ").append(path));
             return std::unique_ptr<Model>{};
         }
@@ -321,10 +327,10 @@ namespace open_sea::model {
      */
     void Model::draw() const {
         // Bind the vertex array
-        glBindVertexArray(vertexArray);
+        glBindVertexArray(vertex_array);
 
         // Draw the triangles from the start of the index buffer
-        glDrawElements(GL_TRIANGLES, vertexCount, GL_UNSIGNED_INT, nullptr);
+        glDrawElements(GL_TRIANGLES, vertex_count, GL_UNSIGNED_INT, nullptr);
 
         // Unbind the vertex array
         glBindVertexArray(0);
@@ -333,16 +339,17 @@ namespace open_sea::model {
     /**
      * \brief Show ImGui debug information for this model
      */
-    void Model::showDebug() {
-        ImGui::Text("Vertices (unique): %i (%i)", vertexCount, uniqueVertexCount);
-        ImGui::Text("Memory size: %i B", sizeof(unsigned int) * vertexCount + sizeof(Vertex) * uniqueVertexCount);
+    void Model::show_debug() {
+        ImGui::Text("Vertices (unique): %i (%i)", vertex_count, unique_vertex_count);
+        ImGui::Text("Memory size: %i B", static_cast<int>(
+                sizeof(unsigned int) * vertex_count + sizeof(Vertex) * unique_vertex_count));
     }
 
     Model::~Model() {
         // Delete buffers and vertex array
-        glDeleteBuffers(1, &vertexBuffer);
-        glDeleteBuffers(1, &idxBuffer);
-        glDeleteVertexArrays(1, &vertexArray);
+        glDeleteBuffers(1, &vertex_buffer);
+        glDeleteBuffers(1, &idx_buffer);
+        glDeleteVertexArrays(1, &vertex_array);
     }
     //--- end Model implementation
 
@@ -354,7 +361,7 @@ namespace open_sea::model {
      * \return Untextured vertex
      */
     UntexModel::Vertex UntexModel::Vertex::reduce(const Model::Vertex source) {
-        return UntexModel::Vertex{.position = source.position};
+        return UntexModel::Vertex{source.position};
     }
 
     /**
@@ -367,23 +374,23 @@ namespace open_sea::model {
      */
     UntexModel::UntexModel(const std::vector<UntexModel::Vertex> &vertices, const std::vector<unsigned int> &indices)
             : Model(){
-        vertexCount = static_cast<unsigned int>(indices.size());
-        uniqueVertexCount = static_cast<unsigned int>(vertices.size());
+        vertex_count = static_cast<unsigned int>(indices.size());
+        unique_vertex_count = static_cast<unsigned int>(vertices.size());
 
         // Create vertex array and enable attributes
-        glGenVertexArrays(1, &vertexArray);
-        glBindVertexArray(vertexArray);
+        glGenVertexArrays(1, &vertex_array);
+        glBindVertexArray(vertex_array);
         glEnableVertexAttribArray(0);   // position
 
         // Create and fill the vertex buffer
-        glGenBuffers(1, &vertexBuffer);
-        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+        glGenBuffers(1, &vertex_buffer);
+        glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
         glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex)*vertices.size(), &vertices[0], GL_STATIC_DRAW);
 
         // Create and fill the index buffer
-        glGenBuffers(1, &idxBuffer);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, idxBuffer);
+        glGenBuffers(1, &idx_buffer);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, idx_buffer);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int)*indices.size(), &indices[0], GL_STATIC_DRAW);
 
         glBindVertexArray(0);
@@ -397,7 +404,7 @@ namespace open_sea::model {
      * \param path Path to the file
      * \return Unique pointer to \c nullptr on file read failure, or to \c UntexModel object otherwise
      */
-    std::unique_ptr<UntexModel> UntexModel::fromFile(const std::string &path) {
+    std::unique_ptr<UntexModel> UntexModel::from_file(const std::string &path) {
         // Verify the file exists and is readable
         std::ifstream stream(path);
         if (stream.fail()) {
@@ -407,13 +414,13 @@ namespace open_sea::model {
 
         // Read the vertex descriptions until the first face
         std::shared_ptr<std::vector<glm::vec3>> positions = std::make_shared<std::vector<glm::vec3>>();
-        std::shared_ptr<std::vector<glm::vec2>> UVs{};
-        read_OBJ_vertices(stream, path, positions, UVs);
+        std::shared_ptr<std::vector<glm::vec2>> uvs{};
+        read_obj_vertices(stream, path, positions, uvs);
 
         // Read the face descriptions
         std::vector<Model::Vertex> vertices;
         std::vector<unsigned int> indices;
-        if (!read_OBJ_faces(stream, path, positions, UVs, vertices, indices)) {
+        if (!read_obj_faces(stream, path, positions, uvs, vertices, indices)) {
             log::log(lg, log::info, std::string("Failed to read faces from ").append(path));
             return std::unique_ptr<UntexModel>{};
         }
@@ -431,9 +438,10 @@ namespace open_sea::model {
     /**
      * \brief Show ImGui debug information for this model
      */
-    void UntexModel::showDebug() {
-        ImGui::Text("Vertices (unique): %i (%i)", vertexCount, uniqueVertexCount);
-        ImGui::Text("Memory size: %i B", sizeof(unsigned int) * vertexCount + sizeof(Vertex) * uniqueVertexCount);
+    void UntexModel::show_debug() {
+        ImGui::Text("Vertices (unique): %i (%i)", vertex_count, unique_vertex_count);
+        ImGui::Text("Memory size: %i B", static_cast<int>(
+                sizeof(unsigned int) * vertex_count + sizeof(Vertex) * unique_vertex_count));
     }
     //--- end UntexModel implementation
 }

@@ -35,7 +35,7 @@ namespace open_sea::debug {
      * \brief Set next window width to the standard width
      */
     void set_standard_width() {
-        ImGui::SetNextWindowSize(ImVec2(STANDARD_WIDTH, 0.0f), ImGuiCond_Once);
+        ImGui::SetNextWindowSize(ImVec2(standard_width, 0.0f), ImGuiCond_Once);
     }
 
     /**
@@ -58,8 +58,9 @@ namespace open_sea::debug {
      */
     void remove_entity_manager(const std::shared_ptr<Debuggable> &em) {
         for (auto i = em_list.begin(); i < em_list.end(); i++){
-            if (std::get<0>(*i) == em)
+            if (std::get<0>(*i) == em) {
                 em_list.erase(i);
+            }
         }
     }
 
@@ -83,8 +84,9 @@ namespace open_sea::debug {
      */
     void remove_component_manager(const std::shared_ptr<Debuggable> &com) {
         for (auto i = com_list.begin(); i < com_list.end(); i++){
-            if (std::get<0>(*i) == com)
+            if (std::get<0>(*i) == com) {
                 com_list.erase(i);
+            }
         }
     }
 
@@ -108,8 +110,9 @@ namespace open_sea::debug {
      */
     void remove_system(const std::shared_ptr<Debuggable> &sys) {
         for (auto i = sys_list.begin(); i < sys_list.end(); i++){
-            if (std::get<0>(*i) == sys)
+            if (std::get<0>(*i) == sys) {
                 sys_list.erase(i);
+            }
         }
     }
 
@@ -133,8 +136,9 @@ namespace open_sea::debug {
      */
     void remove_controls(const std::shared_ptr<Debuggable> &con) {
         for (auto i = con_list.begin(); i < con_list.end(); i++){
-            if (std::get<0>(*i) == con)
+            if (std::get<0>(*i) == con) {
                 con_list.erase(i);
+            }
         }
     }
 
@@ -266,10 +270,14 @@ namespace open_sea::debug {
             set_standard_width();
             input::debug_window(&input);
         }
-        if (opengl) gl::debug_window(&opengl);
+        if (opengl) {
+            gl::debug_window(&opengl);
+        }
 
         // Demo windows
-        if (imgui_demo) ImGui::ShowDemoWindow(&imgui_demo);
+        if (imgui_demo) {
+            ImGui::ShowDemoWindow(&imgui_demo);
+        }
 
         // Entity managers
         for (auto &i : em_list) {
@@ -277,7 +285,7 @@ namespace open_sea::debug {
                 set_standard_width();
 
                 if (ImGui::Begin(std::string("Entity Manager - ").append(std::get<1>(i)).c_str(), &std::get<2>(i))) {
-                    (std::get<0>(i))->showDebug();
+                    (std::get<0>(i))->show_debug();
                 }
                 ImGui::End();
             }
@@ -289,7 +297,7 @@ namespace open_sea::debug {
                 set_standard_width();
 
                 if (ImGui::Begin(std::string("Component Manager - ").append(std::get<1>(i)).c_str(), &std::get<2>(i))) {
-                    (std::get<0>(i))->showDebug();
+                    (std::get<0>(i))->show_debug();
                 }
                 ImGui::End();
             }
@@ -301,7 +309,7 @@ namespace open_sea::debug {
                 set_standard_width();
 
                 if (ImGui::Begin(std::string("System - ").append(std::get<1>(i)).c_str(), &std::get<2>(i))) {
-                    (std::get<0>(i))->showDebug();
+                    (std::get<0>(i))->show_debug();
                 }
                 ImGui::End();
             }
@@ -313,7 +321,7 @@ namespace open_sea::debug {
                 set_standard_width();
 
                 if (ImGui::Begin(std::string("Controls - ").append(std::get<1>(i)).c_str(), &std::get<2>(i))) {
-                    (std::get<0>(i))->showDebug();
+                    (std::get<0>(i))->show_debug();
                 }
                 ImGui::End();
             }

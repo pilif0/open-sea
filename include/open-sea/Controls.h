@@ -6,12 +6,18 @@
 #ifndef OPEN_SEA_CONTROLS_H
 #define OPEN_SEA_CONTROLS_H
 
-#include <open-sea/Controls.h>
-#include <open-sea/Log.h>
 #include <open-sea/Entity.h>
-#include <open-sea/Components.h>
+#include <open-sea/Log.h>
 #include <open-sea/Input.h>
 #include <open-sea/Debuggable.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+
+// Forward declarations
+namespace open_sea::ecs {
+    class TransformationComponent;
+}
 
 //! %Controls that allow for transforming of an entity based on user input
 namespace open_sea::controls {
@@ -34,18 +40,18 @@ namespace open_sea::controls {
             //! Entity being controlled
             ecs::Entity subject;
             //! Last applied translation
-            glm::vec3 lastTranslate{};
+            glm::vec3 last_translate{};
             //! Last applied rotation
-            glm::quat lastRotate;
+            glm::quat last_rotate;
 
         public:
-            Controls(ecs::Entity s) : subject(s), lastRotate(glm::quat()) {}
+            explicit Controls(ecs::Entity s) : subject(s), last_rotate(glm::quat()) {}
             //! Transform the subject according to input
             virtual void transform() = 0;
-            virtual void setSubject(ecs::Entity newSubject);
-            virtual ecs::Entity getSubject() const;
+            virtual void set_subject(ecs::Entity new_subject);
+            virtual ecs::Entity get_subject() const;
 
-            void showDebug() override;
+            void show_debug() override;
 
             virtual ~Controls() {}
     };
@@ -63,26 +69,26 @@ namespace open_sea::controls {
     class Free : public Controls {
         public:
             //! Transformation component manager
-            std::shared_ptr<ecs::TransformationComponent> transformMgr{};
+            std::shared_ptr<ecs::TransformationComponent> transform_mgr{};
             //! Key bindings and factors
             struct Config {
                 // Key bindings
                 //! Negative Z
-                input::unified_input forward;
+                input::UnifiedInput forward;
                 //! Positive Z
-                input::unified_input backward;
+                input::UnifiedInput backward;
                 //! Negative X
-                input::unified_input left;
+                input::UnifiedInput left;
                 //! Positive X
-                input::unified_input right;
+                input::UnifiedInput right;
                 //! Positive Y
-                input::unified_input up;
+                input::UnifiedInput up;
                 //! Negative Y
-                input::unified_input down;
+                input::UnifiedInput down;
                 //! Negatvie around positive Z
-                input::unified_input clockwise;
+                input::UnifiedInput clockwise;
                 //! Positive around positive Z
-                input::unified_input counter_clockwise;
+                input::UnifiedInput counter_clockwise;
 
                 // Factors
                 //! Left-right (strafing) speed (units / second)
@@ -99,11 +105,11 @@ namespace open_sea::controls {
 
             //! Constuct the controls assigning it a pointer to the relevant transformation component manager, subject and config
             Free(std::shared_ptr<ecs::TransformationComponent> t, ecs::Entity s, Config c)
-                    : transformMgr(std::move(t)), config(c), Controls(s) {}
+                    : Controls(s), transform_mgr(std::move(t)), config(c) {}
 
             void transform() override;
 
-            void showDebug() override;
+            void show_debug() override;
     };
 
     /** \class FPS
@@ -120,23 +126,23 @@ namespace open_sea::controls {
     class FPS : public Controls {
         private:
             //! Current subject's pitch (in degrees)
-            float pitch;
-            void updatePitch();
+            float pitch = 0.0f;
+            void update_pitch();
 
         public:
             //! Transformation component manager
-            std::shared_ptr<ecs::TransformationComponent> transformMgr{};
+            std::shared_ptr<ecs::TransformationComponent> transform_mgr{};
             //! Key bindings and factors
             struct Config {
                 // Key bindings
                 //! Negative Z
-                input::unified_input forward;
+                input::UnifiedInput forward;
                 //! Positive Z
-                input::unified_input backward;
+                input::UnifiedInput backward;
                 //! Negative X
-                input::unified_input left;
+                input::UnifiedInput left;
                 //! Positive X
-                input::unified_input right;
+                input::UnifiedInput right;
 
                 // Factors
                 //! Left-right (strafing) speed (units / second)
@@ -150,12 +156,12 @@ namespace open_sea::controls {
 
             //! Constuct the controls assigning it a pointer to the relevant transformation component manager, subject and config
             FPS(std::shared_ptr<ecs::TransformationComponent> t, ecs::Entity s, Config c)
-                    : transformMgr(std::move(t)), config(c), pitch(0.0f), Controls(s) { updatePitch(); }
+                    : Controls(s), transform_mgr(std::move(t)), config(c) { update_pitch(); }
 
             void transform() override;
-            void setSubject(ecs::Entity newSubject) override;
+            void set_subject(ecs::Entity newSubject) override;
 
-            void showDebug() override;
+            void show_debug() override;
     };
 
     /** \class TopDown
@@ -170,22 +176,22 @@ namespace open_sea::controls {
     class TopDown : public Controls {
         public:
             //! Transformation component manager
-            std::shared_ptr<ecs::TransformationComponent> transformMgr{};
+            std::shared_ptr<ecs::TransformationComponent> transform_mgr{};
             //! Key bindings and factors
             struct Config {
                 // Key bindings
                 //! Positive Y
-                input::unified_input up;
+                input::UnifiedInput up;
                 //! Negative Y
-                input::unified_input down;
+                input::UnifiedInput down;
                 //! Negative X
-                input::unified_input left;
+                input::UnifiedInput left;
                 //! Positive X
-                input::unified_input right;
+                input::UnifiedInput right;
                 //! Negative around positive Z
-                input::unified_input clockwise;
+                input::UnifiedInput clockwise;
                 //! Positive around positive Z
-                input::unified_input counter_clockwise;
+                input::UnifiedInput counter_clockwise;
 
                 // Factors
                 //! Left-right (strafing) speed (units / second)
@@ -199,11 +205,11 @@ namespace open_sea::controls {
 
             //! Constuct the controls assigning it a pointer to the relevant transformation component manager, subject and config
             TopDown(std::shared_ptr<ecs::TransformationComponent> t, ecs::Entity s, Config c)
-                    : transformMgr(std::move(t)), config(c), Controls(s) {}
+                    : Controls(s), transform_mgr(std::move(t)), config(c) {}
 
             void transform() override;
 
-            void showDebug() override;
+            void show_debug() override;
     };
 
     /**

@@ -32,8 +32,7 @@ namespace open_sea::log {
     /**
      * \brief Severity levels used when logging
      */
-    enum severity_level
-    {
+    enum severity_level {
         trace,
         debug,
         info,

@@ -3,6 +3,13 @@ project(open_sea)
 
 set(CMAKE_CXX_STANDARD 17)
 
+# Set compiler flags
+set(CLANG_COMPILER_FLAGS "-Wall -Wextra -Wpedantic")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CLANG_COMPILER_FLAGS}")
+
+# Export compile commands for use with LLVM tools
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Set project version
 set(open_sea_VERSION_MAJOR "0")
 set(open_sea_VERSION_MINOR "1")
@@ -58,6 +65,7 @@ set(ImGui "${ImGui_DIR}/imgui.h"
         "${ImGui_DIR}/imgui_demo.cpp"
         "${ImGui_DIR}/imgui_widgets.cpp"
         "${ImGui_DIR}/imgui_internal.h")
+add_library(imgui ${ImGui})
 
 # Doxygen
 if (open_sea_BUILD_DOC)
@@ -65,14 +73,15 @@ if (open_sea_BUILD_DOC)
 endif()
 
 # Configure header
-set(OPEN_SEA_DEBUG_LOG ${open_sea_DEBUG_LOG})
+if (open_sea_DEBUG_LOG)
+    set(open_sea_DEBUG_LOG_VALUE "true")
+else (open_sea_DEBUG_LOG)
+    set(open_sea_DEBUG_LOG_VALUE "false")
+endif()
 configure_file(
         "${INCL_DIR}/open-sea/config.h.in"
         "${INCL_DIR}/open-sea/config.h"
 )
-
-# Include own public interface
-include_directories(${INCL_DIR})        # This feels wrong but means not having to navigate to the directory when including
 
 # Add subdirectories
 add_subdirectory(src)

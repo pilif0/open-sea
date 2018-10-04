@@ -8,6 +8,8 @@
 #include <open-sea/Model.h>
 #include <open-sea/ImGui.h>
 #include <open-sea/Profiler.h>
+#include <open-sea/GL.h>
+#include <open-sea/Components.h>
 
 #include <vector>
 
@@ -24,15 +26,15 @@ namespace open_sea::render {
      */
     UntexturedRenderer::UntexturedRenderer(std::shared_ptr<ecs::ModelComponent> m,
                                            std::shared_ptr<ecs::TransformationComponent> t)
-            : modelMgr(std::move(m)), transformMgr(std::move(t)) {
+            : model_mgr(std::move(m)), transform_mgr(std::move(t)) {
         // Initialise the shader
         shader = std::make_unique<gl::ShaderProgram>();
-        shader->attachVertexFile("data/shaders/Test.vshader");
-        shader->attachFragmentFile("data/shaders/Test.fshader");
+        shader->attach_vertex_file("data/shaders/Test.vshader");
+        shader->attach_fragment_file("data/shaders/Test.fshader");
         shader->link();
         shader->validate();
-        pMatLocation = shader->getUniformLocation("projectionMatrix");
-        wMatLocation = shader->getUniformLocation("worldMatrix");
+        p_mat_location = shader->get_uniform_location("projectionMatrix");
+        w_mat_location = shader->get_uniform_location("worldMatrix");
     }
 
     /**
@@ -48,7 +50,7 @@ namespace open_sea::render {
         profiler::push("Setup");
         // Use the shader and set the projection view matrix
         shader->use();
-        glUniformMatrix4fv(pMatLocation, 1, GL_FALSE, &camera->getProjViewMatrix()[0][0]);
+        glUniformMatrix4fv(p_mat_location, 1, GL_FALSE, &camera->get_proj_view_matrix()[0][0]);
 
         // Prepare info and index destination
         std::vector<RenderInfo> infos(count);
@@ -57,27 +59,27 @@ namespace open_sea::render {
 
         // Get world matrix pointers
         profiler::push("World Matrices");
-        transformMgr->lookup(e, indices.data(), count);
+        transform_mgr->lookup(e, indices.data(), count);
         int *i = indices.data();
         RenderInfo *r = infos.data();
-        for (int j = 0; j < count; j++, i++, r++) {
+        for (unsigned j = 0; j < count; j++, i++, r++) {
             if (*i != -1) {
-                r->matrix = &transformMgr->data.matrix[*i][0][0];
+                r->matrix = &transform_mgr->data.matrix[*i][0][0];
             }
         }
         profiler::pop();
 
         // Get the model information
         profiler::push("Models");
-        modelMgr->lookup(e, indices.data(), count);
+        model_mgr->lookup(e, indices.data(), count);
         i = indices.data();
         r = infos.data();
-        for (int j = 0; j < count; j++, i++, r++) {
+        for (unsigned j = 0; j < count; j++, i++, r++) {
             // Skip invalid indices
             if (*i != -1) {
-                std::shared_ptr<model::Model> model = modelMgr->getModel(modelMgr->data.model[*i]);
-                r->vao = model->getVertexArray();
-                r->vertexCount = model->getVertexCount();
+                std::shared_ptr<model::Model> model = model_mgr->get_model(model_mgr->data.model[*i]);
+                r->vao = model->get_vertex_array();
+                r->vertex_count = model->get_vertex_count();
             }
         }
         profiler::pop();
@@ -85,12 +87,12 @@ namespace open_sea::render {
         // Render the information
         profiler::push("Render");
         r = infos.data();
-        for (int j = 0; j < count; j++, r++) {
+        for (unsigned j = 0; j < count; j++, r++) {
             // Skip invalid entities
             if (r->matrix != nullptr) {
-                glUniformMatrix4fv(wMatLocation, 1, GL_FALSE, r->matrix);
+                glUniformMatrix4fv(w_mat_location, 1, GL_FALSE, r->matrix);
                 glBindVertexArray(r->vao);
-                glDrawElements(GL_TRIANGLES, r->vertexCount, GL_UNSIGNED_INT, nullptr);
+                glDrawElements(GL_TRIANGLES, r->vertex_count, GL_UNSIGNED_INT, nullptr);
             }
         }
         profiler::pop();
@@ -106,20 +108,20 @@ namespace open_sea::render {
      * \brief Show ImGui debug information
      */
     // Note: ImGui ID stack interaction needed to separate the query modals of each component manager
-    void UntexturedRenderer::showDebug() {
+    void UntexturedRenderer::show_debug() {
         if (ImGui::CollapsingHeader("Shader Program")) {
-            shader->showDebug();
+            shader->show_debug();
         }
 
         if (ImGui::CollapsingHeader("Transformation Component Manager")) {
-            ImGui::PushID("transformMgr");
-            transformMgr->showDebug();
+            ImGui::PushID("transform_mgr");
+            transform_mgr->show_debug();
             ImGui::PopID();
         }
 
         if (ImGui::CollapsingHeader("Model Component Manager")) {
-            ImGui::PushID("modelMgr");
-            modelMgr->showDebug();
+            ImGui::PushID("model_mgr");
+            model_mgr->show_debug();
             ImGui::PopID();
         }
     }

@@ -26,12 +26,21 @@ To achieve this, I will explore various approaches (e.g. data oriented design) a
 
 and any libraries required to [build GLFW](https://github.com/glfw/glfw#compiling-glfw).
 
+The main supported compiler is Clang, but GCC should also work with minimal adjustments.
+The recommended linker is LLVM's lld, mainly for the easy to understand warning messages.
+
 ### CMake Options
 
 - `open_sea_BUILD_EXAMPLES` &mdash; build example programs (default: ON),
 - `open_sea_BUILD_DOC` &mdash; build documentation (default: ON),
 - `open_sea_DEBUG_LOG` &mdash; debug logging (default: OFF),
 - `open_sea_BOOST` &mdash; Boost directory (default: /opt/boost)
+
+## Compilation Warnings
+The compiler warnings enabled are all of `-Wall`, `-Wextra` and `-Wpedantic`.
+There is also a configuration file and run script for clang-tidy.
+The library itself should produce no warnings with either of these if at all possible.
+This requirement does not extend to the examples, although the fewer warnings the better.
 
 ## Contributing
 

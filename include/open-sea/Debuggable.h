@@ -19,7 +19,8 @@ namespace open_sea::debug {
     class Debuggable {
         public:
             //! Show debug information (called within an ImGui window)
-            virtual void showDebug() = 0;
+            virtual void show_debug() = 0;
+            virtual ~Debuggable() = default;
     };
 
     /**

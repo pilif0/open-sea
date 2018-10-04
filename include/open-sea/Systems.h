@@ -6,9 +6,21 @@
 #ifndef OPEN_SEA_SYSTEMS_H
 #define OPEN_SEA_SYSTEMS_H
 
-#include <open-sea/Components.h>
-#include <open-sea/GL.h>
 #include <open-sea/Debuggable.h>
+
+#include <memory>
+
+// Forward declarations
+namespace open_sea {
+    namespace ecs {
+        class TransformationComponent;
+        class CameraComponent;
+    }
+
+    namespace gl {
+        class Camera;
+    }
+}
 
 namespace open_sea::ecs {
     /**
@@ -28,18 +40,18 @@ namespace open_sea::ecs {
     class CameraFollow : public debug::Debuggable {
         public:
             //! Transformation component manager
-            std::shared_ptr<ecs::TransformationComponent> transformMgr{};
+            std::shared_ptr<ecs::TransformationComponent> transform_mgr{};
             //! Camera component manager
-            std::shared_ptr<ecs::CameraComponent> cameraMgr{};
+            std::shared_ptr<ecs::CameraComponent> camera_mgr{};
 
             //! Construct the system assigning it pointers to relevant component managers
             CameraFollow(std::shared_ptr<ecs::TransformationComponent> t, std::shared_ptr<ecs::CameraComponent> c)
-                : transformMgr(std::move(t)), cameraMgr(std::move(c)) {}
+                : transform_mgr(std::move(t)), camera_mgr(std::move(c)) {}
 
             void transform();
             void transform(std::shared_ptr<gl::Camera> *cameras, unsigned count);
 
-            void showDebug() override;
+            void show_debug() override;
     };
 
     /**

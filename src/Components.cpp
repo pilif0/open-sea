@@ -6,6 +6,8 @@
 
 #include <open-sea/Components.h>
 #include <open-sea/Debug.h>
+#include <open-sea/Model.h>
+#include <open-sea/GL.h>
 
 #include <imgui.h>
 
@@ -44,31 +46,32 @@ namespace open_sea::ecs {
         assert(size > data.n);
 
         // Allocate new space
-        InstanceData newData;
-        unsigned byteCount = size * RECORD_SIZE;
+        InstanceData new_data;
+        unsigned byte_count = size * record_size;
 
-        newData.buffer = ALLOCATOR.allocate(byteCount);
-        newData.n = data.n;
-        newData.allocated = size;
+        new_data.buffer = allocator.allocate(byte_count);
+        new_data.n = data.n;
+        new_data.allocated = size;
 
         // Compute pointers to data arrays
-        newData.entity = (Entity*) newData.buffer;          // Entity is at the start
-        newData.model = (int*) (newData.entity + size);     // followed by model indices
+        new_data.entity = (Entity*) new_data.buffer;          // Entity is at the start
+        new_data.model = (int*) (new_data.entity + size);     // followed by model indices
 
         // Copy data into new space
         if (data.n > 0) {
-            std::memcpy(newData.entity, data.entity, data.n * sizeof(Entity));
-            std::memcpy(newData.model, data.model, data.n * sizeof(int));
+            std::memcpy(new_data.entity, data.entity, data.n * sizeof(Entity));
+            std::memcpy(new_data.model, data.model, data.n * sizeof(int));
 
 
         }
 
         // Deallocate old data
-        if (data.allocated > 0)
-            ALLOCATOR.deallocate(static_cast<unsigned char *>(data.buffer), data.allocated * RECORD_SIZE);
+        if (data.allocated > 0) {
+            allocator.deallocate(static_cast<unsigned char *>(data.buffer), data.allocated * record_size);
+        }
 
         // Set the data
-        data = newData;
+        data = new_data;
     }
 
     /**
@@ -79,21 +82,21 @@ namespace open_sea::ecs {
      * \param model Pointer to model
      * \return Index into the \c models storage of this manager
      */
-    int ModelComponent::modelToIndex(std::shared_ptr<model::Model> model) {
-        int modelIdx;
+    int ModelComponent::model_to_index(std::shared_ptr<model::Model> model) {
+        int model_idx;
 
         // Try to find the model in storage
-        auto modelPos = std::find(models.begin(), models.end(), model);
-        if (modelPos == models.end()) {
+        auto model_pos = std::find(models.begin(), models.end(), model);
+        if (model_pos == models.end()) {
             // Not found -> add the pointer (passed by value, is a copy)
-            modelIdx = static_cast<int>(models.size());
+            model_idx = static_cast<int>(models.size());
             models.push_back(model);
         } else {
             // Found -> use found index
-            modelIdx = static_cast<int>(modelPos - models.begin());
+            model_idx = static_cast<int>(model_pos - models.begin());
         }
 
-        return modelIdx;
+        return model_idx;
     }
 
     /**
@@ -143,7 +146,7 @@ namespace open_sea::ecs {
      * \param i Index
      * \return Model pointer
      */
-    std::shared_ptr<model::Model> ModelComponent::getModel(int i) {
+    std::shared_ptr<model::Model> ModelComponent::get_model(int i) const {
         return std::shared_ptr<model::Model>(models[i]);
     }
 
@@ -161,12 +164,12 @@ namespace open_sea::ecs {
      */
     void ModelComponent::add(Entity *e, std::shared_ptr<model::Model> *m, unsigned count) {
         // Convert pointers to indices
-        int indices[count];
-        for (int *i = indices; i - indices < count; i++, m++) {
-            *i = modelToIndex(*m);
+        std::vector<int> indices(count);
+        for (unsigned j = 0; j < count; j++, m++) {
+            indices.push_back(model_to_index(*m));
         }
 
-        return add(e, indices, count);
+        return add(e, indices.data(), count);
     }
 
     /**
@@ -190,9 +193,9 @@ namespace open_sea::ecs {
         }
 
         // For every entity, add a new record
-        Entity *destE = data.entity + data.n;
-        int *destM = data.model + data.n;
-        for (unsigned i = 0; i < count; i++, e++, m++, destE++, destM++) {
+        Entity *dest_e = data.entity + data.n;
+        int *dest_m = data.model + data.n;
+        for (unsigned i = 0; i < count; i++, e++, m++, dest_e++, dest_m++) {
             // Check the entity doesn't have this component yet
             try {
                 map.at(*e);     // Produces the exception when entity doesn't have the component
@@ -204,8 +207,8 @@ namespace open_sea::ecs {
             } catch (std::out_of_range &e) {}
 
             // Write the data into the buffer
-            *destE = *e;
-            *destM = *m;
+            *dest_e = *e;
+            *dest_m = *m;
 
             // Increment data count and add map entry for the new record
             data.n++;
@@ -227,12 +230,12 @@ namespace open_sea::ecs {
      */
     void ModelComponent::set(int *i, std::shared_ptr<model::Model> *m, unsigned count) {
         // Convert pointers to indices
-        int indices[count];
-        for (int *j = indices; j - indices < count; j++, m++) {
-            *j = modelToIndex(*m);
+        std::vector<int> indices(count);
+        for (unsigned j = 0; j < count; j++, m++) {
+            indices.push_back(model_to_index(*m));
         }
 
-        set(i, indices, count);
+        set(i, indices.data(), count);
     }
 
     /**
@@ -250,12 +253,12 @@ namespace open_sea::ecs {
      */
     void ModelComponent::set(int *i, int *m, unsigned count) {
         // For every index, set the value
-        for (int j = 0; j < count; j++, i++, m++) {
+        for (unsigned j = 0; j < count; j++, i++, m++) {
             int index = *i;
 
             // Check the index is in range
-            if (index >= data.n) {
-                // Setting value of destroyed records should not have any effect
+            if (index < 0 || static_cast<unsigned>(index) >= data.n) {
+                // Setting value of records out of range should not have any effect
                 return;
             }
 
@@ -275,17 +278,17 @@ namespace open_sea::ecs {
      */
     void ModelComponent::destroy(int i) {
         // Check index is in range
-        if (i >= data.n) {
+        if (i < 0 || static_cast<unsigned>(i) >= data.n) {
             // Records out of range are considered already destroyed
             return;
         }
 
         // Move last record into i-th place
-        int lastIdx = data.n - 1;
+        int last_idx = data.n - 1;
         Entity e = data.entity[i];
-        Entity last = data.entity[lastIdx];
-        data.entity[i] = data.entity[lastIdx];
-        data.model[i] = data.model[lastIdx];
+        Entity last = data.entity[last_idx];
+        data.entity[i] = data.entity[last_idx];
+        data.model[i] = data.model[last_idx];
 
         // Update data counts and index map
         map.erase(e);
@@ -305,17 +308,17 @@ namespace open_sea::ecs {
      */
     void ModelComponent::gc(const EntityManager &manager) {
         // Randomly check records until 4 live entities in a row are found
-        unsigned aliveInRow = 0;
+        unsigned alive_in_row = 0;
         static std::random_device device;
         static std::mt19937_64 generator;
         std::uniform_int_distribution<int> distribution(0, data.n);
-        while (data.n > 0 && aliveInRow < 4) {
+        while (data.n > 0 && alive_in_row < 4) {
             // Note: % data.n required because data.n can change and this keeps indices in valid range
             unsigned i = distribution(generator) % data.n;
             if (manager.alive(data.entity[i])) {
-                aliveInRow++;
+                alive_in_row++;
             } else {
-                aliveInRow = 0;
+                alive_in_row = 0;
                 destroy(i);
             }
         }
@@ -332,22 +335,22 @@ namespace open_sea::ecs {
         models.clear();
 
         // Deallocate the data buffer
-        ALLOCATOR.deallocate(static_cast<unsigned char *>(data.buffer), data.allocated * RECORD_SIZE);
+        allocator.deallocate(static_cast<unsigned char *>(data.buffer), data.allocated * record_size);
     }
 
     /**
      * \brief Show ImGui debug information
      */
-    void ModelComponent::showDebug() {
-        ImGui::Text("Record size: %i bytes", RECORD_SIZE);
+    void ModelComponent::show_debug() {
+        ImGui::Text("Record size: %i bytes", record_size);
         ImGui::Text("Records (allocated): %i (%i)", data.n, data.allocated);
-        ImGui::Text("Stored models: %i", models.size());
-        ImGui::Text("Size data arrays (allocated): %i (%i) bytes", RECORD_SIZE * data.n, RECORD_SIZE * data.allocated);
+        ImGui::Text("Stored models: %i", static_cast<int>(models.size()));
+        ImGui::Text("Size data arrays (allocated): %i (%i) bytes", record_size * data.n, record_size * data.allocated);
         if (ImGui::Button("Query")) {
             ImGui::OpenPopup("Component Manager Query");
         }
         if (ImGui::BeginPopupModal("Component Manager Query", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-            showQuery();
+            show_query();
 
             ImGui::Separator();
             if (ImGui::Button("Close")) { ImGui::CloseCurrentPopup(); }
@@ -358,23 +361,23 @@ namespace open_sea::ecs {
     /**
      * \brief Show ImGui form for querying data from a manager of this component
      */
-    void ModelComponent::showQuery() {
+    void ModelComponent::show_query() {
         ImGui::TextUnformatted("Entity:");
-        ImGui::InputInt2("index - generation", queryIdxGen);
+        ImGui::InputInt2("index - generation", query_idx_gen);
         if (ImGui::Button("Refresh")) {
-            if (queryIdxGen[0] >= 0 && queryIdxGen[1] >= 0) {
-                int i = lookup(ecs::Entity(static_cast<unsigned>(queryIdxGen[0]), static_cast<unsigned>(queryIdxGen[1])));
-                queryIdx = i;
+            if (query_idx_gen[0] >= 0 && query_idx_gen[1] >= 0) {
+                int i = lookup(ecs::Entity(static_cast<unsigned>(query_idx_gen[0]), static_cast<unsigned>(query_idx_gen[1])));
+                query_idx = i;
             } else {
-                queryIdx = -1;
+                query_idx = -1;
             }
         }
         ImGui::Separator();
-        if (queryIdx != -1) {
-            ImGui::Text("Model index: %i", data.model[queryIdx]);
+        if (query_idx != -1) {
+            ImGui::Text("Model index: %i", data.model[query_idx]);
             ImGui::TextUnformatted("Model information:");
             ImGui::Indent();
-            getModel(data.model[queryIdx])->showDebug();
+            get_model(data.model[query_idx])->show_debug();
             ImGui::Unindent();
         } else {
             ImGui::TextUnformatted("No record found");
@@ -422,45 +425,46 @@ namespace open_sea::ecs {
         assert(size > data.n);
 
         // Allocate new space
-        InstanceData newData;
-        unsigned byteCount = size * RECORD_SIZE;
+        InstanceData new_data;
+        unsigned byte_count = size * record_size;
 
-        newData.buffer = ALLOCATOR.allocate(byteCount);
-        newData.n = data.n;
-        newData.allocated = size;
+        new_data.buffer = allocator.allocate(byte_count);
+        new_data.n = data.n;
+        new_data.allocated = size;
 
         // Compute pointers to data arrays
-        newData.entity = (Entity*) newData.buffer;                      // Entity is at the start
-        newData.position = (glm::vec3*) (newData.entity + size);        // followed by position
-        newData.orientation = (glm::quat*) (newData.position + size);   // followed by orientation
-        newData.scale = (glm::vec3*) (newData.orientation + size);      // followed by scale
-        newData.matrix = (glm::mat4*) (newData.scale + size);           // followed by matrix
-        newData.parent = (int*) (newData.matrix + size);                // followed by parent
-        newData.firstChild = newData.parent + size;                     // followed by first child
-        newData.nextSibling = newData.firstChild + size;                // followed by next sibling
-        newData.prevSibling = newData.nextSibling + size;               // followed by previous sibling
+        new_data.entity = (Entity*) new_data.buffer;                      // Entity is at the start
+        new_data.position = (glm::vec3*) (new_data.entity + size);        // followed by position
+        new_data.orientation = (glm::quat*) (new_data.position + size);   // followed by orientation
+        new_data.scale = (glm::vec3*) (new_data.orientation + size);      // followed by scale
+        new_data.matrix = (glm::mat4*) (new_data.scale + size);           // followed by matrix
+        new_data.parent = (int*) (new_data.matrix + size);                // followed by parent
+        new_data.first_child = new_data.parent + size;                     // followed by first child
+        new_data.next_sibling = new_data.first_child + size;                // followed by next sibling
+        new_data.prev_sibling = new_data.next_sibling + size;               // followed by previous sibling
 
         // Copy data into new space
         if (data.n > 0) {
-            std::memcpy(newData.entity, data.entity, data.n * sizeof(Entity));
-            std::memcpy(newData.position, data.position, data.n * sizeof(glm::vec3));
-            std::memcpy(newData.orientation, data.orientation, data.n * sizeof(glm::quat));
-            std::memcpy(newData.scale, data.scale, data.n * sizeof(glm::vec3));
-            std::memcpy(newData.matrix, data.matrix, data.n * sizeof(glm::mat4));
-            std::memcpy(newData.parent, data.parent, data.n * sizeof(int));
-            std::memcpy(newData.firstChild, data.firstChild, data.n * sizeof(int));
-            std::memcpy(newData.nextSibling, data.nextSibling, data.n * sizeof(int));
-            std::memcpy(newData.prevSibling, data.prevSibling, data.n * sizeof(int));
+            std::memcpy(new_data.entity, data.entity, data.n * sizeof(Entity));
+            std::memcpy(new_data.position, data.position, data.n * sizeof(glm::vec3));
+            std::memcpy(new_data.orientation, data.orientation, data.n * sizeof(glm::quat));
+            std::memcpy(new_data.scale, data.scale, data.n * sizeof(glm::vec3));
+            std::memcpy(new_data.matrix, data.matrix, data.n * sizeof(glm::mat4));
+            std::memcpy(new_data.parent, data.parent, data.n * sizeof(int));
+            std::memcpy(new_data.first_child, data.first_child, data.n * sizeof(int));
+            std::memcpy(new_data.next_sibling, data.next_sibling, data.n * sizeof(int));
+            std::memcpy(new_data.prev_sibling, data.prev_sibling, data.n * sizeof(int));
 
 
         }
 
         // Deallocate old data
-        if (data.allocated > 0)
-            ALLOCATOR.deallocate(static_cast<unsigned char *>(data.buffer), data.allocated * RECORD_SIZE);
+        if (data.allocated > 0) {
+            allocator.deallocate(static_cast<unsigned char *>(data.buffer), data.allocated * record_size);
+        }
 
         // Set the data
-        data = newData;
+        data = new_data;
     }
 
     /**
@@ -524,31 +528,32 @@ namespace open_sea::ecs {
         }
 
         // Find last child of parent
-        int prevSib = -1;
+        int prev_sib = -1;
         if (parent != -1) {
-            prevSib = data.firstChild[parent];
-            while (prevSib != -1) {
-                if (data.nextSibling[prevSib] != -1)
+            prev_sib = data.first_child[parent];
+            while (prev_sib != -1) {
+                if (data.next_sibling[prev_sib] != -1) {
                     // Next sibling present, move to it
-                    prevSib = data.nextSibling[prevSib];
-                else
+                    prev_sib = data.next_sibling[prev_sib];
+                } else {
                     // Found last sibling, break out
                     break;
+                }
             }
         }
 
         // For every entity, add a new record
-        Entity *destE = data.entity + data.n;
-        glm::vec3 *destP = data.position + data.n;
-        glm::quat *destO = data.orientation + data.n;
-        glm::vec3 *destS = data.scale + data.n;
-        glm::mat4 *destM = data.matrix + data.n;
-        int *destParent = data.parent + data.n;
-        int *destFirstCh = data.firstChild + data.n;
-        int *destNextSib = data.nextSibling + data.n;
-        int *destPrevSib = data.prevSibling + data.n;
+        Entity *dest_e = data.entity + data.n;
+        glm::vec3 *dest_p = data.position + data.n;
+        glm::quat *dest_o = data.orientation + data.n;
+        glm::vec3 *dest_s = data.scale + data.n;
+        glm::mat4 *dest_m = data.matrix + data.n;
+        int *dest_parent = data.parent + data.n;
+        int *dest_first_ch = data.first_child + data.n;
+        int *dest_next_sib = data.next_sibling + data.n;
+        int *dest_prev_sib = data.prev_sibling + data.n;
         for (unsigned i = 0; i < count; i++, e++, position++, orientation++, scale++,
-                destE++, destP++, destO++, destS++, destM++, destParent++, destFirstCh++, destNextSib++, destPrevSib++) {
+                dest_e++, dest_p++, dest_o++, dest_s++, dest_m++, dest_parent++, dest_first_ch++, dest_next_sib++, dest_prev_sib++) {
             // Check that the entity doesn't yet have this component
             try {
                 map.at(*e);     // Produces the exception when entity doesn't have the component
@@ -560,26 +565,27 @@ namespace open_sea::ecs {
             } catch (std::out_of_range &e) {}
 
             // Add as first child to parent if it had no children and this is the first child being added
-            if (count > 0 && parent != -1 && prevSib == -1) {
-                data.firstChild[parent] = data.n;
+            if (count > 0 && parent != -1 && prev_sib == -1) {
+                data.first_child[parent] = data.n;
             }
 
             // Write the data into the buffer
-            *destE = *e;
-            *destP = *position;
-            *destO = *orientation;
-            *destS = *scale;
-            *destM = transformation(*position, *orientation, *scale);
-            *destParent = parent;
-            *destFirstCh = -1;
-            if (i == count - 1 || parent == -1)
-                *destNextSib = -1;
-            else
-                *destNextSib = data.n + 1;
-            *destPrevSib = (parent == -1) ? -1 : prevSib;
+            *dest_e = *e;
+            *dest_p = *position;
+            *dest_o = *orientation;
+            *dest_s = *scale;
+            *dest_m = transformation(*position, *orientation, *scale);
+            *dest_parent = parent;
+            *dest_first_ch = -1;
+            if (i == count - 1 || parent == -1) {
+                *dest_next_sib = -1;
+            } else {
+                *dest_next_sib = data.n + 1;
+            }
+            *dest_prev_sib = (parent == -1) ? -1 : prev_sib;
 
             // Current is previous sibling for next iteration
-            prevSib = data.n;
+            prev_sib = data.n;
 
             // Increment data count and add map entry for the new record
             data.n++;
@@ -604,12 +610,12 @@ namespace open_sea::ecs {
     void TransformationComponent::set(int *i, glm::vec3 *position, glm::quat *orientation, glm::vec3 *scale,
                                       unsigned count) {
         // For every index, set the value
-        for (int j = 0; j < count; j++, i++, position++, orientation++, scale++) {
+        for (unsigned j = 0; j < count; j++, i++, position++, orientation++, scale++) {
             int index = *i;
 
             // Check the index is in range
-            if (index >= data.n) {
-                // Setting value of destroyed records should not have any effect
+            if (index < 0 || static_cast<unsigned>(index) >= data.n) {
+                // Setting value of records out of range should not have any effect
                 return;
             }
 
@@ -617,7 +623,7 @@ namespace open_sea::ecs {
             data.position[*i] = *position;
             data.orientation[*i] = *orientation;
             data.scale[*i] = *scale;
-            updateMatrix(*i);
+            update_matrix(*i);
         }
     }
 
@@ -631,15 +637,15 @@ namespace open_sea::ecs {
      */
     void TransformationComponent::swap(int i, int j) {
         // Buffer i
-        Entity bufferEnt = data.entity[i];
-        glm::vec3 bufferPos = data.position[i];
-        glm::quat bufferOri = data.orientation[i];
-        glm::vec3 bufferSca = data.scale[i];
-        glm::mat4 bufferMat = data.matrix[i];
-        int bufferPar = data.parent[i];
-        int bufferFir = data.firstChild[i];
-        int bufferNex = data.nextSibling[i];
-        int bufferPre = data.prevSibling[i];
+        Entity buffer_ent = data.entity[i];
+        glm::vec3 buffer_pos = data.position[i];
+        glm::quat buffer_ori = data.orientation[i];
+        glm::vec3 buffer_sca = data.scale[i];
+        glm::mat4 buffer_mat = data.matrix[i];
+        int buffer_par = data.parent[i];
+        int buffer_fir = data.first_child[i];
+        int buffer_nex = data.next_sibling[i];
+        int buffer_pre = data.prev_sibling[i];
 
         // Move j to i
         data.entity[i] = data.entity[j];
@@ -648,58 +654,64 @@ namespace open_sea::ecs {
         data.scale[i] = data.scale[j];
         data.matrix[i] = data.matrix[j];
         data.parent[i] = data.parent[j];
-        data.firstChild[i] = data.firstChild[j];
-        data.nextSibling[i] = data.nextSibling[j];
-        data.prevSibling[i] = data.prevSibling[j];
+        data.first_child[i] = data.first_child[j];
+        data.next_sibling[i] = data.next_sibling[j];
+        data.prev_sibling[i] = data.prev_sibling[j];
         
         // Change references to j to refer to i (write to buffer if i is the target)
-        int prevSib = data.prevSibling[j];
-        int nextSib = data.nextSibling[j];
+        int prev_sib = data.prev_sibling[j];
+        int next_sib = data.next_sibling[j];
         int parent = data.parent[j];
-        int ignoreParent = -1;  // Used to fix problem when i an j have a common parent and j is the first child
-        if (prevSib != -1) {
-            if (prevSib == i)
-                bufferNex = i;
-            else
-                data.nextSibling[prevSib] = i;
-        }
-        if (nextSib != -1) {
-            if (nextSib == i)
-                bufferPre = i;
-            else
-                data.prevSibling[nextSib] = i;
-        }
-        if (parent != -1 && data.firstChild[parent] == j) {
-            if (parent == i) {
-                bufferFir = i;
+        int ignore_parent = -1;  // Used to fix problem when i an j have a common parent and j is the first child
+        if (prev_sib != -1) {
+            if (prev_sib == i) {
+                buffer_nex = i;
             } else {
-                if (bufferPar == parent)
-                    ignoreParent = parent;
-                data.firstChild[parent] = i;
+                data.next_sibling[prev_sib] = i;
+            }
+        }
+        if (next_sib != -1) {
+            if (next_sib == i) {
+                buffer_pre = i;
+            } else {
+                data.prev_sibling[next_sib] = i;
+            }
+        }
+        if (parent != -1 && data.first_child[parent] == j) {
+            if (parent == i) {
+                buffer_fir = i;
+            } else {
+                if (buffer_par == parent) {
+                    ignore_parent = parent;
+                }
+                data.first_child[parent] = i;
             }
         }
         
         // Move buffer to j
-        data.entity[j] = bufferEnt;
-        data.position[j] = bufferPos;
-        data.orientation[j] = bufferOri;
-        data.scale[j] = bufferSca;
-        data.matrix[j] = bufferMat;
-        data.parent[j] = bufferPar;
-        data.firstChild[j] = bufferFir;
-        data.nextSibling[j] = bufferNex;
-        data.prevSibling[j] = bufferPre;
+        data.entity[j] = buffer_ent;
+        data.position[j] = buffer_pos;
+        data.orientation[j] = buffer_ori;
+        data.scale[j] = buffer_sca;
+        data.matrix[j] = buffer_mat;
+        data.parent[j] = buffer_par;
+        data.first_child[j] = buffer_fir;
+        data.next_sibling[j] = buffer_nex;
+        data.prev_sibling[j] = buffer_pre;
 
         // Change references to i to refer to j (data in the buffer already knows that j moved to i)
-        prevSib = bufferPre;
-        nextSib = bufferNex;
-        parent = bufferPar;
-        if (prevSib != -1)
-            data.nextSibling[prevSib] = j;
-        if (nextSib != -1)
-            data.prevSibling[nextSib] = j;
-        if (parent != -1 && data.firstChild[parent] == i && parent != ignoreParent)
-            data.firstChild[parent] = j;
+        prev_sib = buffer_pre;
+        next_sib = buffer_nex;
+        parent = buffer_par;
+        if (prev_sib != -1) {
+            data.next_sibling[prev_sib] = j;
+        }
+        if (next_sib != -1) {
+            data.prev_sibling[next_sib] = j;
+        }
+        if (parent != -1 && data.first_child[parent] == i && parent != ignore_parent) {
+            data.first_child[parent] = j;
+        }
 
         // Update entity-index mappings
         map[data.entity[i]] = i;
@@ -714,21 +726,21 @@ namespace open_sea::ecs {
      */
     void TransformationComponent::adopt(int i, int parent) {
         // Remove from original tree
-        int originalParent = data.parent[i];
-        if (originalParent != -1) {
+        int original_parent = data.parent[i];
+        if (original_parent != -1) {
             // Make parent point to next sibling if necessary
-            if (data.firstChild[originalParent] == i) {
-                data.firstChild[originalParent] = data.nextSibling[i];
+            if (data.first_child[original_parent] == i) {
+                data.first_child[original_parent] = data.next_sibling[i];
             }
 
             // Connect neighbouring siblings
-            int prevSib = data.prevSibling[i];
-            int nextSib = data.nextSibling[i];
-            if (prevSib != -1) {
-                data.nextSibling[prevSib] = nextSib;
+            int prev_sib = data.prev_sibling[i];
+            int next_sib = data.next_sibling[i];
+            if (prev_sib != -1) {
+                data.next_sibling[prev_sib] = next_sib;
             }
-            if (nextSib != -1) {
-                data.prevSibling[nextSib] = prevSib;
+            if (next_sib != -1) {
+                data.prev_sibling[next_sib] = prev_sib;
             }
         }
 
@@ -736,17 +748,20 @@ namespace open_sea::ecs {
         data.parent[i] = parent;
         if (parent == -1) {
             // Make root
-            data.prevSibling[i] = -1;
-            data.nextSibling[i] = -1;
+            data.prev_sibling[i] = -1;
+            data.next_sibling[i] = -1;
         } else {
             // Find last child
-            int lastChild = data.firstChild[parent];
-            if (lastChild != -1)
-                while (data.nextSibling[lastChild] != -1) lastChild = data.nextSibling[lastChild];
+            int last_child = data.first_child[parent];
+            if (last_child != -1) {
+                while (data.next_sibling[last_child] != -1) {
+                    last_child = data.next_sibling[last_child];
+                }
+            }
 
             // Append self
-            data.nextSibling[lastChild] = i;
-            data.prevSibling[i] = lastChild;
+            data.next_sibling[last_child] = i;
+            data.prev_sibling[i] = last_child;
         }
 
         /* --- Ordering not enforced
@@ -758,13 +773,13 @@ namespace open_sea::ecs {
             }
 
             // Check siblings (all have to be before)
-            if (data.firstChild[parent] != i) {
-                int sibling = data.firstChild[parent];
+            if (data.first_child[parent] != i) {
+                int sibling = data.first_child[parent];
                 while (sibling != i) {
                     if (sibling > i) {
                         swap(sibling, i);
                     }
-                    sibling = data.nextSibling[sibling];
+                    sibling = data.next_sibling[sibling];
                 }
             }
         }*/
@@ -775,22 +790,23 @@ namespace open_sea::ecs {
      *
      * \param i Index
      */
-    void TransformationComponent::updateMatrix(int i) {
+    void TransformationComponent::update_matrix(int i) {
         // Retreive parent matrix
         glm::mat4 parent;
-        if (data.parent[i] == -1)
+        if (data.parent[i] == -1) {
             parent = glm::mat4(1.0f);
-        else
+        } else {
             parent = data.matrix[data.parent[i]];
+        }
 
         // Update own matrix
         data.matrix[i] = parent * transformation(data.position[i], data.orientation[i], data.scale[i]);
 
         //Update the children
-        int child = data.firstChild[i];
+        int child = data.first_child[i];
         while (child != -1) {
-            updateMatrix(child);
-            child = data.nextSibling[child];
+            update_matrix(child);
+            child = data.next_sibling[child];
         }
     }
 
@@ -807,54 +823,60 @@ namespace open_sea::ecs {
     // Depth-first recursive
     void TransformationComponent::destroy(int i) {
         // Check index is in range
-        if (i >= data.n) {
+        if (i < 0 || static_cast<unsigned>(i) >= data.n) {
             // Records out of range are considered already destroyed
             return;
         }
 
         // Destroy children
-        int child = data.firstChild[i];
+        int child = data.first_child[i];
         while (child != -1) {
             destroy(child);
-            child = data.firstChild[i]; // Gets changed to next sibling or -1 by destruction
+            child = data.first_child[i]; // Gets changed to next sibling or -1 by destruction
         }
 
         // Remove references to i
-        int nextSib = data.nextSibling[i];
-        int prevSib = data.prevSibling[i];
+        int next_sib = data.next_sibling[i];
+        int prev_sib = data.prev_sibling[i];
         int parent = data.parent[i];
-        if (parent != -1 && data.firstChild[parent] == i)
-            data.firstChild[parent] = nextSib;
-        if (nextSib != -1)
-            data.prevSibling[nextSib] = prevSib;
-        if (prevSib != -1)
-            data.nextSibling[prevSib] = nextSib;
+        if (parent != -1 && data.first_child[parent] == i) {
+            data.first_child[parent] = next_sib;
+        }
+        if (next_sib != -1) {
+            data.prev_sibling[next_sib] = prev_sib;
+        }
+        if (prev_sib != -1) {
+            data.next_sibling[prev_sib] = next_sib;
+        }
 
         // Remove entity-index mapping and update data count
         map.erase(data.entity[i]);
         data.n--;
 
         // Move last record into i-th place
-        int lastIdx = data.n - 1;
-        Entity last = data.entity[lastIdx];
-        int parentLast = data.parent[lastIdx];
-        int nextSibLast = data.nextSibling[lastIdx];
-        int prevSibLast = data.prevSibling[lastIdx];
+        int last_idx = data.n - 1;
+        Entity last = data.entity[last_idx];
+        int parent_last = data.parent[last_idx];
+        int next_sib_last = data.next_sibling[last_idx];
+        int prev_sib_last = data.prev_sibling[last_idx];
         data.entity[i] = last;
-        data.position[i] = data.position[lastIdx];
-        data.orientation[i] = data.orientation[lastIdx];
-        data.scale[i] = data.scale[lastIdx];
-        data.matrix[i] = data.matrix[lastIdx];
-        data.parent[i] = parentLast;
-        data.firstChild[i] = data.firstChild[lastIdx];
-        data.nextSibling[i] = nextSibLast;
-        data.prevSibling[i] = prevSibLast;
-        if (parentLast != -1 && data.firstChild[parentLast] == lastIdx)
-            data.firstChild[parentLast] = i;
-        if (prevSibLast != -1)
-            data.nextSibling[prevSibLast] = i;
-        if (nextSibLast != -1)
-            data.prevSibling[nextSibLast] = i;
+        data.position[i] = data.position[last_idx];
+        data.orientation[i] = data.orientation[last_idx];
+        data.scale[i] = data.scale[last_idx];
+        data.matrix[i] = data.matrix[last_idx];
+        data.parent[i] = parent_last;
+        data.first_child[i] = data.first_child[last_idx];
+        data.next_sibling[i] = next_sib_last;
+        data.prev_sibling[i] = prev_sib_last;
+        if (parent_last != -1 && data.first_child[parent_last] == last_idx) {
+            data.first_child[parent_last] = i;
+        }
+        if (prev_sib_last != -1) {
+            data.next_sibling[prev_sib_last] = i;
+        }
+        if (next_sib_last != -1) {
+            data.prev_sibling[next_sib_last] = i;
+        }
 
         // Update entity-index mapping
         map[last] = i;
@@ -872,17 +894,17 @@ namespace open_sea::ecs {
      */
     void TransformationComponent::gc(const EntityManager &manager) {
         // Randomly check records until 4 live entities in a row are found
-        unsigned aliveInRow = 0;
+        unsigned alive_in_row = 0;
         static std::random_device device;
         static std::mt19937_64 generator;
         std::uniform_int_distribution<int> distribution(0, data.n);
-        while (data.n > 0 && aliveInRow < 4) {
+        while (data.n > 0 && alive_in_row < 4) {
             // Note: % data.n required because data.n can change and this keeps indices in valid range
             unsigned i = distribution(generator) % data.n;
             if (manager.alive(data.entity[i])) {
-                aliveInRow++;
+                alive_in_row++;
             } else {
-                aliveInRow = 0;
+                alive_in_row = 0;
                 destroy(i);
             }
         }
@@ -893,7 +915,7 @@ namespace open_sea::ecs {
      */
     TransformationComponent::~TransformationComponent() {
         // Deallocate the data buffer
-        ALLOCATOR.deallocate(static_cast<unsigned char *>(data.buffer), data.allocated * RECORD_SIZE);
+        allocator.deallocate(static_cast<unsigned char *>(data.buffer), data.allocated * record_size);
     }
 
     /**
@@ -908,18 +930,18 @@ namespace open_sea::ecs {
      */
     void TransformationComponent::translate(int *i, glm::vec3 *delta, unsigned count) {
         // For every index, set the value
-        for (int j = 0; j < count; j++, i++, delta++) {
+        for (unsigned j = 0; j < count; j++, i++, delta++) {
             int index = *i;
 
             // Check the index is in range
-            if (index >= data.n) {
-                // Setting value of destroyed records should not have any effect
+            if (index < 0 || static_cast<unsigned>(index) >= data.n) {
+                // Setting value of records out of range should not have any effect
                 return;
             }
 
             // Set the values
             data.position[*i] += *delta;
-            updateMatrix(*i);
+            update_matrix(*i);
         }
     }
 
@@ -935,18 +957,18 @@ namespace open_sea::ecs {
      */
     void TransformationComponent::rotate(int *i, glm::quat *delta, unsigned count) {
         // For every index, set the value
-        for (int j = 0; j < count; j++, i++, delta++) {
+        for (unsigned j = 0; j < count; j++, i++, delta++) {
             int index = *i;
 
             // Check the index is in range
-            if (index >= data.n) {
-                // Setting value of destroyed records should not have any effect
+            if (index < 0 || static_cast<unsigned>(index) >= data.n) {
+                // Setting value of records out of range should not have any effect
                 return;
             }
 
             // Set the values
             data.orientation[*i] = *delta * data.orientation[*i];
-            updateMatrix(*i);
+            update_matrix(*i);
         }
     }
 
@@ -963,18 +985,18 @@ namespace open_sea::ecs {
      */
     void TransformationComponent::scale(int *i, glm::vec3 *delta, unsigned count) {
         // For every index, set the value
-        for (int j = 0; j < count; j++, i++, delta++) {
+        for (unsigned j = 0; j < count; j++, i++, delta++) {
             int index = *i;
 
             // Check the index is in range
-            if (index >= data.n) {
-                // Setting value of destroyed records should not have any effect
+            if (index < 0 || static_cast<unsigned>(index) >= data.n) {
+                // Setting value of records out of range should not have any effect
                 return;
             }
 
             // Set the values
             data.scale[*i] *= *delta;
-            updateMatrix(*i);
+            update_matrix(*i);
         }
     }
 
@@ -988,20 +1010,20 @@ namespace open_sea::ecs {
      * \param position New position vectors
      * \param count Number of indices
      */
-    void TransformationComponent::setPosition(int *i, glm::vec3 *position, unsigned count) {
+    void TransformationComponent::set_position(int *i, glm::vec3 *position, unsigned count) {
         // For every index, set the value
-        for (int j = 0; j < count; j++, i++, position++) {
+        for (unsigned j = 0; j < count; j++, i++, position++) {
             int index = *i;
 
             // Check the index is in range
-            if (index >= data.n) {
-                // Setting value of destroyed records should not have any effect
+            if (index < 0 || static_cast<unsigned>(index) >= data.n) {
+                // Setting value of records out of range should not have any effect
                 return;
             }
 
             // Set the values
             data.position[*i] = *position;
-            updateMatrix(*i);
+            update_matrix(*i);
         }
     }
 
@@ -1015,20 +1037,20 @@ namespace open_sea::ecs {
      * \param orientation New orientation quaternions
      * \param count Number of indices
      */
-    void TransformationComponent::setOrientation(int *i, glm::quat *orientation, unsigned count) {
+    void TransformationComponent::set_orientation(int *i, glm::quat *orientation, unsigned count) {
         // For every index, set the value
-        for (int j = 0; j < count; j++, i++, orientation++) {
+        for (unsigned j = 0; j < count; j++, i++, orientation++) {
             int index = *i;
 
             // Check the index is in range
-            if (index >= data.n) {
-                // Setting value of destroyed records should not have any effect
+            if (index < 0 || static_cast<unsigned>(index) >= data.n) {
+                // Setting value of records out of range should not have any effect
                 return;
             }
 
             // Set the values
             data.orientation[*i] = *orientation;
-            updateMatrix(*i);
+            update_matrix(*i);
         }
     }
 
@@ -1042,35 +1064,35 @@ namespace open_sea::ecs {
      * \param scale New scale vectors
      * \param count Number of indices
      */
-    void TransformationComponent::setScale(int *i, glm::vec3 *scale, unsigned count) {
+    void TransformationComponent::set_scale(int *i, glm::vec3 *scale, unsigned count) {
         // For every index, set the value
-        for (int j = 0; j < count; j++, i++, scale++) {
+        for (unsigned j = 0; j < count; j++, i++, scale++) {
             int index = *i;
 
             // Check the index is in range
-            if (index >= data.n) {
-                // Setting value of destroyed records should not have any effect
+            if (index < 0 || static_cast<unsigned>(index) >= data.n) {
+                // Setting value of records out of range should not have any effect
                 return;
             }
 
             // Set the values
             data.scale[*i] = *scale;
-            updateMatrix(*i);
+            update_matrix(*i);
         }
     }
 
     /**
      * \brief Show ImGui debug information
      */
-    void TransformationComponent::showDebug() {
-        ImGui::Text("Record size: %i bytes", RECORD_SIZE);
+    void TransformationComponent::show_debug() {
+        ImGui::Text("Record size: %i bytes", record_size);
         ImGui::Text("Records (allocated): %i (%i)", data.n, data.allocated);
-        ImGui::Text("Size data arrays (allocated): %i (%i) bytes", RECORD_SIZE * data.n, RECORD_SIZE * data.allocated);
+        ImGui::Text("Size data arrays (allocated): %i (%i) bytes", record_size * data.n, record_size * data.allocated);
         if (ImGui::Button("Query")) {
             ImGui::OpenPopup("Component Manager Query");
         }
         if (ImGui::BeginPopupModal("Component Manager Query", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-            showQuery();
+            show_query();
 
             ImGui::Separator();
             if (ImGui::Button("Close")) { ImGui::CloseCurrentPopup(); }
@@ -1081,53 +1103,53 @@ namespace open_sea::ecs {
     /**
      * \brief Show ImGui form for querying data from a manager of this component
      */
-    void TransformationComponent::showQuery() {
+    void TransformationComponent::show_query() {
         ImGui::TextUnformatted("Entity:");
-        ImGui::InputInt2("index - generation", queryIdxGen);
+        ImGui::InputInt2("index - generation", query_idx_gen);
         if (ImGui::Button("Refresh")) {
-            if (queryIdxGen[0] >= 0 && queryIdxGen[1] >= 0) {
-                int i = lookup(ecs::Entity(static_cast<unsigned>(queryIdxGen[0]), static_cast<unsigned>(queryIdxGen[1])));
-                queryIdx = i;
+            if (query_idx_gen[0] >= 0 && query_idx_gen[1] >= 0) {
+                int i = lookup(ecs::Entity(static_cast<unsigned>(query_idx_gen[0]), static_cast<unsigned>(query_idx_gen[1])));
+                query_idx = i;
             } else {
-                queryIdx = -1;
+                query_idx = -1;
             }
         }
         ImGui::Separator();
-        if (queryIdx != -1) {
-            ImGui::Text("Position: %.3f, %.3f, %.3f", data.position[queryIdx].x, data.position[queryIdx].y, data.position[queryIdx].z);
+        if (query_idx != -1) {
+            ImGui::Text("Position: %.3f, %.3f, %.3f", data.position[query_idx].x, data.position[query_idx].y, data.position[query_idx].z);
             ImGui::TextUnformatted("Orientation:");
             ImGui::SameLine();
-            debug::show_quat(data.orientation[queryIdx]);
-            ImGui::Text("Scale: %.3f, %.3f, %.3f", data.scale[queryIdx].x, data.scale[queryIdx].y, data.scale[queryIdx].z);
-            debug::show_matrix(data.matrix[queryIdx]);
-            ImGui::Text("Parent: %s", (data.parent[queryIdx] == -1) ? "none" : data.entity[data.parent[queryIdx]].str().c_str());
-            ImGui::Text("First child: %s", (data.firstChild[queryIdx] == -1) ? "none" : data.entity[data.firstChild[queryIdx]].str().c_str());
-            ImGui::Text("Next sibling: %s", (data.nextSibling[queryIdx] == -1) ? "none" : data.entity[data.nextSibling[queryIdx]].str().c_str());
-            ImGui::Text("Previous sibling: %s", (data.prevSibling[queryIdx] == -1) ? "none" : data.entity[data.prevSibling[queryIdx]].str().c_str());
+            debug::show_quat(data.orientation[query_idx]);
+            ImGui::Text("Scale: %.3f, %.3f, %.3f", data.scale[query_idx].x, data.scale[query_idx].y, data.scale[query_idx].z);
+            debug::show_matrix(data.matrix[query_idx]);
+            ImGui::Text("Parent: %s", (data.parent[query_idx] == -1) ? "none" : data.entity[data.parent[query_idx]].str().c_str());
+            ImGui::Text("First child: %s", (data.first_child[query_idx] == -1) ? "none" : data.entity[data.first_child[query_idx]].str().c_str());
+            ImGui::Text("Next sibling: %s", (data.next_sibling[query_idx] == -1) ? "none" : data.entity[data.next_sibling[query_idx]].str().c_str());
+            ImGui::Text("Previous sibling: %s", (data.prev_sibling[query_idx] == -1) ? "none" : data.entity[data.prev_sibling[query_idx]].str().c_str());
             ImGui::Spacing();
             if (ImGui::Button("Set Position")) {
-                queryPos = data.position[queryIdx];
+                query_pos = data.position[query_idx];
                 ImGui::OpenPopup("set position");
             } ImGui::SameLine();
             if (ImGui::Button("Set Orientation")) {
-                queryOri = data.orientation[queryIdx];
+                query_ori = data.orientation[query_idx];
                 ImGui::OpenPopup("set orientation");
             } ImGui::SameLine();
             if (ImGui::Button("Set Scale")) {
-                querySca = data.scale[queryIdx];
+                query_sca = data.scale[query_idx];
                 ImGui::OpenPopup("set scale");
             }
             ImGui::Spacing();
             if (ImGui::Button("Translate")) {
-                queryPosDelta = {};
+                query_pos_delta = {};
                 ImGui::OpenPopup("translate");
             } ImGui::SameLine();
             if (ImGui::Button("Rotate")) {
-                queryOriDelta = glm::quat();
+                query_ori_delta = glm::quat();
                 ImGui::OpenPopup("rotate");
             } ImGui::SameLine();
             if (ImGui::Button("Scale")) {
-                queryScaFac = {};
+                query_sca_fac = {};
                 ImGui::OpenPopup("scale");
             }
         } else {
@@ -1136,11 +1158,11 @@ namespace open_sea::ecs {
 
         // Set position dialog
         if (ImGui::BeginPopupModal("set position", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-            ImGui::InputFloat3("position", &queryPos.x);
+            ImGui::InputFloat3("position", &query_pos.x);
             ImGui::Separator();
             if (ImGui::Button("Cancel")) { ImGui::CloseCurrentPopup(); }
             if (ImGui::Button("Set")) {
-                setPosition(&queryIdx, &queryPos, 1);
+                set_position(&query_idx, &query_pos, 1);
                 ImGui::CloseCurrentPopup();
             }
             ImGui::EndPopup();
@@ -1148,11 +1170,11 @@ namespace open_sea::ecs {
 
         // Set orientation dialog
         if (ImGui::BeginPopupModal("set orientation", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-            ImGui::InputFloat4("orientation", &queryOri.x);
+            ImGui::InputFloat4("orientation", &query_ori.x);
             ImGui::Separator();
             if (ImGui::Button("Cancel")) { ImGui::CloseCurrentPopup(); }
             if (ImGui::Button("Set")) {
-                setOrientation(&queryIdx, &queryOri, 1);
+                set_orientation(&query_idx, &query_ori, 1);
                 ImGui::CloseCurrentPopup();
             }
             ImGui::EndPopup();
@@ -1160,11 +1182,11 @@ namespace open_sea::ecs {
 
         // Set scale dialog
         if (ImGui::BeginPopupModal("set scale", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-            ImGui::InputFloat3("scale", &querySca.x);
+            ImGui::InputFloat3("scale", &query_sca.x);
             ImGui::Separator();
             if (ImGui::Button("Cancel")) { ImGui::CloseCurrentPopup(); }
             if (ImGui::Button("Set")) {
-                setScale(&queryIdx, &querySca, 1);
+                set_scale(&query_idx, &query_sca, 1);
                 ImGui::CloseCurrentPopup();
             }
             ImGui::EndPopup();
@@ -1172,11 +1194,11 @@ namespace open_sea::ecs {
 
         // Translate dialog
         if (ImGui::BeginPopupModal("translate", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-            ImGui::InputFloat3("delta", &queryPosDelta.x);
+            ImGui::InputFloat3("delta", &query_pos_delta.x);
             ImGui::Separator();
             if (ImGui::Button("Cancel")) { ImGui::CloseCurrentPopup(); } ImGui::SameLine();
             if (ImGui::Button("Translate")) {
-                translate(&queryIdx, &queryPosDelta, 1);
+                translate(&query_idx, &query_pos_delta, 1);
                 ImGui::CloseCurrentPopup();
             }
             ImGui::EndPopup();
@@ -1184,11 +1206,11 @@ namespace open_sea::ecs {
 
         // Rotate dialog
         if (ImGui::BeginPopupModal("rotate", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-            ImGui::InputFloat4("delta", &queryOriDelta.x);
+            ImGui::InputFloat4("delta", &query_ori_delta.x);
             ImGui::Separator();
             if (ImGui::Button("Cancel")) { ImGui::CloseCurrentPopup(); } ImGui::SameLine();
             if (ImGui::Button("Rotate")) {
-                rotate(&queryIdx, &queryOriDelta, 1);
+                rotate(&query_idx, &query_ori_delta, 1);
                 ImGui::CloseCurrentPopup();
             }
             ImGui::EndPopup();
@@ -1196,11 +1218,11 @@ namespace open_sea::ecs {
 
         // Scale dialog
         if (ImGui::BeginPopupModal("scale", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-            ImGui::InputFloat3("factor", &queryScaFac.x);
+            ImGui::InputFloat3("factor", &query_sca_fac.x);
             ImGui::Separator();
             if (ImGui::Button("Cancel")) { ImGui::CloseCurrentPopup(); } ImGui::SameLine();
             if (ImGui::Button("Scale")) {
-                scale(&queryIdx, &queryScaFac, 1);
+                scale(&query_idx, &query_sca_fac, 1);
                 ImGui::CloseCurrentPopup();
             }
             ImGui::EndPopup();
@@ -1233,29 +1255,30 @@ namespace open_sea::ecs {
         assert(size > data.n);
 
         // Allocate new space
-        InstanceData newData;
-        unsigned byteCount = size * RECORD_SIZE;
+        InstanceData new_data;
+        unsigned byte_count = size * record_size;
 
-        newData.buffer = ALLOCATOR.allocate(byteCount);
-        newData.n = data.n;
-        newData.allocated = size;
+        new_data.buffer = allocator.allocate(byte_count);
+        new_data.n = data.n;
+        new_data.allocated = size;
 
         // Compute pointers to data arrays
-        newData.entity = (Entity*) newData.buffer;
-        newData.camera = (std::shared_ptr<gl::Camera>*) (newData.entity + size);
+        new_data.entity = (Entity*) new_data.buffer;
+        new_data.camera = (std::shared_ptr<gl::Camera>*) (new_data.entity + size);
 
         // Copy data into new space
         if (data.n > 0) {
-            std::memcpy(newData.entity, data.entity, data.n * sizeof(Entity));
-            std::memcpy(newData.camera, data.camera, data.n * sizeof(std::shared_ptr<gl::Camera>));
+            std::memcpy(new_data.entity, data.entity, data.n * sizeof(Entity));
+            std::memcpy(new_data.camera, data.camera, data.n * sizeof(std::shared_ptr<gl::Camera>));
         }
 
         // Deallocate old data
-        if (data.allocated > 0)
-            ALLOCATOR.deallocate(static_cast<unsigned char *>(data.buffer), data.allocated * RECORD_SIZE);
+        if (data.allocated > 0) {
+            allocator.deallocate(static_cast<unsigned char *>(data.buffer), data.allocated * record_size);
+        }
 
         // Set the data
-        data = newData;
+        data = new_data;
     }
 
     /**
@@ -1266,8 +1289,11 @@ namespace open_sea::ecs {
      */
     int CameraComponent::lookup(Entity e) const {
         Entity *d = data.entity;
-        for (int i = 0; i < data.n; i++, d++)
-            if (e == *d) return i;
+        for (unsigned i = 0; i < data.n; i++, d++) {
+            if (e == *d) {
+                return i;
+            }
+        }
         return -1;
     }
 
@@ -1308,12 +1334,12 @@ namespace open_sea::ecs {
         }
 
         // For every entity, add a new record
-        Entity *destE = data.entity + data.n;
-        std::shared_ptr<gl::Camera> *destC = data.camera + data.n;
-        for (unsigned i = 0; i < count; i++, e++, c++, destE++, destC++) {
+        Entity *dest_e = data.entity + data.n;
+        std::shared_ptr<gl::Camera> *dest_c = data.camera + data.n;
+        for (unsigned i = 0; i < count; i++, e++, c++, dest_e++, dest_c++) {
             // Write the data into the buffer
-            *destE = *e;
-            new (destC) std::shared_ptr<gl::Camera>(*c);
+            *dest_e = *e;
+            new (dest_c) std::shared_ptr<gl::Camera>(*c);
 
             // Increment data count
             data.n++;
@@ -1335,12 +1361,12 @@ namespace open_sea::ecs {
      */
     void CameraComponent::set(int *i, std::shared_ptr<gl::Camera> *c, unsigned count) {
         // For every index, set the value
-        for (int j = 0; j < count; j++, i++, c++) {
+        for (unsigned j = 0; j < count; j++, i++, c++) {
             int index = *i;
 
             // Check the index is in range
-            if (index >= data.n) {
-                // Setting value of destroyed records should not have any effect
+            if (index < 0 || static_cast<unsigned>(index) >= data.n) {
+                // Setting value of records out of range should not have any effect
                 return;
             }
 
@@ -1360,20 +1386,18 @@ namespace open_sea::ecs {
      */
     void CameraComponent::destroy(int i) {
         // Check index is in range
-        if (i >= data.n) {
+        if (i < 0 || static_cast<unsigned>(i) >= data.n) {
             // Records out of range are considered already destroyed
             return;
         }
 
         // Move last record into i-th place
-        int lastIdx = data.n - 1;
-        Entity e = data.entity[i];
-        Entity last = data.entity[lastIdx];
-        data.entity[i] = data.entity[lastIdx];
-        data.camera[i] = data.camera[lastIdx];
+        int last_idx = data.n - 1;
+        data.entity[i] = data.entity[last_idx];
+        data.camera[i] = data.camera[last_idx];
 
         // Destroy the pointer at the last record (as it is now invalidated)
-        data.camera[lastIdx].~shared_ptr<gl::Camera>();
+        data.camera[last_idx].~shared_ptr<gl::Camera>();
 
         // Update data counts and index map
         data.n--;
@@ -1391,17 +1415,17 @@ namespace open_sea::ecs {
      */
     void CameraComponent::gc(const EntityManager &manager) {
         // Randomly check records until 4 live entities in a row are found
-        unsigned aliveInRow = 0;
+        unsigned alive_in_row = 0;
         static std::random_device device;
         static std::mt19937_64 generator;
         std::uniform_int_distribution<int> distribution(0, data.n);
-        while (data.n > 0 && aliveInRow < 4) {
+        while (data.n > 0 && alive_in_row < 4) {
             // Note: % data.n required because data.n can change and this keeps indices in valid range
             unsigned i = distribution(generator) % data.n;
             if (manager.alive(data.entity[i])) {
-                aliveInRow++;
+                alive_in_row++;
             } else {
-                aliveInRow = 0;
+                alive_in_row = 0;
                 destroy(i);
             }
         }
@@ -1413,26 +1437,26 @@ namespace open_sea::ecs {
     CameraComponent::~CameraComponent() {
         // Destroy all pointers
         std::shared_ptr<gl::Camera> *c = data.camera;
-        for (int i = 0; i < data.n; i++, c++) {
+        for (unsigned i = 0; i < data.n; i++, c++) {
             c->~shared_ptr<gl::Camera>();
         }
 
         // Deallocate the data buffer
-        ALLOCATOR.deallocate(static_cast<unsigned char *>(data.buffer), data.allocated * RECORD_SIZE);
+        allocator.deallocate(static_cast<unsigned char *>(data.buffer), data.allocated * record_size);
     }
 
     /**
      * \brief Show ImGui debug information
      */
-    void CameraComponent::showDebug() {
-        ImGui::Text("Record size: %i bytes", RECORD_SIZE);
+    void CameraComponent::show_debug() {
+        ImGui::Text("Record size: %i bytes", record_size);
         ImGui::Text("Records (allocated): %i (%i)", data.n, data.allocated);
-        ImGui::Text("Size data arrays (allocated): %i (%i) bytes", RECORD_SIZE * data.n, RECORD_SIZE * data.allocated);
+        ImGui::Text("Size data arrays (allocated): %i (%i) bytes", record_size * data.n, record_size * data.allocated);
         if (ImGui::Button("Query")) {
             ImGui::OpenPopup("Component Manager Query");
         }
         if (ImGui::BeginPopupModal("Component Manager Query", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-            showQuery();
+            show_query();
 
             ImGui::Separator();
             if (ImGui::Button("Close")) { ImGui::CloseCurrentPopup(); }
@@ -1443,29 +1467,32 @@ namespace open_sea::ecs {
     /**
      * \brief Show ImGui form for querying data from a manager of this component
      */
-    void CameraComponent::showQuery() {
+    void CameraComponent::show_query() {
         ImGui::TextUnformatted("Entity:");
-        ImGui::InputInt2("index - generation", queryIdxGen);
+        ImGui::InputInt2("index - generation", query_idx_gen);
         if (ImGui::Button("Refresh")) {
-            queryCameras.clear();
-            if (queryIdxGen[0] >= 0 && queryIdxGen[1] >= 0) {
-                ecs::Entity q(static_cast<unsigned>(queryIdxGen[0]), static_cast<unsigned>(queryIdxGen[1]));
+            query_cameras.clear();
+            if (query_idx_gen[0] >= 0 && query_idx_gen[1] >= 0) {
+                ecs::Entity q(static_cast<unsigned>(query_idx_gen[0]), static_cast<unsigned>(query_idx_gen[1]));
                 ecs::Entity *e = data.entity;
                 for (unsigned i = 0; i < data.n; i++, e++) {
-                    if (*e == q) queryCameras.emplace_back(data.camera[i]);
+                    if (*e == q) {
+                        query_cameras.emplace_back(data.camera[i]);
+                    }
                 }
             }
         }
         ImGui::Separator();
-        if (queryCameras.empty()) {
+        if (query_cameras.empty()) {
             ImGui::TextUnformatted("No record found");
         } else {
-            ImGui::Text("Camera count: %i", queryCameras.size());
-            for (unsigned i = 0; i < queryCameras.size(); i++) {
+            ImGui::Text("Camera count: %i", static_cast<int>(query_cameras.size()));
+            for (unsigned i = 0; i < query_cameras.size(); i++) {
                 std::ostringstream label;
-                label << "Camera #" << i+1;
-                if (ImGui::CollapsingHeader(label.str().c_str()))
-                    queryCameras[i]->showDebug();
+                label << "Camera #" << (i + 1);
+                if (ImGui::CollapsingHeader(label.str().c_str())) {
+                    query_cameras[i]->show_debug();
+                }
             }
         }
     }

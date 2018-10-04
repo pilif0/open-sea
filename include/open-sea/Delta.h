@@ -22,8 +22,8 @@ namespace open_sea::time {
     void update_delta();
 
     double get_delta();
-    double get_FPS_immediate();
-    double get_FPS_average();
+    double get_fps_immediate();
+    double get_fps_average();
 
     void debug_window(bool *open);
 

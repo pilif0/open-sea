@@ -268,7 +268,7 @@ int main() {
     debug::add_controls(controls_td, "Top Down Controls");
 
     // Add suspend controls button
-    bool suspend_controls = false;
+    bool suspend_controls = true;
     const input::UnifiedInput suspend_binding = input::UnifiedInput::keyboard(GLFW_KEY_F1);
     input::connect_unified([&suspend_controls, suspend_binding](input::UnifiedInput i, input::state a){
         if (i == suspend_binding && a == input::press) {

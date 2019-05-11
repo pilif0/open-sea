@@ -22,6 +22,7 @@
 #include <open-sea/Controls.h>
 #include <open-sea/Debug.h>
 #include <open-sea/Profiler.h>
+#include <open-sea/Table.h>
 namespace os_log = open_sea::log;
 namespace window = open_sea::window;
 namespace input = open_sea::input;
@@ -44,6 +45,20 @@ namespace profiler = open_sea::profiler;
 #include <sstream>
 #include <random>
 #include <vector>
+
+//! Test table data struct
+struct TestData {
+    static constexpr unsigned int count = 2;
+    struct SoA {
+        int *a;
+        float *b;
+    };
+
+    int a;
+    float b;
+};
+SOA_MEMBER(TestData, 0, int, a)
+SOA_MEMBER(TestData, 1, float, b)
 
 int main() {
     // Initialize logging
@@ -316,6 +331,36 @@ int main() {
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
+
+    // Initialize test SoA table
+    auto test_table = open_sea::data::TableSoA<ecs::Entity, TestData>();
+    {
+        TestData data{1, 3.14f};
+        test_table.add(entities[0], data);
+
+        // Test copy get
+        TestData copy = test_table.get_copy(entities[0]);
+        std::ostringstream message;
+        message << "Test table copy get test result: a = " << copy.a << ", b = " << copy.b;
+        os_log::log(lg, os_log::debug, message.str());
+
+        // Test reference get
+        TestData::SoA ref = test_table.get_reference(entities[0]);
+        message = std::ostringstream();
+        message << "Test table reference get test result: a = " << *(ref.a) << ", b = " << *(ref.b);
+        os_log::log(lg, os_log::debug, message.str());
+
+        // Edit check
+        *(ref.a) = 100;
+        *(ref.b) = 10.24f;
+        message = std::ostringstream();
+        message << "Test table edit test result:\n"
+                << "Copy: a = " << copy.a << ", b = " << copy.b << '\n'
+                << "Reference: a = " << *(ref.a) << ", b = " << *(ref.b) << '\n';
+        ref = test_table.get_reference(entities[0]);
+        message << "New reference: a = " << *(ref.a) << ", b = " << *(ref.b);
+        os_log::log(lg, os_log::debug, message.str());
+    }
 
     // Update cursor delta once before main loop to avoid extreme first cursor delta
     input::update_cursor_delta();

@@ -14,6 +14,8 @@ set(open_sea_HEADERS
         "${INCL_DIR}/open-sea/GL.h"
         "${INCL_DIR}/open-sea/Model.h"
         "${INCL_DIR}/open-sea/Entity.h"
+        "${INCL_DIR}/open-sea/Util.h"
+        "${INCL_DIR}/open-sea/Table.h"
         "${INCL_DIR}/open-sea/Components.h"
         "${INCL_DIR}/open-sea/Render.h"
         "${INCL_DIR}/open-sea/Systems.h"

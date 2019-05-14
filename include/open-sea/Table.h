@@ -66,7 +66,7 @@ namespace open_sea::data {
             bool remove(const K &key);
             record_t get_copy(const K &key);
             record_ptr_t get_reference(const K &key);
-            //TODO get reference to array starts for iterating over the whole struct
+            record_ptr_t get_reference();
 
             //! Get number of records
             unsigned int size() { return n; }
@@ -303,7 +303,7 @@ namespace open_sea::data {
             unsigned int index = map.at(key);
             TableSoA<K, R>::record_ptr_t result;
 
-            // Move last into deleted
+            // Set result to point to the correct entries
             util::invoke_n<R::count, GetRefHelper>(arrays, index, result);
 
             return result;
@@ -312,6 +312,24 @@ namespace open_sea::data {
             //TODO include key value in message?
             throw std::out_of_range("No record found for the provided key.");
         }
+    }
+
+    /**
+     * Get read-write reference to the first record
+     *
+     * \tparam K Key type
+     * \tparam R Record type
+     * \return Instance of R::SoA (struct of pointers to members of R) whose members point to the value array starts
+     */
+    template<typename K, typename R>
+    typename TableSoA<K, R>::record_ptr_t TableSoA<K, R>::get_reference() {
+        // Prepare result
+        TableSoA<K, R>::record_ptr_t result;
+
+        // Set result to point to array starts
+        util::invoke_n<R::count, GetRefHelper>(arrays, 0u, result);
+
+        return result;
     }
 
     /**

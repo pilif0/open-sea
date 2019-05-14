@@ -60,7 +60,7 @@ namespace open_sea::data {
             //! Record type
             typedef R record_t; //TODO replace most usages of R with this, to enable future changes to the data struct layout
             //! Record pointer type (struct of pointers to members of R)
-            typedef typename R::SoA record_ptr_t;
+            typedef typename R::Ptr record_ptr_t;
 
             bool add(const K &key, const R &record);
             bool remove(const K &key);
@@ -128,13 +128,13 @@ namespace open_sea::data {
                 }
             };
 
-            //! Helper functor to fill Nth member of R::SoA with a pointer to the appropriate value of record i
+            //! Helper functor to fill Nth member of R::Ptr with a pointer to the appropriate value of record i
             template <unsigned int N>
             struct GetRefHelper {
                 void operator()(void **arr, const unsigned int i, record_ptr_t &result) {
                     typedef typename util::GetMemberType<R, N>::type member_type;
                     auto start = static_cast<member_type *>(arr[N]);
-                    std::invoke(util::get_pointer_to_member<typename R::SoA, N>(), result) = start + i;
+                    std::invoke(util::get_pointer_to_member<typename R::Ptr, N>(), result) = start + i;
                 }
             };
 
@@ -290,7 +290,7 @@ namespace open_sea::data {
      * \tparam K Key type
      * \tparam R Record type
      * \param key Key to look up
-     * \return Instance of R::SoA (struct of pointers to members of R) whose members point to the values associated with
+     * \return Instance of R::Ptr (struct of pointers to members of R) whose members point to the values associated with
      *  the provided key
      *
      * \throws std::out_of_range When no record is associated with the provided key
@@ -319,7 +319,7 @@ namespace open_sea::data {
      *
      * \tparam K Key type
      * \tparam R Record type
-     * \return Instance of R::SoA (struct of pointers to members of R) whose members point to the value array starts
+     * \return Instance of R::Ptr (struct of pointers to members of R) whose members point to the value array starts
      */
     template<typename K, typename R>
     typename TableSoA<K, R>::record_ptr_t TableSoA<K, R>::get_reference() {
@@ -338,7 +338,7 @@ namespace open_sea::data {
 }
 
 // Generate member type struct and member pointer get function for member N of type T and identifier I of struct S,
-//  as well as the pointer variant for sub-struct S:SoA
+//  as well as the pointer variant for sub-struct S:Ptr
 //TODO use sub-struct S::AoS for base data? to keep data at the same level
 #define SOA_MEMBER(S, N, T, I) \
 template<>  \
@@ -349,18 +349,18 @@ typename open_sea::util::GetMemberPointerType<S, N>::type open_sea::util::get_po
     return &S::I;   \
 }   \
 template<>  \
-struct open_sea::util::GetMemberType<S::SoA, N> { typedef T* type; }; \
+struct open_sea::util::GetMemberType<S::Ptr, N> { typedef T* type; }; \
 \
 template<>  \
-typename open_sea::util::GetMemberPointerType<S::SoA, N>::type open_sea::util::get_pointer_to_member<S::SoA, N>() {   \
-    return &S::SoA::I;   \
+typename open_sea::util::GetMemberPointerType<S::Ptr, N>::type open_sea::util::get_pointer_to_member<S::Ptr, N>() {   \
+    return &S::Ptr::I;   \
 }
 
 /* Example usage:
  *
  * struct Data {
  *     static constexpr unsigned int count = 2;
- *     struct SoA {
+ *     struct Ptr {
  *         int *a;
  *         float *b;
  *     };

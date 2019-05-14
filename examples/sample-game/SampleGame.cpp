@@ -49,7 +49,7 @@ namespace profiler = open_sea::profiler;
 //! Test table data struct
 struct TestData {
     static constexpr unsigned int count = 2;
-    struct SoA {
+    struct Ptr {
         int *a;
         float *b;
     };
@@ -345,7 +345,7 @@ int main() {
         os_log::log(lg, os_log::debug, message.str());
 
         // Test reference get
-        TestData::SoA ref = test_table.get_reference(entities[0]);
+        TestData::Ptr ref = test_table.get_reference(entities[0]);
         message = std::ostringstream();
         message << "Test table reference get test result: a = " << *(ref.a) << ", b = " << *(ref.b);
         os_log::log(lg, os_log::debug, message.str());

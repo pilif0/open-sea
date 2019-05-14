@@ -249,6 +249,9 @@ namespace open_sea::data {
                 }
             }
             map.erase(key);
+
+            // Decrement size
+            n--;
         } catch (std::out_of_range &e) {
             // Not present -> nothing to remove
             return false;
@@ -271,7 +274,7 @@ namespace open_sea::data {
         try {
             // Get the index and prepare result
             unsigned int index = map.at(key);
-            TableSoA<K, R>::record_t result;
+            record_t result;
 
             // Move last into deleted
             util::invoke_n<R::count, GetCopyHelper>(arrays, index, result);
@@ -301,7 +304,7 @@ namespace open_sea::data {
         try {
             // Get the index and prepare result
             unsigned int index = map.at(key);
-            TableSoA<K, R>::record_ptr_t result;
+            record_ptr_t result;
 
             // Set result to point to the correct entries
             util::invoke_n<R::count, GetRefHelper>(arrays, index, result);
@@ -324,7 +327,7 @@ namespace open_sea::data {
     template<typename K, typename R>
     typename TableSoA<K, R>::record_ptr_t TableSoA<K, R>::get_reference() {
         // Prepare result
-        TableSoA<K, R>::record_ptr_t result;
+        record_ptr_t result;
 
         // Set result to point to array starts
         util::invoke_n<R::count, GetRefHelper>(arrays, 0u, result);

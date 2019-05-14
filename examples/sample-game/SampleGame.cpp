@@ -333,7 +333,7 @@ int main() {
     glDepthFunc(GL_LESS);
 
     // Initialize test SoA table
-    auto test_table = open_sea::data::TableSoA<ecs::Entity, TestData>();
+    auto test_table = open_sea::data::TableAoS<ecs::Entity, TestData>();
     {
         TestData data{1, 3.14f};
         test_table.add(entities[0], data);

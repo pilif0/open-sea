@@ -13,6 +13,8 @@
 #include <functional>
 
 //TODO use page allocator
+//TODO make sure copying deals well with objects
+//TODO use typedefs instead of type parameters to improve flexibility
 namespace open_sea::data {
     /**
      * \addtogroup Data
@@ -29,7 +31,239 @@ namespace open_sea::data {
     template<typename K, typename R>
     class Table{};    //TODO add general interface
 
-    //TODO AoS implementation
+    /** \class TableAoS
+     * Table that stores its records as an array of structs
+     *
+     * \tparam K Key type
+     * \tparam R Record type
+     */
+    template<typename K, typename R>
+    class TableAoS : public Table<K, R> {
+        public:
+            //! Record type
+            typedef R record_t;
+            //! Record pointer type (struct of pointers to members of R)
+            typedef typename R::Ptr record_ptr_t;
+
+        private:
+            //! Map of keys to indices to the data
+            std::unordered_map<K, unsigned int> map{};
+            //! Start of the data
+            record_t *data = nullptr;
+            //! Number of records stored
+            unsigned int n = 0;
+            //! Allocated space in terms of number of records that fit in it
+            unsigned int capacity = 0;
+
+            //! Allocator
+            std::allocator<record_t> allocator;
+
+        public:
+            bool add(const K &key, const record_t &record);
+            bool remove(const K &key);
+            record_t get_copy(const K &key);
+            record_ptr_t get_reference(const K &key);
+            record_ptr_t get_reference();
+
+            //! Get number of records
+            unsigned int size() { return n; }
+
+        private:
+            //! Helper functor to fill Nth member of R::Ptr with a pointer to the appropriate value of record i
+            template <unsigned int N>
+            struct GetRefHelper {
+                void operator()(record_t *arr, const unsigned int i, record_ptr_t &result) {
+                    // Get the appropriate value's address
+                    auto ptr = &(std::invoke(util::get_pointer_to_member<R, N>(), arr[i]));
+
+                    // Set result's member to the address
+                    std::invoke(util::get_pointer_to_member<typename R::Ptr, N>(), result) = ptr;
+                }
+            };
+
+            void allocate(unsigned int size);
+    };
+
+    /**
+     * Allocate space for the data, potentially copying over data from previous space if needed
+     *
+     * \tparam K Key type
+     * \tparam R Record type
+     * \param size Number of records to allocate space for
+     */
+    template<typename K, typename R>
+    void TableAoS<K, R>::allocate(unsigned int size) {
+        // Make sure data will fit into new space
+        assert(size > n);
+
+        // Allocate space
+        record_t *target = allocator.allocate(size);
+
+        // Copy data into new space
+        if (n > 0) {
+            std::copy_n(data, n, target);
+        }
+
+        // Deallocate old data
+        if (data && capacity > 0) {
+            allocator.deallocate(data, capacity);
+        }
+
+        // Update state
+        data = target;
+        capacity = size;
+    }
+
+    /**
+     * \brief Add record under the provided key
+     *
+     * Copies the values of the provided record and associates them with the key.
+     * Does nothing when the key already has a record associated with it.
+     *
+     * \tparam K Key type
+     * \tparam R Record type
+     * \param key Key to associate with the record
+     * \param record Record to add
+     * \return `true` iff the structure was modified (i.e. the record was added)
+     */
+    template<typename K, typename R>
+    bool TableAoS<K, R>::add(const K &key, const record_t &record) {
+        // Check the key is not present yet
+        try {
+            map.at(key);
+            //TODO report error?
+            return false;
+        } catch (std::out_of_range &e) {}
+
+        // Check there is enough space
+        if (capacity <= n) {
+            // At capacity -> reallocate double capacity (but at least 1)
+            allocate((capacity == 0) ? 1 : capacity * 2);   //TODO different initial size?
+        }
+
+        // Set row to the record
+        data[n] = record;
+
+        // Update state
+        map[key] = n;
+        n++;
+
+        return true;
+    }
+
+    /**
+     * \brief Remove record associated with the provided key
+     *
+     * Does nothing when no record is associated with the key.
+     * Done by copying the last record over the one to be removed and decrementing size.
+     * Potentially reshuffles the data, and therefore invalidates any references to it.
+     *
+     * \tparam K Key type
+     * \tparam R Record type
+     * \param key Key to remove
+     * \return `true` iff the structure was modified (i.e. the key was present and associated record removed)
+     */
+    template<typename K, typename R>
+    bool TableAoS<K, R>::remove(const K &key) {
+        // Check the key is present
+        try {
+            // Get the index to delete and of last item
+            unsigned int index = map.at(key);
+            unsigned int last = n - 1;
+
+            // Move last into deleted
+            data[index] = data[last];
+
+            // Update key-index map
+            //TODO might want to add second map in reverse direction to speed this lookup from O(n) to O(1)
+            for (auto i = map.begin(); i != map.end(); i++) {
+                if (i->second == last) {
+                    i->second = index;
+                    break;
+                }
+            }
+            map.erase(key);
+
+            // Decrement size
+            n--;
+        } catch (std::out_of_range &e) {
+            // Not present -> nothing to remove
+            return false;
+        }
+    }
+
+    /**
+     * Get copy of record under the provided key
+     *
+     * \tparam K Key type
+     * \tparam R Record type
+     * \param key Key to look up
+     * \return Instance of R whose members are copies of values associated with the provided key
+     *
+     * \throws std::out_of_range When no record is associated with the provided key
+     */
+    template<typename K, typename R>
+    typename TableAoS<K, R>::record_t TableAoS<K, R>::get_copy(const K &key) {
+        // Check the key is present
+        try {
+            // Return copy of the record associated with the key
+            return data[map.at(key)];
+        } catch (std::out_of_range &e) {
+            // Not present -> error
+            //TODO include key value in message?
+            throw std::out_of_range("No record found for the provided key.");
+        }
+    }
+
+    /**
+     * Get read-write reference to the record under the provided key
+     *
+     * \tparam K Key type
+     * \tparam R Record type
+     * \param key Key to look up
+     * \return Instance of R::Ptr (struct of pointers to members of R) whose members point to the values associated with
+     *  the provided key
+     *
+     * \throws std::out_of_range When no record is associated with the provided key
+     */
+    template<typename K, typename R>
+    typename TableAoS<K, R>::record_ptr_t TableAoS<K, R>::get_reference(const K &key) {
+        // Check the key is present
+        try {
+            // Get the index and prepare result
+            unsigned int index = map.at(key);
+            record_ptr_t result;
+
+            // Set result to point to the correct entries
+            util::invoke_n<R::count, GetRefHelper>(data, index, result);
+
+            return result;
+        } catch (std::out_of_range &e) {
+            // Not present -> error
+            //TODO include key value in message?
+            throw std::out_of_range("No record found for the provided key.");
+        }
+    }
+
+    /**
+     * Get read-write reference to the first record
+     *
+     * \tparam K Key type
+     * \tparam R Record type
+     * \return Instance of R::Ptr (struct of pointers to members of R) whose members point to the values associated with
+     *  the first record
+     */
+    template<typename K, typename R>
+    typename TableAoS<K, R>::record_ptr_t TableAoS<K, R>::get_reference() {
+        // Prepare result
+        record_ptr_t result;
+
+        // Set result to point to array starts
+        util::invoke_n<R::count, GetRefHelper>(data, 0u, result);
+
+        return result;
+    }
+
     //TODO SoS implementation
 
     /** \class TableSoA
@@ -38,7 +272,6 @@ namespace open_sea::data {
      * \tparam K Key type
      * \tparam R Record type
      */
-    //TODO make sure copying deals with objects well
     template<typename K, typename R>
     class TableSoA : public Table<K, R> {
         private:
@@ -58,7 +291,7 @@ namespace open_sea::data {
 
         public:
             //! Record type
-            typedef R record_t; //TODO replace most usages of R with this, to enable future changes to the data struct layout
+            typedef R record_t;
             //! Record pointer type (struct of pointers to members of R)
             typedef typename R::Ptr record_ptr_t;
 

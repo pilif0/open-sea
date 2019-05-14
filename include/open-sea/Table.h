@@ -41,19 +41,6 @@ namespace open_sea::data {
     //TODO make sure copying deals with objects well
     template<typename K, typename R>
     class TableSoA : public Table<K, R> {
-        public:
-            //! Record type
-            typedef R record_t; //TODO replace most usages of R with this, to enable future changes to the data struct layout
-            //! Record pointer type (struct of pointers to members of R)
-            typedef typename R::SoA record_ptr_t;
-
-            bool add(const K &key, const R &record);
-            bool remove(const K &key);
-            record_t get_copy(const K &key);
-            record_ptr_t get_reference(const K &key);
-            //TODO get reference to array starts for iterating over the whole struct
-            //TODO get size
-
         private:
             //! Map of keys to indices to the data
             std::unordered_map<K, unsigned int> map{};
@@ -69,6 +56,22 @@ namespace open_sea::data {
             //! Allocator
             std::allocator<unsigned char> allocator;
 
+        public:
+            //! Record type
+            typedef R record_t; //TODO replace most usages of R with this, to enable future changes to the data struct layout
+            //! Record pointer type (struct of pointers to members of R)
+            typedef typename R::SoA record_ptr_t;
+
+            bool add(const K &key, const R &record);
+            bool remove(const K &key);
+            record_t get_copy(const K &key);
+            record_ptr_t get_reference(const K &key);
+            //TODO get reference to array starts for iterating over the whole struct
+
+            //! Get number of records
+            unsigned int size() { return n; }
+
+        private:
             //! Helper functor to compute start of Nth data array based on the previous one (N != 0) and the capacity
             template <unsigned int N>
             struct AllocatePtrHelper {

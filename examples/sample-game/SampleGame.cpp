@@ -372,6 +372,9 @@ int main() {
         ref = test_table->get_reference(entities[0]);
         message << "New reference: a = " << *(ref.a) << ", b = " << *(ref.b);
         os_log::log(lg, os_log::debug, message.str());
+
+        // Remove check
+        test_table->remove(entities[1]);
     }
 
     // Update cursor delta once before main loop to avoid extreme first cursor delta

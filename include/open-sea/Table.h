@@ -227,21 +227,26 @@ namespace open_sea::data {
             unsigned int index = map.at(key);
             unsigned int last = n - 1;
 
-            // Move last into deleted
-            data[index] = data[last];
+            // Only copy over when not last
+            if (index != last) {
+                // Move last into deleted
+                data[index] = data[last];
 
-            // Update key-index map
-            //TODO might want to add second map in reverse direction to speed this lookup from O(n) to O(1)
-            for (auto i = map.begin(); i != map.end(); i++) {
-                if (i->second == last) {
-                    i->second = index;
-                    break;
+                // Update key-index map
+                //TODO might want to add second map in reverse direction to speed this lookup from O(n) to O(1)
+                for (auto i = map.begin(); i != map.end(); i++) {
+                    if (i->second == last) {
+                        i->second = index;
+                        break;
+                    }
                 }
             }
+
+            // Decrement size and erase the removed key
+            n--;
             map.erase(key);
 
-            // Decrement size
-            n--;
+            return true;
         } catch (std::out_of_range &e) {
             // Not present -> nothing to remove
             return false;
@@ -372,7 +377,7 @@ namespace open_sea::data {
                 void operator()(void **arr, const unsigned int index, const unsigned int last) {
                     typedef typename util::GetMemberType<R, N>::type member_type;
                     auto start = static_cast<member_type *>(arr[N]);
-                    std::copy(start + last, start + index, sizeof(member_type));    // start[last] -> start[index]
+                    start[index] = start[last];
                     //TODO clear start[last] so that anything trying to access it hopefully breaks?
                 }
             };
@@ -482,21 +487,26 @@ namespace open_sea::data {
             unsigned int index = map.at(key);
             unsigned int last = n - 1;
 
-            // Move last into deleted
-            util::invoke_n<R::count, RemoveHelper>(arrays, index, last);
+            // Only copy over when not last
+            if (index != last) {
+                // Move last into deleted
+                util::invoke_n<R::count, RemoveHelper>(arrays, index, last);
 
-            // Update key-index map
-            //TODO might want to add second map in reverse direction to speed this lookup from O(n) to O(1)
-            for (auto i = map.begin(); i != map.end(); i++) {
-                if (i->second == last) {
-                    i->second = index;
-                    break;
+                // Update key-index map
+                //TODO might want to add second map in reverse direction to speed this lookup from O(n) to O(1)
+                for (auto i = map.begin(); i != map.end(); i++) {
+                    if (i->second == last) {
+                        i->second = index;
+                        break;
+                    }
                 }
             }
+
+            // Decrement size and erase the removed key
+            n--;
             map.erase(key);
 
-            // Decrement size
-            n--;
+            return true;
         } catch (std::out_of_range &e) {
             // Not present -> nothing to remove
             return false;

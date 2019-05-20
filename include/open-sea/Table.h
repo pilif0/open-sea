@@ -42,8 +42,6 @@ namespace open_sea::data {
              * Copies the values of the provided record and associates them with the key.
              * Does nothing when the key already has a record associated with it.
              *
-             * \tparam K Key type
-             * \tparam R Record type
              * \param key Key to associate with the record
              * \param record Record to add
              * \return `true` iff the structure was modified (i.e. the record was added)
@@ -57,8 +55,6 @@ namespace open_sea::data {
              * Done by copying the last record over the one to be removed and decrementing size.
              * Potentially reshuffles the data, and therefore invalidates any references to it.
              *
-             * \tparam K Key type
-             * \tparam R Record type
              * \param key Key to remove
              * \return `true` iff the structure was modified (i.e. the key was present and associated record removed)
              */
@@ -67,8 +63,6 @@ namespace open_sea::data {
             /**
              * Get copy of record under the provided key
              *
-             * \tparam K Key type
-             * \tparam R Record type
              * \param key Key to look up
              * \return Instance of R whose members are copies of values associated with the provided key
              *
@@ -79,8 +73,6 @@ namespace open_sea::data {
             /**
              * Get read-write reference to the record under the provided key
              *
-             * \tparam K Key type
-             * \tparam R Record type
              * \param key Key to look up
              * \return Instance of R::Ptr (struct of pointers to members of R) whose members point to the values
              *  associated with the provided key
@@ -92,12 +84,17 @@ namespace open_sea::data {
             /**
              * Get read-write reference to the first record
              *
-             * \tparam K Key type
-             * \tparam R Record type
              * \return Instance of R::Ptr (struct of pointers to members of R) whose members point to the values
              *  associated with the first record
              */
             virtual record_ptr_t get_reference() = 0;
+
+            /**
+             * Increment reference to point to the next record
+             *
+             * \param ref Reference to increment
+             */
+            virtual void increment_reference(record_ptr_t &ref) = 0;
 
             //! Get number of records
             virtual unsigned int size() = 0;
@@ -136,6 +133,7 @@ namespace open_sea::data {
             record_t get_copy(const K &key) override;
             record_ptr_t get_reference(const K &key) override;
             record_ptr_t get_reference() override;
+            void increment_reference(record_ptr_t &ref) override { util::invoke_n<R::count, IncrementHelper>(ref); }
             unsigned int size() override { return n; }
 
         private:
@@ -148,6 +146,18 @@ namespace open_sea::data {
 
                     // Set result's member to the address
                     std::invoke(util::get_pointer_to_member<typename R::Ptr, N>(), result) = ptr;
+                }
+            };
+
+            //! Helper functor to increment Nth member of R::Ptr
+            template <unsigned int N>
+            struct IncrementHelper {
+                void operator()(record_ptr_t &ref) {
+                    // Increment member by sizeof(R) bytes (next element, same offset)
+                    // Note: cast to byte ptr -> increment by size of R -> cast back to member type ptr
+                    typedef typename util::GetMemberType<typename R::Ptr, N>::type member_type;
+                    auto member_p = util::get_pointer_to_member<typename R::Ptr, N>();
+                    std::invoke(member_p, ref) = (member_type) (((unsigned char *) std::invoke(member_p, ref)) + sizeof(R));
                 }
             };
 
@@ -317,6 +327,7 @@ namespace open_sea::data {
             record_t get_copy(const K &key) override;
             record_ptr_t get_reference(const K &key) override;
             record_ptr_t get_reference() override;
+            void increment_reference(record_ptr_t &ref) override { util::invoke_n<R::count, IncrementHelper>(ref); }
             unsigned int size() override { return n; }
 
         private:
@@ -383,6 +394,16 @@ namespace open_sea::data {
                     typedef typename util::GetMemberType<R, N>::type member_type;
                     auto start = static_cast<member_type *>(arr[N]);
                     std::invoke(util::get_pointer_to_member<typename R::Ptr, N>(), result) = start + i;
+                }
+            };
+
+            //! Helper functor to increment Nth member of R::Ptr
+            template <unsigned int N>
+            struct IncrementHelper {
+                void operator()(record_ptr_t &ref) {
+                    // Increment member by 1 (next element of its array)
+                    auto member_p = util::get_pointer_to_member<typename R::Ptr, N>();
+                    std::invoke(member_p, ref)++;
                 }
             };
 

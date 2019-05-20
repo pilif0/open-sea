@@ -336,8 +336,10 @@ int main() {
     typedef open_sea::data::Table<ecs::Entity, TestData> table_t;
     std::unique_ptr<table_t> test_table = std::make_unique<open_sea::data::TableAoS<ecs::Entity, TestData>>();
     {
-        TestData data{1, 3.14f};
-        test_table->add(entities[0], data);
+        TestData data1{1, 3.14f};
+        test_table->add(entities[0], data1);
+        TestData data2{2, 3.14f};
+        test_table->add(entities[1], data2);
 
         // Test copy get
         TestData copy = test_table->get_copy(entities[0]);
@@ -351,7 +353,16 @@ int main() {
         message << "Test table reference get test result: a = " << *(ref.a) << ", b = " << *(ref.b);
         os_log::log(lg, os_log::debug, message.str());
 
+        // Test reference increment
+        ref = test_table->get_reference();
+        message = std::ostringstream();
+        message << "Test table reference increment test original: a = " << *(ref.a) << ", b = " << *(ref.b) << '\n';
+        test_table->increment_reference(ref);
+        message << "Test table reference increment test result: a = " << *(ref.a) << ", b = " << *(ref.b);
+        os_log::log(lg, os_log::debug, message.str());
+
         // Edit check
+        ref = test_table->get_reference(entities[0]);
         *(ref.a) = 100;
         *(ref.b) = 10.24f;
         message = std::ostringstream();

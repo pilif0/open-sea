@@ -333,19 +333,20 @@ int main() {
     glDepthFunc(GL_LESS);
 
     // Initialize test SoA table
-    auto test_table = open_sea::data::TableAoS<ecs::Entity, TestData>();
+    typedef open_sea::data::Table<ecs::Entity, TestData> table_t;
+    std::unique_ptr<table_t> test_table = std::make_unique<open_sea::data::TableAoS<ecs::Entity, TestData>>();
     {
         TestData data{1, 3.14f};
-        test_table.add(entities[0], data);
+        test_table->add(entities[0], data);
 
         // Test copy get
-        TestData copy = test_table.get_copy(entities[0]);
+        TestData copy = test_table->get_copy(entities[0]);
         std::ostringstream message;
         message << "Test table copy get test result: a = " << copy.a << ", b = " << copy.b;
         os_log::log(lg, os_log::debug, message.str());
 
         // Test reference get
-        TestData::Ptr ref = test_table.get_reference(entities[0]);
+        TestData::Ptr ref = test_table->get_reference(entities[0]);
         message = std::ostringstream();
         message << "Test table reference get test result: a = " << *(ref.a) << ", b = " << *(ref.b);
         os_log::log(lg, os_log::debug, message.str());
@@ -357,7 +358,7 @@ int main() {
         message << "Test table edit test result:\n"
                 << "Copy: a = " << copy.a << ", b = " << copy.b << '\n'
                 << "Reference: a = " << *(ref.a) << ", b = " << *(ref.b) << '\n';
-        ref = test_table.get_reference(entities[0]);
+        ref = test_table->get_reference(entities[0]);
         message << "New reference: a = " << *(ref.a) << ", b = " << *(ref.b);
         os_log::log(lg, os_log::debug, message.str());
     }

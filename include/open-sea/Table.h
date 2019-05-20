@@ -29,7 +29,79 @@ namespace open_sea::data {
      * \tparam R Record type
      */
     template<typename K, typename R>
-    class Table{};    //TODO add general interface
+    class Table {
+        public:
+            //! Record type
+            typedef R record_t;
+            //! Record pointer type (struct of pointers to members of R)
+            typedef typename R::Ptr record_ptr_t;
+
+            /**
+             * \brief Add record under the provided key
+             *
+             * Copies the values of the provided record and associates them with the key.
+             * Does nothing when the key already has a record associated with it.
+             *
+             * \tparam K Key type
+             * \tparam R Record type
+             * \param key Key to associate with the record
+             * \param record Record to add
+             * \return `true` iff the structure was modified (i.e. the record was added)
+             */
+            virtual bool add(const K &key, const record_t &record) = 0;
+
+            /**
+             * \brief Remove record associated with the provided key
+             *
+             * Does nothing when no record is associated with the key.
+             * Done by copying the last record over the one to be removed and decrementing size.
+             * Potentially reshuffles the data, and therefore invalidates any references to it.
+             *
+             * \tparam K Key type
+             * \tparam R Record type
+             * \param key Key to remove
+             * \return `true` iff the structure was modified (i.e. the key was present and associated record removed)
+             */
+            virtual bool remove(const K &key) = 0;
+
+            /**
+             * Get copy of record under the provided key
+             *
+             * \tparam K Key type
+             * \tparam R Record type
+             * \param key Key to look up
+             * \return Instance of R whose members are copies of values associated with the provided key
+             *
+             * \throws std::out_of_range When no record is associated with the provided key
+             */
+            virtual record_t get_copy(const K &key) = 0;
+
+            /**
+             * Get read-write reference to the record under the provided key
+             *
+             * \tparam K Key type
+             * \tparam R Record type
+             * \param key Key to look up
+             * \return Instance of R::Ptr (struct of pointers to members of R) whose members point to the values
+             *  associated with the provided key
+             *
+             * \throws std::out_of_range When no record is associated with the provided key
+             */
+            virtual record_ptr_t get_reference(const K &key) = 0;
+
+            /**
+             * Get read-write reference to the first record
+             *
+             * \tparam K Key type
+             * \tparam R Record type
+             * \return Instance of R::Ptr (struct of pointers to members of R) whose members point to the values
+             *  associated with the first record
+             */
+            virtual record_ptr_t get_reference() = 0;
+
+            //! Get number of records
+            virtual unsigned int size() = 0;
+    };
 
     /** \class TableAoS
      * Table that stores its records as an array of structs
@@ -59,14 +131,12 @@ namespace open_sea::data {
             std::allocator<record_t> allocator;
 
         public:
-            bool add(const K &key, const record_t &record);
-            bool remove(const K &key);
-            record_t get_copy(const K &key);
-            record_ptr_t get_reference(const K &key);
-            record_ptr_t get_reference();
-
-            //! Get number of records
-            unsigned int size() { return n; }
+            bool add(const K &key, const record_t &record) override;
+            bool remove(const K &key) override;
+            record_t get_copy(const K &key) override;
+            record_ptr_t get_reference(const K &key) override;
+            record_ptr_t get_reference() override;
+            unsigned int size() override { return n; }
 
         private:
             //! Helper functor to fill Nth member of R::Ptr with a pointer to the appropriate value of record i
@@ -114,18 +184,6 @@ namespace open_sea::data {
         capacity = size;
     }
 
-    /**
-     * \brief Add record under the provided key
-     *
-     * Copies the values of the provided record and associates them with the key.
-     * Does nothing when the key already has a record associated with it.
-     *
-     * \tparam K Key type
-     * \tparam R Record type
-     * \param key Key to associate with the record
-     * \param record Record to add
-     * \return `true` iff the structure was modified (i.e. the record was added)
-     */
     template<typename K, typename R>
     bool TableAoS<K, R>::add(const K &key, const record_t &record) {
         // Check the key is not present yet
@@ -151,18 +209,6 @@ namespace open_sea::data {
         return true;
     }
 
-    /**
-     * \brief Remove record associated with the provided key
-     *
-     * Does nothing when no record is associated with the key.
-     * Done by copying the last record over the one to be removed and decrementing size.
-     * Potentially reshuffles the data, and therefore invalidates any references to it.
-     *
-     * \tparam K Key type
-     * \tparam R Record type
-     * \param key Key to remove
-     * \return `true` iff the structure was modified (i.e. the key was present and associated record removed)
-     */
     template<typename K, typename R>
     bool TableAoS<K, R>::remove(const K &key) {
         // Check the key is present
@@ -192,16 +238,6 @@ namespace open_sea::data {
         }
     }
 
-    /**
-     * Get copy of record under the provided key
-     *
-     * \tparam K Key type
-     * \tparam R Record type
-     * \param key Key to look up
-     * \return Instance of R whose members are copies of values associated with the provided key
-     *
-     * \throws std::out_of_range When no record is associated with the provided key
-     */
     template<typename K, typename R>
     typename TableAoS<K, R>::record_t TableAoS<K, R>::get_copy(const K &key) {
         // Check the key is present
@@ -215,17 +251,6 @@ namespace open_sea::data {
         }
     }
 
-    /**
-     * Get read-write reference to the record under the provided key
-     *
-     * \tparam K Key type
-     * \tparam R Record type
-     * \param key Key to look up
-     * \return Instance of R::Ptr (struct of pointers to members of R) whose members point to the values associated with
-     *  the provided key
-     *
-     * \throws std::out_of_range When no record is associated with the provided key
-     */
     template<typename K, typename R>
     typename TableAoS<K, R>::record_ptr_t TableAoS<K, R>::get_reference(const K &key) {
         // Check the key is present
@@ -245,14 +270,6 @@ namespace open_sea::data {
         }
     }
 
-    /**
-     * Get read-write reference to the first record
-     *
-     * \tparam K Key type
-     * \tparam R Record type
-     * \return Instance of R::Ptr (struct of pointers to members of R) whose members point to the values associated with
-     *  the first record
-     */
     template<typename K, typename R>
     typename TableAoS<K, R>::record_ptr_t TableAoS<K, R>::get_reference() {
         // Prepare result
@@ -264,7 +281,6 @@ namespace open_sea::data {
         return result;
     }
 
-    //TODO SoS implementation
 
     /** \class TableSoA
      * Table that stores its records as a struct of arrays
@@ -274,6 +290,12 @@ namespace open_sea::data {
      */
     template<typename K, typename R>
     class TableSoA : public Table<K, R> {
+        public:
+            //! Record type
+            typedef R record_t;
+            //! Record pointer type (struct of pointers to members of R)
+            typedef typename R::Ptr record_ptr_t;
+
         private:
             //! Map of keys to indices to the data
             std::unordered_map<K, unsigned int> map{};
@@ -290,19 +312,12 @@ namespace open_sea::data {
             std::allocator<unsigned char> allocator;
 
         public:
-            //! Record type
-            typedef R record_t;
-            //! Record pointer type (struct of pointers to members of R)
-            typedef typename R::Ptr record_ptr_t;
-
-            bool add(const K &key, const R &record);
-            bool remove(const K &key);
-            record_t get_copy(const K &key);
-            record_ptr_t get_reference(const K &key);
-            record_ptr_t get_reference();
-
-            //! Get number of records
-            unsigned int size() { return n; }
+            bool add(const K &key, const R &record) override;
+            bool remove(const K &key) override;
+            record_t get_copy(const K &key) override;
+            record_ptr_t get_reference(const K &key) override;
+            record_ptr_t get_reference() override;
+            unsigned int size() override { return n; }
 
         private:
             //! Helper functor to compute start of Nth data array based on the previous one (N != 0) and the capacity
@@ -413,18 +428,6 @@ namespace open_sea::data {
         capacity = size;
     }
 
-    /**
-     * \brief Add record under the provided key
-     *
-     * Copies the values of the provided record and associates them with the key.
-     * Does nothing when the key already has a record associated with it.
-     *
-     * \tparam K Key type
-     * \tparam R Record type
-     * \param key Key to associate with the record
-     * \param record Record to add
-     * \return `true` iff the structure was modified (i.e. the record was added)
-     */
     template<typename K, typename R>
     bool TableSoA<K, R>::add(const K &key, const R &record) {
         // Check the key is not present yet
@@ -450,18 +453,6 @@ namespace open_sea::data {
         return true;
     }
 
-    /**
-     * \brief Remove record associated with the provided key
-     *
-     * Does nothing when no record is associated with the key.
-     * Done by copying the last record over the one to be removed and decrementing size.
-     * Potentially reshuffles the data, and therefore invalidates any references to it.
-     *
-     * \tparam K Key type
-     * \tparam R Record type
-     * \param key Key to remove
-     * \return `true` iff the structure was modified (i.e. the key was present and associated record removed)
-     */
     template<typename K, typename R>
     bool TableSoA<K, R>::remove(const K &key) {
         // Check the key is present
@@ -491,16 +482,6 @@ namespace open_sea::data {
         }
     }
 
-    /**
-     * Get copy of record under the provided key
-     *
-     * \tparam K Key type
-     * \tparam R Record type
-     * \param key Key to look up
-     * \return Instance of R whose members are copies of values associated with the provided key
-     *
-     * \throws std::out_of_range When no record is associated with the provided key
-     */
     template<typename K, typename R>
     typename TableSoA<K, R>::record_t TableSoA<K, R>::get_copy(const K &key) {
         // Check the key is present
@@ -520,17 +501,6 @@ namespace open_sea::data {
         }
     }
 
-    /**
-     * Get read-write reference to the record under the provided key
-     *
-     * \tparam K Key type
-     * \tparam R Record type
-     * \param key Key to look up
-     * \return Instance of R::Ptr (struct of pointers to members of R) whose members point to the values associated with
-     *  the provided key
-     *
-     * \throws std::out_of_range When no record is associated with the provided key
-     */
     template<typename K, typename R>
     typename TableSoA<K, R>::record_ptr_t TableSoA<K, R>::get_reference(const K &key) {
         // Check the key is present
@@ -550,13 +520,6 @@ namespace open_sea::data {
         }
     }
 
-    /**
-     * Get read-write reference to the first record
-     *
-     * \tparam K Key type
-     * \tparam R Record type
-     * \return Instance of R::Ptr (struct of pointers to members of R) whose members point to the value array starts
-     */
     template<typename K, typename R>
     typename TableSoA<K, R>::record_ptr_t TableSoA<K, R>::get_reference() {
         // Prepare result

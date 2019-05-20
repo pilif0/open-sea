@@ -131,6 +131,16 @@ namespace open_sea::data {
             std::allocator<record_t> allocator;
 
         public:
+            //! Construct the table and defer allocation to first insertion
+            TableAoS() = default;
+
+            /**
+             * Construct the table and allocate space for `count` records
+             *
+             * \param count Number of records to allocate space for
+             */
+            TableAoS(unsigned int count) { allocate(count); }
+
             bool add(const key_t &key, const record_t &record) override;
             bool remove(const key_t &key) override;
             record_t get_copy(const key_t &key) override;
@@ -328,6 +338,16 @@ namespace open_sea::data {
             std::allocator<unsigned char> allocator;
 
         public:
+            //! Construct the table and defer allocation to first insertion
+            TableSoA() = default;
+
+            /**
+             * Construct the table and allocate space for `count` records
+             *
+             * \param count Number of records to allocate space for
+             */
+            TableSoA(unsigned int count) { allocate(count); }
+
             bool add(const key_t &key, const record_t &record) override;
             bool remove(const key_t &key) override;
             record_t get_copy(const key_t &key) override;

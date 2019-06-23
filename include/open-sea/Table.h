@@ -99,6 +99,8 @@ namespace open_sea::data {
 
             //! Get number of records
             virtual unsigned int size() = 0;
+
+            virtual ~Table() = default;
     };
 
     /** \class TableAoS
@@ -139,7 +141,7 @@ namespace open_sea::data {
              *
              * \param count Number of records to allocate space for
              */
-            TableAoS(unsigned int count) { allocate(count); }
+            explicit TableAoS(unsigned int count) { allocate(count); }
 
             bool add(const key_t &key, const record_t &record) override;
             bool remove(const key_t &key) override;
@@ -148,6 +150,8 @@ namespace open_sea::data {
             record_ptr_t get_reference() override;
             void increment_reference(record_ptr_t &ref) override { util::invoke_n<record_t::count, IncrementHelper>(ref); }
             unsigned int size() override { return n; }
+
+            virtual ~TableAoS();
 
         private:
             //! Helper functor to fill Nth member of R::Ptr with a pointer to the appropriate value of record i
@@ -305,6 +309,13 @@ namespace open_sea::data {
         return result;
     }
 
+    template<typename K, typename R>
+    TableAoS<K, R>::~TableAoS() {
+        // Deallocate data
+        if (data && capacity > 0) {
+            allocator.deallocate(data, capacity);
+        }
+    }
 
     /** \class TableSoA
      * Table that stores its records as a struct of arrays
@@ -346,7 +357,7 @@ namespace open_sea::data {
              *
              * \param count Number of records to allocate space for
              */
-            TableSoA(unsigned int count) { allocate(count); }
+            explicit TableSoA(unsigned int count) { allocate(count); }
 
             bool add(const key_t &key, const record_t &record) override;
             bool remove(const key_t &key) override;
@@ -355,6 +366,8 @@ namespace open_sea::data {
             record_ptr_t get_reference() override;
             void increment_reference(record_ptr_t &ref) override { util::invoke_n<record_t::count, IncrementHelper>(ref); }
             unsigned int size() override { return n; }
+
+            virtual ~TableSoA();
 
         private:
             //! Helper functor to compute start of Nth data array based on the previous one (N != 0) and the capacity
@@ -576,6 +589,14 @@ namespace open_sea::data {
         util::invoke_n<record_t::count, GetRefHelper>(arrays, 0u, result);
 
         return result;
+    }
+
+    template<typename K, typename R>
+    TableSoA<K, R>::~TableSoA() {
+        // Deallocate data
+        if (data && capacity > 0) {
+            allocator.deallocate(static_cast<unsigned char *>(data), capacity * sizeof(record_t));
+        }
     }
 
     /**

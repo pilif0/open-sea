@@ -9,6 +9,7 @@
 #include <open-sea/Entity.h>
 #include <open-sea/Log.h>
 #include <open-sea/Debuggable.h>
+#include <open-sea/Table.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -43,6 +44,48 @@ namespace open_sea::ecs {
 
     //! Default starting size of component managers
     constexpr unsigned default_size = 1;
+
+    /** \class ModelTable
+     * \brief Table-based model component manager
+     */
+     //TODO docs
+    class ModelTable : public debug::Debuggable {
+        public:
+            /** \struct Data
+             * Model component data is just the index into the model store
+             */
+            struct Data {
+                static constexpr unsigned int count = 1;
+                struct Ptr {
+                    size_t *model;
+                };
+
+                size_t model;
+            };
+        private:
+            //! Logger for this manager
+            log::severity_logger lg = log::get_logger("Model Component Manager (Table)");
+            //! Models used by components in this manager
+            std::vector<std::shared_ptr<model::Model>> models;
+        public:
+            //! Table holding the components
+            std::unique_ptr<data::Table<Entity, Data>> table;
+
+            ModelTable() : ModelTable(default_size) {}
+            explicit ModelTable(unsigned size);
+
+            size_t model_to_index(const std::shared_ptr<model::Model>& model);
+            std::shared_ptr<model::Model> get_model(size_t i) const;
+
+            void gc(const EntityManager &manager);
+
+            void show_debug() override;
+            int query_idx_gen[2] {0, 0};
+            Data::Ptr query_ref {nullptr};
+            void show_query();
+
+            ~ModelTable() override;
+    };
 
     /** \class ModelComponent
      * \brief Associates an entity with a model
@@ -250,5 +293,8 @@ namespace open_sea::ecs {
      * @}
      */
 }
+
+// Table-related member macros
+SOA_MEMBER(open_sea::ecs::ModelTable::Data, 0, size_t, model)
 
 #endif //OPEN_SEA_COMPONENTS_H

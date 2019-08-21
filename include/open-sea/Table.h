@@ -14,6 +14,8 @@
 
 //TODO use page allocator
 //TODO make sure copying deals well with objects
+//TODO if performance degrades due to removing, add inverse key-index map to speed up last's key lookup
+//TODO use size_t where appropriate
 namespace open_sea::data {
     /**
      * \addtogroup Data
@@ -50,6 +52,20 @@ namespace open_sea::data {
             virtual bool add(const key_t &key, const record_t &record) = 0;
 
             /**
+             * \brief Add records under the provided keys
+             *
+             * Copies the values of the provided records and associates them with the keys.
+             * Does nothing when any of the keys already has a record associated with it.
+             * The records have to be provided as a record pointer type (with members in contiguous arrays).
+             *
+             * \param keys Keys to associate with the records
+             * \param records Records to add
+             * \param count Number of records to add
+             * \return `true` iff the structure was modified (i.e. the records were added)
+             */
+            virtual bool add(const key_t *keys, const record_ptr_t records, size_t count) = 0;
+
+            /**
              * \brief Remove record associated with the provided key
              *
              * Does nothing when no record is associated with the key.
@@ -83,6 +99,16 @@ namespace open_sea::data {
             virtual record_ptr_t get_reference(const key_t &key) = 0;
 
             /**
+             * Get read-write references to the records under the provided keys
+             * References are set to `nullptr` when no record is associated with that key
+             *
+             * \param keys Keys to look up
+             * \param dest Array of size `count` with R:Ptr instances to fill with the references
+             * \param count Number of records to look up
+             */
+            virtual void get_reference(const key_t *keys, record_ptr_t *dest, size_t count) = 0;
+
+            /**
              * Get read-write reference to the first record
              *
              * \return Instance of R::Ptr (struct of pointers to members of R) whose members point to the values
@@ -99,6 +125,15 @@ namespace open_sea::data {
 
             //! Get number of records
             virtual unsigned int size() = 0;
+
+            //! Get key set
+            virtual std::vector<key_t> keys() = 0;
+
+            //! Get number of allocated records
+            virtual size_t allocated() = 0;
+
+            //! Get name of the table type (ie the storage scheme)
+            virtual const char* type_name() = 0;
 
             virtual ~Table() = default;
     };
@@ -144,16 +179,35 @@ namespace open_sea::data {
             explicit TableAoS(unsigned int count) { allocate(count); }
 
             bool add(const key_t &key, const record_t &record) override;
+            bool add(const key_t *keys, const record_ptr_t records, size_t count) override;
             bool remove(const key_t &key) override;
             record_t get_copy(const key_t &key) override;
             record_ptr_t get_reference(const key_t &key) override;
             record_ptr_t get_reference() override;
+            void get_reference(const key_t *keys, record_ptr_t *dest, size_t count) override;
             void increment_reference(record_ptr_t &ref) override { util::invoke_n<record_t::count, IncrementHelper>(ref); }
             unsigned int size() override { return n; }
+            std::vector<key_t> keys() override;
+            size_t allocated() override { return capacity; }
+            const char* type_name() override { return "AoS"; }
 
             virtual ~TableAoS();
 
         private:
+            //! Helper functor to fill the Nth member of the ith record with data being pointed to by the Nth member of
+            //! the record pointer, incrementing the record pointer member.
+            template <unsigned int N>
+            struct AddsHelper {
+                void operator()(record_t *arr, const unsigned int i, record_ptr_t &records) {
+                    // From Nth member of records,
+                    auto src = std::invoke(util::get_pointer_to_member<record_ptr_t, N>(), records);
+                    // to Nth member of ith record, copy
+                    std::invoke(util::get_pointer_to_member<record_t, N>(), arr[i]) = *src;
+                    // and increment the pointer in records
+                    std::invoke(util::get_pointer_to_member<record_ptr_t, N>(), records)++; //TODO test this increments
+                }
+            };
+
             //! Helper functor to fill Nth member of R::Ptr with a pointer to the appropriate value of record i
             template <unsigned int N>
             struct GetRefHelper {
@@ -235,6 +289,43 @@ namespace open_sea::data {
         return true;
     }
 
+    //TODO optimize
+    template<typename K, typename R>
+    bool TableAoS<K, R>::add(const key_t *keys, const record_ptr_t records, size_t count) {
+        // Check no key is present yet
+        for (size_t i = 0; i < count; i++) {
+            try {
+                map.at(keys[i]);
+                return false;
+            } catch (std::out_of_range&) {}
+        }
+
+        // Check there is enough space
+        if (capacity < (n + count)) {
+            // Wouldn't fit -> reallocate enough capacity (maximum of 1, double current capacity, and needed)
+            if (capacity * 2 > n + count) {
+                allocate(capacity * 2);
+            } else if (n + count > 1) {
+                allocate(n + count);
+            } else {
+                allocate(1);
+            }
+        }
+
+        // Process each record (copying records to modify it)
+        record_ptr_t rs_copy = records;
+        for (size_t i = 0; i < count; i++) {
+            // Set row to the record
+            util::invoke_n<record_t::count, AddsHelper>(data, n, rs_copy);
+
+            // Update state
+            map[keys[i]] = n;
+            n++;
+        }
+
+        return true;
+    }
+
     template<typename K, typename R>
     bool TableAoS<K, R>::remove(const key_t &key) {
         // Check the key is present
@@ -298,6 +389,7 @@ namespace open_sea::data {
         }
     }
 
+    //TODO what if empty?
     template<typename K, typename R>
     typename TableAoS<K, R>::record_ptr_t TableAoS<K, R>::get_reference() {
         // Prepare result
@@ -306,6 +398,32 @@ namespace open_sea::data {
         // Set result to point to array starts
         util::invoke_n<record_t::count, GetRefHelper>(data, 0u, result);
 
+        return result;
+    }
+
+    template<typename K, typename R>
+    void TableAoS<K, R>::get_reference(const key_t *keys, record_ptr_t *dest, size_t count) {
+        // Go through each key
+        const key_t *k = keys;
+        record_ptr_t *d = dest;
+        for (size_t i = 0; i < count; i++, k++, d++) {
+            // Set destination to the reference
+            try {
+                *d = get_reference(*k);
+            } catch (std::out_of_range &e) {
+                // Not present -> fill with nullptrs
+                //TODO check this correctly fills the struct with nullptrs
+                *d = {nullptr};
+            }
+        }
+    }
+
+    template<typename K, typename R>
+    std::vector<typename TableAoS<K, R>::key_t> TableAoS<K, R>::keys() {
+        std::vector<key_t> result;
+        for (auto kv : map) {
+            result.push_back(kv.first);
+        }
         return result;
     }
 
@@ -360,12 +478,17 @@ namespace open_sea::data {
             explicit TableSoA(unsigned int count) { allocate(count); }
 
             bool add(const key_t &key, const record_t &record) override;
+            bool add(const key_t *keys, const record_ptr_t records, size_t count) override;
             bool remove(const key_t &key) override;
             record_t get_copy(const key_t &key) override;
             record_ptr_t get_reference(const key_t &key) override;
             record_ptr_t get_reference() override;
+            void get_reference(const key_t *keys, record_ptr_t *dest, size_t count) override;
             void increment_reference(record_ptr_t &ref) override { util::invoke_n<record_t::count, IncrementHelper>(ref); }
             unsigned int size() override { return n; }
+            std::vector<key_t> keys() override;
+            size_t allocated() override { return capacity; }
+            const char* type_name() override { return "SoA"; }
 
             virtual ~TableSoA();
 
@@ -405,6 +528,20 @@ namespace open_sea::data {
                 }
             };
 
+            //! Helper functor to append the Nth members of the provided records to the appropriate data array
+            template <unsigned int N>
+            struct AddsHelper {
+                void operator()(void **arr, const unsigned int n, const record_ptr_t &records, size_t count) {
+                    typedef typename util::GetMemberType<record_t, N>::type member_type;
+                    // From the relevant member of records,
+                    auto src = std::invoke(util::get_pointer_to_member<record_ptr_t, N>(), records);
+                    // to just after the last entry in the relevant array,
+                    auto dest = static_cast<member_type *>(arr[N]) + n;
+                    // copy count elements
+                    std::copy_n(src, count, dest);
+                }
+            };
+
             //! Helper functor to copy Nth member of the last record to the provided index
             template <unsigned int N>
             struct RemoveHelper {
@@ -432,6 +569,25 @@ namespace open_sea::data {
                     typedef typename util::GetMemberType<record_t, N>::type member_type;
                     auto start = static_cast<member_type *>(arr[N]);
                     std::invoke(util::get_pointer_to_member<record_ptr_t, N>(), result) = start + i;
+                }
+            };
+
+            //! Helper functor to fill Nth members of R::Ptr array elements with pointers to the appropriate values of
+            //!     records under keys
+            template <unsigned int N>
+            struct GetRefsHelper {
+                void operator()(void **arr, std::unordered_map<key_t, unsigned int> &m, const key_t *keys, record_ptr_t *dest, size_t count) {
+                    typedef typename util::GetMemberType<record_t, N>::type member_type;
+                    auto start = static_cast<member_type *>(arr[N]);
+                    const key_t *k = keys;
+                    record_ptr_t *d = dest;
+                    for (size_t i = 0; i < count; i++, k++, d++) {
+                        try {
+                            std::invoke(util::get_pointer_to_member<record_ptr_t, N>(), *d) = start + m.at(*k);
+                        } catch (std::out_of_range &e) {
+                            std::invoke(util::get_pointer_to_member<record_ptr_t, N>(), *d) = nullptr;
+                        }
+                    }
                 }
             };
 
@@ -507,6 +663,40 @@ namespace open_sea::data {
         // Update state
         map[key] = n;
         n++;
+
+        return true;
+    }
+
+    template<typename K, typename R>
+    bool TableSoA<K, R>::add(const key_t *keys, const record_ptr_t records, size_t count) {
+        // Check no key is present yet
+        for (size_t i = 0; i < count; i++) {
+            try {
+                map.at(keys[i]);
+                return false;
+            } catch (std::out_of_range&) {}
+        }
+
+        // Check there is enough space
+        if (capacity < (n + count)) {
+            // Wouldn't fit -> reallocate enough capacity (maximum of 1, double current capacity, and needed)
+            if (capacity * 2 > n + count) {
+                allocate(capacity * 2);
+            } else if (n + count > 1) {
+                allocate(n + count);
+            } else {
+                allocate(1);
+            }
+        }
+
+        // Copy records data to relevant arrays
+        util::invoke_n<record_t::count, AddsHelper>(arrays, n, records, count);
+
+        // Update key map
+        for (size_t i = 0; i < count; i++) {
+            map[keys[i]] = n;
+            n++;
+        }
 
         return true;
     }
@@ -592,6 +782,21 @@ namespace open_sea::data {
     }
 
     template<typename K, typename R>
+    void TableSoA<K, R>::get_reference(const key_t *keys, record_ptr_t *dest, size_t count) {
+        // Go through keys for each member and set references
+        util::invoke_n<record_t::count, GetRefsHelper>(arrays, map, keys, dest, count);
+    }
+
+    template<typename K, typename R>
+    std::vector<typename TableSoA<K, R>::key_t> TableSoA<K, R>::keys() {
+        std::vector<key_t> result;
+        for (auto kv : map) {
+            result.push_back(kv.first);
+        }
+        return result;
+    }
+
+    template<typename K, typename R>
     TableSoA<K, R>::~TableSoA() {
         // Deallocate data
         if (data && capacity > 0) {
@@ -612,14 +817,14 @@ template<>  \
 struct open_sea::util::GetMemberType<S, N> { typedef T type; }; \
 \
 template<>  \
-typename open_sea::util::GetMemberPointerType<S, N>::type open_sea::util::get_pointer_to_member<S, N>() {   \
+inline typename open_sea::util::GetMemberPointerType<S, N>::type open_sea::util::get_pointer_to_member<S, N>() {   \
     return &S::I;   \
 }   \
 template<>  \
 struct open_sea::util::GetMemberType<S::Ptr, N> { typedef T* type; }; \
 \
 template<>  \
-typename open_sea::util::GetMemberPointerType<S::Ptr, N>::type open_sea::util::get_pointer_to_member<S::Ptr, N>() {   \
+inline typename open_sea::util::GetMemberPointerType<S::Ptr, N>::type open_sea::util::get_pointer_to_member<S::Ptr, N>() {   \
     return &S::Ptr::I;   \
 }
 

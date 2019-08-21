@@ -153,16 +153,16 @@ int main() {
     debug::add_entity_manager(test_manager, "Test Manager");
 
     // Prepare and assign model
-    std::shared_ptr<ecs::ModelComponent> model_comp_manager = std::make_shared<ecs::ModelComponent>();
+    std::shared_ptr<ecs::ModelTable> model_comp_manager = std::make_shared<ecs::ModelTable>();
     {
         std::shared_ptr<model::Model> model(model::UntexModel::from_file("examples/sample-game/data/models/cube.obj"));
         if (!model) {
             return -1;
         }
         model_comp_manager->model_to_index(model);
-        std::vector<int> models(n);   // modelIdx == 0, because it is the first model
+        std::vector<size_t> models(n);   // modelIdx == 0, because it is the first model
 
-        model_comp_manager->add(entities.data(), models.data(), n);
+        model_comp_manager->table->add(entities.data(), {models.data()}, n);
     }
     debug::add_component_manager(model_comp_manager, "Model");
 

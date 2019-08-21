@@ -20,6 +20,157 @@
 #include <sstream>
 
 namespace open_sea::ecs {
+    //! Number of live entities that need to be seen in row before garbage collection gives up
+    constexpr size_t live_in_row = 4;
+
+    //--- Start ModelTable implementation
+    /**
+     * \brief Construct a model component manager
+     *
+     * Construct a model component manager and pre-allocate space for the given number of components.
+     *
+     * \param size Number of components
+     */
+    ModelTable::ModelTable(unsigned size) {
+        this->table = std::make_unique<data::TableSoA<Entity, Data>>(size);
+    }
+
+    /**
+     * \brief Get index to a model
+     *
+     * Get index to a model, adding the model to the manager's storage if necessary.
+     *
+     * \param model Pointer to model
+     * \return Index into the \c models storage of this manager
+     */
+    size_t ModelTable::model_to_index(const std::shared_ptr<model::Model> &model) {
+        size_t model_idx;
+
+        // Try to find the model in storage
+        auto model_pos = std::find(models.begin(), models.end(), model);
+        if (model_pos == models.end()) {
+            // Not found -> add the pointer
+            model_idx = static_cast<int>(models.size());
+            models.emplace_back(model); //TODO make sure this works
+        } else {
+            // Found -> use found index
+            model_idx = static_cast<int>(model_pos - models.begin());
+        }
+
+        return model_idx;
+    }
+
+    /**
+     * \brief Get the model at the provided index
+     *
+     * Get the model at the provided index from the model store
+     *
+     * \param i Index
+     * \return Model pointer
+     */
+    std::shared_ptr<model::Model> ModelTable::get_model(size_t i) const {
+        return std::shared_ptr<model::Model>(models[i]);
+    }
+
+    /**
+     * \brief Collect garbage
+     *
+     * Destroy records for dead entities.
+     * This is done by checking random records until a certain number of live entities in a row are found.
+     * Therefore with few dead entities not much time is wasted iterating through the array, and with many dead entities
+     * they are destroyed within couple calls.
+     *
+     * \param manager Entity manager to check entities against
+     */
+    void ModelTable::gc(const EntityManager &manager) {
+        unsigned seen_live_in_row = 0;
+        static std::random_device device;
+        static std::mt19937_64 generator(table->size());
+
+        std::vector<Entity> entities = table->keys();
+        std::uniform_int_distribution<int> distribution(0, entities.size());
+
+        // Keep trying while there are entities and haven't seen too many living
+        while (!entities.empty() && seen_live_in_row < live_in_row) {
+            // Note: modulo required because number of entities can change and this keeps indices in valid range
+            size_t i = distribution(generator) % entities.size();
+
+            if (manager.alive(entities[i])) {
+                // Increment live counter
+                seen_live_in_row++;
+            } else {
+                // Reset live counter and remove record from table and entity list
+                seen_live_in_row = 0;
+                table->remove(entities[i]);
+                entities.erase(entities.begin() + i);
+            }
+        }
+    }
+
+    /**
+     * \brief Destroy the component manager, freeing up the used memory
+     */
+    //TODO this is not necessary, model store destructor takes care of this
+    ModelTable::~ModelTable() {
+        // Reset model pointers
+        for (auto &model : models) {
+            model.reset();
+        }
+        models.clear();
+    }
+
+    /**
+     * \brief Show ImGui debug information
+     */
+    void ModelTable::show_debug() {
+        ImGui::Text("Table type: %s", table->type_name());
+        ImGui::Text("Record size: %lu bytes", sizeof(Data));
+        ImGui::Text("Records (allocated): %i (%zu)", table->size(), table->allocated());
+        ImGui::Text("Stored models: %i", static_cast<int>(models.size()));
+        ImGui::Text("Size data arrays (allocated): %lu (%lu) bytes", sizeof(Data) * table->size(), sizeof(Data) * table->allocated());
+        if (ImGui::Button("Query")) {
+            ImGui::OpenPopup("Component Manager Query");
+        }
+        if (ImGui::BeginPopupModal("Component Manager Query", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            show_query();
+
+            ImGui::Separator();
+            if (ImGui::Button("Close")) { ImGui::CloseCurrentPopup(); }
+            ImGui::EndPopup();
+        }
+    }
+
+    /**
+     * \brief Show ImGui form for querying data from a manager of this component
+     */
+    void ModelTable::show_query() {
+        ImGui::TextUnformatted("Entity:");
+        ImGui::InputInt2("index - generation", query_idx_gen);
+        if (ImGui::Button("Refresh")) {
+            if (query_idx_gen[0] >= 0 && query_idx_gen[1] >= 0) {
+                try {
+                    Entity entity(static_cast<unsigned>(query_idx_gen[0]), static_cast<unsigned>(query_idx_gen[1]));
+                    query_ref = table->get_reference(entity);
+                } catch (std::out_of_range&) {
+                    query_ref = {nullptr};
+                }
+            } else {
+                query_ref = {nullptr};
+            };
+        }
+        ImGui::Separator();
+        if (query_ref.model) {
+            size_t model_id = *(query_ref.model);
+            ImGui::Text("Model index: %zu", model_id);
+            ImGui::TextUnformatted("Model information:");
+            ImGui::Indent();
+            get_model(model_id)->show_debug();
+            ImGui::Unindent();
+        } else {
+            ImGui::TextUnformatted("No record found");
+        }
+    }
+    //--- End ModelTable implementation
 
     //--- start ModelComponent implementation
     /**

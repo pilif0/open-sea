@@ -24,7 +24,7 @@ namespace open_sea::render {
      * \param m Model component manager
      * \param t Transformation component manager
      */
-    UntexturedRenderer::UntexturedRenderer(std::shared_ptr<ecs::ModelComponent> m,
+    UntexturedRenderer::UntexturedRenderer(std::shared_ptr<ecs::ModelTable> m,
                                            std::shared_ptr<ecs::TransformationComponent> t)
             : model_mgr(std::move(m)), transform_mgr(std::move(t)) {
         // Initialise the shader
@@ -71,13 +71,15 @@ namespace open_sea::render {
 
         // Get the model information
         profiler::push("Models");
-        model_mgr->lookup(e, indices.data(), count);
-        i = indices.data();
+
+        std::vector<ecs::ModelTable::Data::Ptr> refs(count);
+        model_mgr->table->get_reference(e, refs.data(), count);
+        auto ref = refs.data();
         r = infos.data();
-        for (unsigned j = 0; j < count; j++, i++, r++) {
+        for (unsigned j = 0; j < count; j++, ref++, r++) {
             // Skip invalid indices
             if (*i != -1) {
-                std::shared_ptr<model::Model> model = model_mgr->get_model(model_mgr->data.model[*i]);
+                std::shared_ptr<model::Model> model = model_mgr->get_model(*(ref->model));
                 r->vao = model->get_vertex_array();
                 r->vertex_count = model->get_vertex_count();
             }

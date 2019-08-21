@@ -18,7 +18,7 @@ namespace open_sea {
     namespace ecs {
         struct Entity;
         class EntityManager;
-        class ModelComponent;
+        class ModelTable;
         class TransformationComponent;
     }
 
@@ -46,7 +46,7 @@ namespace open_sea::render {
     class UntexturedRenderer : public debug::Debuggable {
         public:
             //! Model component manager
-            std::shared_ptr<ecs::ModelComponent> model_mgr{};
+            std::shared_ptr<ecs::ModelTable> model_mgr{};
             //! Transformation component manager
             std::shared_ptr<ecs::TransformationComponent> transform_mgr{};
             //! Shader program
@@ -55,7 +55,7 @@ namespace open_sea::render {
             GLint p_mat_location;
             //! World matrix uniform location
             GLint w_mat_location;
-            UntexturedRenderer(std::shared_ptr<ecs::ModelComponent> m, std::shared_ptr<ecs::TransformationComponent> t);
+            UntexturedRenderer(std::shared_ptr<ecs::ModelTable> m, std::shared_ptr<ecs::TransformationComponent> t);
 
             //! Render information for a single entity
             struct RenderInfo {

@@ -16,12 +16,49 @@
 //TODO make sure copying deals well with objects
 //TODO if performance degrades due to removing, add inverse key-index map to speed up last's key lookup
 //TODO use size_t where appropriate
+//TODO removal possibly should destruct element being removed (even if last) and destructively move last instead of copy
 namespace open_sea::data {
     /**
      * \addtogroup Data
      *
      * @{
      */
+
+    /** \struct opt_index
+     * \brief Optional index
+     *
+     * Represents an optional index, which is either unset or set to a `size_t` value.
+     * All but the maximum value of `size_t` are safe.
+     * The maximum value of `size_t` is reserved to represent the unset state.
+     */
+    // Note: could also use 0 to represent unset but then every evaluation would need an extra operation to subtract 1
+    struct opt_index {
+        private:
+            //! Value used to represent unset state
+            static constexpr size_t none = std::numeric_limits<size_t>::max();
+            //! Index value, or `none`
+            size_t value = none;
+        public:
+            //! Construct unset optional index
+            opt_index() = default;
+            //! Construct set optional index
+            explicit opt_index(size_t value) : value(value) {}
+
+            //! `true` iff the index is set
+            [[nodiscard]] bool is_set() const { return value != none; }
+            //! Get index value (only safe when `is_set` is `true`
+            [[nodiscard]] size_t get() const { return value; }
+            //! Set the index value
+            void set(size_t v) { value = v; }
+            //! Set the index value to another optional index's value
+            void set(opt_index v) { value = v.value; }
+            //! Unset the index
+            void unset() { value = none; }
+
+            //! Optional indices are equal iff their values are
+            friend bool operator==(const opt_index &lhs, const opt_index &rhs) { return lhs.value == rhs.value; }
+            friend bool operator!=(const opt_index &lhs, const opt_index &rhs) { return !(rhs == lhs); }
+    };
 
     /** \class Table
      * Stores records associated with keys.
@@ -47,9 +84,9 @@ namespace open_sea::data {
              *
              * \param key Key to associate with the record
              * \param record Record to add
-             * \return `true` iff the structure was modified (i.e. the record was added)
+             * \return index of the record iff the structure was modified (i.e. the record was added), unset otherwise
              */
-            virtual bool add(const key_t &key, const record_t &record) = 0;
+            virtual opt_index add(const key_t &key, const record_t &record) = 0;
 
             /**
              * \brief Add records under the provided keys
@@ -63,7 +100,20 @@ namespace open_sea::data {
              * \param count Number of records to add
              * \return `true` iff the structure was modified (i.e. the records were added)
              */
-            virtual bool add(const key_t *keys, const record_ptr_t records, size_t count) = 0;
+            virtual bool add(const key_t *keys, const record_ptr_t &records, size_t count) = 0;
+
+            /**
+             * \brief Remove record at the provided index
+             *
+             * Does nothing when no record is at the index.
+             * Done by copying the last record over the one to be removed and decrementing size.
+             * Potentially reshuffles the data, and therefore invalidates any references to it.
+             *
+             * \param idx Index of record to remove
+             * \return index of the removed element (and where last element was moved) iff the structure was modified
+             *          (i.e. the key was present and associated record removed)
+             */
+            virtual opt_index remove(opt_index idx) = 0;
 
             /**
              * \brief Remove record associated with the provided key
@@ -73,9 +123,28 @@ namespace open_sea::data {
              * Potentially reshuffles the data, and therefore invalidates any references to it.
              *
              * \param key Key to remove
-             * \return `true` iff the structure was modified (i.e. the key was present and associated record removed)
+             * \return index of the removed element (and where last element was moved) iff the structure was modified
+             *          (i.e. the key was present and associated record removed)
              */
-            virtual bool remove(const key_t &key) = 0;
+            virtual opt_index remove(const key_t &key) = 0;
+
+            /**
+             * Get index of record under the provided key
+             *
+             * \param key Key to look up
+             * \return Instance of `opt_index` with the index, or unset if no record associated with the provided key
+             */
+            virtual opt_index lookup(const key_t &key) = 0;
+
+            /**
+             * Get key of record at the provided index
+             *
+             * \param idx Index to look up
+             * \return Instance of `key_t` with which the index is associated
+             *
+             * \throws std::out_of_range When no record is at the provided index
+             */
+            virtual key_t lookup(const opt_index &idx) = 0;
 
             /**
              * Get copy of record under the provided key
@@ -88,6 +157,16 @@ namespace open_sea::data {
             virtual record_t get_copy(const key_t &key) = 0;
 
             /**
+             * Get copy of record at the provided index
+             *
+             * \param i Index
+             * \return Instance of R whose members are copies of values at the provided index
+             *
+             * \throws std::out_of_range When no record is at the provided index
+             */
+            virtual record_t get_copy(const opt_index &i) = 0;
+
+            /**
              * Get read-write reference to the record under the provided key
              *
              * \param key Key to look up
@@ -97,6 +176,17 @@ namespace open_sea::data {
              * \throws std::out_of_range When no record is associated with the provided key
              */
             virtual record_ptr_t get_reference(const key_t &key) = 0;
+
+            /**
+             * Get read-write reference to the record at the provided index
+             *
+             * \param i Index
+             * \return Instance of R::Ptr (struct of pointers to members of R) whose members point to the values
+             *  at the provided index
+             *
+             * \throws std::out_of_range When no record is at the provided index
+             */
+            virtual record_ptr_t get_reference(const opt_index &i) = 0;
 
             /**
              * Get read-write references to the records under the provided keys
@@ -178,11 +268,16 @@ namespace open_sea::data {
              */
             explicit TableAoS(unsigned int count) { allocate(count); }
 
-            bool add(const key_t &key, const record_t &record) override;
-            bool add(const key_t *keys, const record_ptr_t records, size_t count) override;
-            bool remove(const key_t &key) override;
+            opt_index add(const key_t &key, const record_t &record) override;
+            bool add(const key_t *keys, const record_ptr_t &records, size_t count) override;
+            opt_index remove(const key_t &key) override;
+            opt_index remove(opt_index idx) override;
+            opt_index lookup(const key_t &key) override;
+            key_t lookup(const opt_index &idx) override;
             record_t get_copy(const key_t &key) override;
+            record_t get_copy(const opt_index &i) override;
             record_ptr_t get_reference(const key_t &key) override;
+            record_ptr_t get_reference(const opt_index &i) override;
             record_ptr_t get_reference() override;
             void get_reference(const key_t *keys, record_ptr_t *dest, size_t count) override;
             void increment_reference(record_ptr_t &ref) override { util::invoke_n<record_t::count, IncrementHelper>(ref); }
@@ -266,11 +361,11 @@ namespace open_sea::data {
     }
 
     template<typename K, typename R>
-    bool TableAoS<K, R>::add(const key_t &key, const record_t &record) {
+    opt_index TableAoS<K, R>::add(const key_t &key, const record_t &record) {
         // Check the key is not present yet
         try {
             map.at(key);
-            return false;
+            return opt_index();
         } catch (std::out_of_range &e) {}
 
         // Check there is enough space
@@ -282,16 +377,16 @@ namespace open_sea::data {
         // Set row to the record
         data[n] = record;
 
-        // Update state
+        // Update map
         map[key] = n;
-        n++;
 
-        return true;
+        // Return inserted index and increment size
+        return opt_index(n++);
     }
 
     //TODO optimize
     template<typename K, typename R>
-    bool TableAoS<K, R>::add(const key_t *keys, const record_ptr_t records, size_t count) {
+    bool TableAoS<K, R>::add(const key_t *keys, const record_ptr_t &records, size_t count) {
         // Check no key is present yet
         for (size_t i = 0; i < count; i++) {
             try {
@@ -327,7 +422,25 @@ namespace open_sea::data {
     }
 
     template<typename K, typename R>
-    bool TableAoS<K, R>::remove(const key_t &key) {
+    opt_index TableAoS<K, R>::remove(opt_index idx) {
+        // Find the index's key in the map and remove using the key overload
+        if (idx.is_set() && idx.get() < n) {
+            for (auto i = map.begin(); i != map.end(); i++) {
+                if (i->second == idx.get()) {
+                    return remove(i->first);
+                }
+            }
+
+            // We got here -> none found
+            return opt_index();
+        } else {
+            // Unset or out of range
+            return opt_index();
+        }
+    }
+
+    template<typename K, typename R>
+    opt_index TableAoS<K, R>::remove(const key_t &key) {
         // Check the key is present
         try {
             // Get the index to delete and of last item
@@ -352,11 +465,46 @@ namespace open_sea::data {
             n--;
             map.erase(key);
 
-            return true;
+            return opt_index(index);
         } catch (std::out_of_range &e) {
             // Not present -> nothing to remove
-            return false;
+            return opt_index();
         }
+    }
+
+    template<typename K, typename R>
+    opt_index TableAoS<K, R>::lookup(const key_t &key) {
+        // Find the key
+        try {
+            // Return index when found
+            return opt_index(map.at(key));
+        } catch (std::out_of_range &e) {
+            // Not present -> unset
+            return opt_index();
+        }
+    }
+
+    template<typename K, typename R>
+    typename TableAoS<K, R>::key_t TableAoS<K, R>::lookup(const opt_index &idx) {
+        // Check the index is valid
+        if (!idx.is_set()) {
+            // Unset -> error
+            throw std::out_of_range("Index is unset.");
+        }
+        if (idx.get() > n) {
+            // Outside -> error
+            throw std::out_of_range("Index is outside the table.");
+        }
+
+        // Find the key
+        for (auto i = map.begin(); i != map.end(); i++) {
+            if (i->second == idx.get()) {
+                return i->first;
+            }
+        }
+
+        // Not found -> error
+        throw std::out_of_range("No record found for the provided key.");
     }
 
     template<typename K, typename R>
@@ -368,6 +516,21 @@ namespace open_sea::data {
         } catch (std::out_of_range &e) {
             // Not present -> error
             throw std::out_of_range("No record found for the provided key.");
+        }
+    }
+
+    template<typename K, typename R>
+    typename TableAoS<K, R>::record_t TableAoS<K, R>::get_copy(const opt_index &i) {
+        // Check the index is set and within range
+        if (!i.is_set()) {
+            // Not set -> error
+            throw std::invalid_argument("Index is not set.");
+        } else if(i.get() < this->n) {
+            // Return copy of the record at the index
+            return data[i.get()];
+        } else {
+            // Not present -> error
+            throw std::out_of_range("No record found for the provided index.");
         }
     }
 
@@ -386,6 +549,27 @@ namespace open_sea::data {
         } catch (std::out_of_range &e) {
             // Not present -> error
             throw std::out_of_range("No record found for the provided key.");
+        }
+    }
+
+    template<typename K, typename R>
+    typename TableAoS<K, R>::record_ptr_t TableAoS<K, R>::get_reference(const opt_index &i) {
+        // Check if the index is set and within range
+        if (!i.is_set()) {
+            // Not set -> error
+            throw std::invalid_argument("Index is not set.");
+        } else if (i.get() < this->n) {
+            // Get the index and prepare result
+            unsigned int index = i.get();
+            record_ptr_t result;
+
+            // Set result to point to the correct entries
+            util::invoke_n<record_t::count, GetRefHelper>(data, index, result);
+
+            return result;
+        } else {
+            // Not present -> error
+            throw std::out_of_range("No record found for the provided index.");
         }
     }
 
@@ -477,11 +661,16 @@ namespace open_sea::data {
              */
             explicit TableSoA(unsigned int count) { allocate(count); }
 
-            bool add(const key_t &key, const record_t &record) override;
-            bool add(const key_t *keys, const record_ptr_t records, size_t count) override;
-            bool remove(const key_t &key) override;
+            opt_index add(const key_t &key, const record_t &record) override;
+            bool add(const key_t *keys, const record_ptr_t &records, size_t count) override;
+            opt_index remove(const key_t &key) override;
+            opt_index remove(opt_index idx) override;
+            opt_index lookup(const key_t &key) override;
+            key_t lookup(const opt_index &idx) override;
             record_t get_copy(const key_t &key) override;
+            record_t get_copy(const opt_index &i) override;
             record_ptr_t get_reference(const key_t &key) override;
+            record_ptr_t get_reference(const opt_index &i) override;
             record_ptr_t get_reference() override;
             void get_reference(const key_t *keys, record_ptr_t *dest, size_t count) override;
             void increment_reference(record_ptr_t &ref) override { util::invoke_n<record_t::count, IncrementHelper>(ref); }
@@ -644,11 +833,11 @@ namespace open_sea::data {
     }
 
     template<typename K, typename R>
-    bool TableSoA<K, R>::add(const key_t &key, const R &record) {
+    opt_index TableSoA<K, R>::add(const key_t &key, const R &record) {
         // Check the key is not present yet
         try {
             map.at(key);
-            return false;
+            return opt_index();
         } catch (std::out_of_range &e) {}
 
         // Check there is enough space
@@ -660,15 +849,15 @@ namespace open_sea::data {
         // Set row to the record
         util::invoke_n<record_t::count, AddHelper>(arrays, n, record);
 
-        // Update state
+        // Update map
         map[key] = n;
-        n++;
 
-        return true;
+        // Return inserted index and increment size
+        return opt_index(n++);
     }
 
     template<typename K, typename R>
-    bool TableSoA<K, R>::add(const key_t *keys, const record_ptr_t records, size_t count) {
+    bool TableSoA<K, R>::add(const key_t *keys, const record_ptr_t &records, size_t count) {
         // Check no key is present yet
         for (size_t i = 0; i < count; i++) {
             try {
@@ -702,7 +891,25 @@ namespace open_sea::data {
     }
 
     template<typename K, typename R>
-    bool TableSoA<K, R>::remove(const key_t &key) {
+    opt_index TableSoA<K, R>::remove(opt_index idx) {
+        // Find the index's key in the map and remove using the key overload
+        if (idx.is_set() && idx.get() < n) {
+            for (auto i = map.begin(); i != map.end(); i++) {
+                if (i->second == idx.get()) {
+                    return remove(i->first);
+                }
+            }
+
+            // We got here -> none found
+            return opt_index();
+        } else {
+            // Unset or out of range
+            return opt_index();
+        }
+    }
+
+    template<typename K, typename R>
+    opt_index TableSoA<K, R>::remove(const key_t &key) {
         // Check the key is present
         try {
             // Get the index to delete and of last item
@@ -727,11 +934,46 @@ namespace open_sea::data {
             n--;
             map.erase(key);
 
-            return true;
+            return opt_index(index);
         } catch (std::out_of_range &e) {
             // Not present -> nothing to remove
-            return false;
+            return opt_index();
         }
+    }
+
+    template<typename K, typename R>
+    opt_index TableSoA<K, R>::lookup(const key_t &key) {
+        // Find the key
+        try {
+            // Return index when found
+            return opt_index(map.at(key));
+        } catch (std::out_of_range &e) {
+            // Not present -> unset
+            return opt_index();
+        }
+    }
+
+    template<typename K, typename R>
+    typename TableSoA<K, R>::key_t TableSoA<K, R>::lookup(const opt_index &idx) {
+        // Check the index is valid
+        if (!idx.is_set()) {
+            // Unset -> error
+            throw std::out_of_range("Index is unset.");
+        }
+        if (idx.get() > n) {
+            // Outside -> error
+            throw std::out_of_range("Index is outside the table.");
+        }
+
+        // Find the key
+        for (auto i = map.begin(); i != map.end(); i++) {
+            if (i->second == idx.get()) {
+                return i->first;
+            }
+        }
+
+        // Not found -> error
+        throw std::out_of_range("No record found for the provided key.");
     }
 
     template<typename K, typename R>
@@ -753,6 +995,27 @@ namespace open_sea::data {
     }
 
     template<typename K, typename R>
+    typename TableSoA<K, R>::record_t TableSoA<K, R>::get_copy(const opt_index &i) {
+        // Check the index is set and within range
+        if (!i.is_set()) {
+            // Not set -> error
+            throw std::invalid_argument("Index is not set.");
+        } else if(i.get() < this->n) {
+            // Get the index and prepare result
+            unsigned int index = i.get();
+            record_t result;
+
+            // Move last into deleted
+            util::invoke_n<record_t::count, GetCopyHelper>(arrays, index, result);
+
+            return result;
+        } else {
+            // Not present -> error
+            throw std::out_of_range("No record found for the provided index.");
+        }
+    }
+
+    template<typename K, typename R>
     typename TableSoA<K, R>::record_ptr_t TableSoA<K, R>::get_reference(const key_t &key) {
         // Check the key is present
         try {
@@ -767,6 +1030,27 @@ namespace open_sea::data {
         } catch (std::out_of_range &e) {
             // Not present -> error
             throw std::out_of_range("No record found for the provided key.");
+        }
+    }
+
+    template<typename K, typename R>
+    typename TableSoA<K, R>::record_ptr_t TableSoA<K, R>::get_reference(const opt_index &i) {
+        // Check if the index is set and within range
+        if (!i.is_set()) {
+            // Not set -> error
+            throw std::invalid_argument("Index is not set.");
+        } else if (i.get() < this->n) {
+            // Get the index and prepare result
+            unsigned int index = i.get();
+            record_ptr_t result;
+
+            // Set result to point to the correct entries
+            util::invoke_n<record_t::count, GetRefHelper>(arrays, index, result);
+
+            return result;
+        } else {
+            // Not present -> error
+            throw std::out_of_range("No record found for the provided index.");
         }
     }
 

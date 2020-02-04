@@ -19,7 +19,7 @@ namespace open_sea {
         struct Entity;
         class EntityManager;
         class ModelTable;
-        class TransformationComponent;
+        class TransformationTable;
     }
 
     namespace gl {
@@ -48,14 +48,14 @@ namespace open_sea::render {
             //! Model component manager
             std::shared_ptr<ecs::ModelTable> model_mgr{};
             //! Transformation component manager
-            std::shared_ptr<ecs::TransformationComponent> transform_mgr{};
+            std::shared_ptr<ecs::TransformationTable> transform_mgr{};
             //! Shader program
             std::unique_ptr<gl::ShaderProgram> shader{};
             //! Projection matrix uniform location
             GLint p_mat_location;
             //! World matrix uniform location
             GLint w_mat_location;
-            UntexturedRenderer(std::shared_ptr<ecs::ModelTable> m, std::shared_ptr<ecs::TransformationComponent> t);
+            UntexturedRenderer(std::shared_ptr<ecs::ModelTable> m, std::shared_ptr<ecs::TransformationTable> t);
 
             //! Render information for a single entity
             struct RenderInfo {

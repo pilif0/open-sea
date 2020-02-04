@@ -16,7 +16,7 @@
 
 // Forward declarations
 namespace open_sea::ecs {
-    class TransformationComponent;
+    class TransformationTable;
 }
 
 //! %Controls that allow for transforming of an entity based on user input
@@ -69,7 +69,7 @@ namespace open_sea::controls {
     class Free : public Controls {
         public:
             //! Transformation component manager
-            std::shared_ptr<ecs::TransformationComponent> transform_mgr{};
+            std::shared_ptr<ecs::TransformationTable> transform_mgr{};
             //! Key bindings and factors
             struct Config {
                 // Key bindings
@@ -104,7 +104,7 @@ namespace open_sea::controls {
             } config;
 
             //! Constuct the controls assigning it a pointer to the relevant transformation component manager, subject and config
-            Free(std::shared_ptr<ecs::TransformationComponent> t, ecs::Entity s, Config c)
+            Free(std::shared_ptr<ecs::TransformationTable> t, ecs::Entity s, Config c)
                     : Controls(s), transform_mgr(std::move(t)), config(c) {}
 
             void transform() override;
@@ -131,7 +131,7 @@ namespace open_sea::controls {
 
         public:
             //! Transformation component manager
-            std::shared_ptr<ecs::TransformationComponent> transform_mgr{};
+            std::shared_ptr<ecs::TransformationTable> transform_mgr{};
             //! Key bindings and factors
             struct Config {
                 // Key bindings
@@ -155,7 +155,7 @@ namespace open_sea::controls {
 
 
             //! Constuct the controls assigning it a pointer to the relevant transformation component manager, subject and config
-            FPS(std::shared_ptr<ecs::TransformationComponent> t, ecs::Entity s, Config c)
+            FPS(std::shared_ptr<ecs::TransformationTable> t, ecs::Entity s, Config c)
                     : Controls(s), transform_mgr(std::move(t)), config(c) { update_pitch(); }
 
             void transform() override;
@@ -176,7 +176,7 @@ namespace open_sea::controls {
     class TopDown : public Controls {
         public:
             //! Transformation component manager
-            std::shared_ptr<ecs::TransformationComponent> transform_mgr{};
+            std::shared_ptr<ecs::TransformationTable> transform_mgr{};
             //! Key bindings and factors
             struct Config {
                 // Key bindings
@@ -204,7 +204,7 @@ namespace open_sea::controls {
 
 
             //! Constuct the controls assigning it a pointer to the relevant transformation component manager, subject and config
-            TopDown(std::shared_ptr<ecs::TransformationComponent> t, ecs::Entity s, Config c)
+            TopDown(std::shared_ptr<ecs::TransformationTable> t, ecs::Entity s, Config c)
                     : Controls(s), transform_mgr(std::move(t)), config(c) {}
 
             void transform() override;

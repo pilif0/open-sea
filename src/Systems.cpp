@@ -20,18 +20,18 @@ namespace open_sea::ecs {
     void CameraFollow::transform() {
         unsigned n = camera_mgr->data.n;
 
-        // Look each entity up in transformation manager
-        std::vector<int> indices(n);
-        transform_mgr->lookup(camera_mgr->data.entity, indices.data(), n);
+        // Get reference for each entity in transformation manager
+        std::vector<TransformationTable::Data::Ptr> refs(n);
+        transform_mgr->table->get_reference(camera_mgr->data.entity, refs.data(), n);
 
         // Apply transformation for each entity-camera pair
         std::shared_ptr<gl::Camera> *c = camera_mgr->data.camera;
-        int *i = indices.data();
-        for (unsigned j = 0; j < n; j++, i++, c++) {
-            if (*i == -1) {
+        auto r = refs.begin();
+        for (unsigned j = 0; j < n; j++, r++, c++) {
+            if (r->matrix == nullptr) {
                 (*c)->set_transformation(glm::mat4(1.0f));
             } else {
-                (*c)->set_transformation(transform_mgr->data.matrix[*i]);
+                (*c)->set_transformation(*r->matrix);
             }
         }
     }
@@ -56,17 +56,17 @@ namespace open_sea::ecs {
         }
 
         // Look each entity up in transformation manager
-        std::vector<int> indices(count);
-        transform_mgr->lookup(entities.data(), indices.data(), count);
+        std::vector<TransformationTable::Data::Ptr> refs(count);
+        transform_mgr->table->get_reference(camera_mgr->data.entity, refs.data(), count);
 
         // Apply transformation for each entity-camera pair
         std::shared_ptr<gl::Camera> *c = camera_mgr->data.camera;
-        int *i = indices.data();
-        for (unsigned j = 0; j < count; j++, i++, c++) {
-            if (*i == -1) {
+        auto r = refs.begin();
+        for (unsigned j = 0; j < count; j++, r++, c++) {
+            if (r->matrix == nullptr) {
                 (*c)->set_transformation(glm::mat4(1.0f));
             } else {
-                (*c)->set_transformation(transform_mgr->data.matrix[*i]);
+                (*c)->set_transformation(*r->matrix);
             }
         }
     }

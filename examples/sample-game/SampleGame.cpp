@@ -167,7 +167,7 @@ int main() {
     debug::add_component_manager(model_comp_manager, "Model");
 
     // Prepare and assign random transformations
-    std::shared_ptr<ecs::TransformationComponent> trans_comp_manager = std::make_shared<ecs::TransformationComponent>();
+    std::shared_ptr<ecs::TransformationTable> trans_comp_manager = std::make_shared<ecs::TransformationTable>();
     {
         // Prepare random distributions
         std::random_device device;
@@ -201,7 +201,7 @@ int main() {
         os_log::log(lg, os_log::info, "Transformations generated");
 
         // Add the components
-        trans_comp_manager->add(entities.data(), positions.data(), orientations.data(), scales.data(), n);
+        trans_comp_manager->add(entities.data(), positions.data(), orientations.data(), scales.data(), open_sea::data::opt_index(), n);
         os_log::log(lg, os_log::info, "Transformations set");
     }
     debug::add_component_manager(trans_comp_manager, "Transformation");
@@ -215,7 +215,7 @@ int main() {
     glm::vec3 camera_guide_pos{0.0f, 0.0f, 1000.0f};
     glm::quat camera_guide_ori{0.0f, 0.0f, 0.0f, 1.0f};
     glm::vec3 camera_guide_sca(1.0f, 1.0f, 1.0f);
-    trans_comp_manager->add(&camera_guide, &camera_guide_pos, &camera_guide_ori, &camera_guide_sca, 1);
+    trans_comp_manager->add(&camera_guide, &camera_guide_pos, &camera_guide_ori, &camera_guide_sca, open_sea::data::opt_index{}, 1);
 
     // Prepare camera component
     std::shared_ptr<ecs::CameraComponent> camera_comp_manager = std::make_shared<ecs::CameraComponent>();

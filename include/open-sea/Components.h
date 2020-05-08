@@ -323,6 +323,11 @@ namespace open_sea::ecs {
             void show_query();
     };
 
+    // Note: There are issues with using the tables to store the camera component. These highlighted that camera isn't
+    //  really a component of an entity. I am instead making them a thing that the game state holds and uses to render
+    //  through. The method of following entities will instead wrap around a camera and be directly udated, instead of
+    //  being an ECS system.
+
     /** \class CameraComponent
      * \brief Associates an entity with a camera
      *

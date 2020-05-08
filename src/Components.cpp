@@ -630,7 +630,7 @@ namespace open_sea::ecs {
                 transformation(position, orientation, scale),
                 parent,
                 {},
-                *par_ref.first_child,
+                (parent.is_set()) ? *par_ref.first_child : data::opt_index(),
                 {}
         };
 

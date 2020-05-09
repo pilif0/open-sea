@@ -16,7 +16,7 @@ namespace open_sea::util {
      * \tparam T Container type
      * \tparam N Member index
      */
-    template<typename T, unsigned int N>
+    template<typename T, size_t N>
     struct GetMemberType;
 
     /**
@@ -25,7 +25,7 @@ namespace open_sea::util {
      * \tparam T Container type
      * \tparam N Member index
      */
-    template<typename T, unsigned int N>
+    template<typename T, size_t N>
     struct GetMemberPointerType {
         typedef typename GetMemberType<T, N>::type T::*type;
     };
@@ -37,7 +37,7 @@ namespace open_sea::util {
      * \tparam N Member index
      * \return Pointer to Nth member of T
      */
-    template<typename T, unsigned int N>
+    template<typename T, size_t N>
     typename GetMemberPointerType<T, N>::type get_pointer_to_member();
     //----- End Class Member Utility Templates
 
@@ -64,7 +64,7 @@ namespace open_sea::util {
      * \tparam Args Arguments type
      * \param args Arguments
      */
-    template<unsigned int I, unsigned int L, template <unsigned int> typename F, class... Args>
+    template<size_t I, size_t L, template <size_t> typename F, class... Args>
     void invoke_n_body(invoke_continue, Args &&... args) {
         // Invoke function
         std::invoke(F<I>(), std::forward<Args>(args)...);
@@ -83,7 +83,7 @@ namespace open_sea::util {
      * \tparam F Functor type
      * \tparam Args Arguments type
      */
-    template<unsigned int I, unsigned int L, template <unsigned int> typename F, class... Args>
+    template<size_t I, size_t L, template <size_t> typename F, class... Args>
     void invoke_n_body(invoke_stop, Args &&... /*args*/) {}
 
     /**
@@ -94,7 +94,7 @@ namespace open_sea::util {
      * \tparam Args Arguments type
      * \param args Arguments
      */
-    template<unsigned int N, template <unsigned int> typename F, class... Args>
+    template<size_t N, template <size_t> typename F, class... Args>
     void invoke_n(Args &&... args) {
         invoke_n_body<0, N, F>(IntToType<(0 < N)>(), std::forward<Args>(args)...);
     }

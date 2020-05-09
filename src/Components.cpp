@@ -123,7 +123,7 @@ namespace open_sea::ecs {
     void ModelTable::show_debug() {
         ImGui::Text("Table type: %s", table->type_name());
         ImGui::Text("Record size: %lu bytes", sizeof(Data));
-        ImGui::Text("Records (allocated): %i (%zu)", table->size(), table->allocated());
+        ImGui::Text("Records (allocated): %lu (%zu)", table->size(), table->allocated());
         ImGui::Text("Stored models: %i", static_cast<int>(models.size()));
         ImGui::Text("Size data arrays (allocated): %lu (%lu) bytes", sizeof(Data) * table->size(), sizeof(Data) * table->allocated());
         if (ImGui::Button("Query")) {
@@ -846,7 +846,7 @@ namespace open_sea::ecs {
     void TransformationTable::show_debug() {
         ImGui::Text("Table type: %s", table->type_name());
         ImGui::Text("Record size: %lu bytes", sizeof(Data));
-        ImGui::Text("Records (allocated): %i (%zu)", table->size(), table->allocated());
+        ImGui::Text("Records (allocated): %lu (%zu)", table->size(), table->allocated());
         ImGui::Text("Size data arrays (allocated): %lu (%lu) bytes", sizeof(Data) * table->size(), sizeof(Data) * table->allocated());
         if (ImGui::Button("Query")) {
             ImGui::OpenPopup("Component Manager Query");

@@ -49,7 +49,7 @@ namespace open_sea::ecs {
              * Model component data is just the index into the model store
              */
             struct Data {
-                static constexpr unsigned int count = 1;
+                static constexpr size_t count = 1;
                 struct Ptr {
                     size_t *model;
                 };
@@ -95,7 +95,7 @@ namespace open_sea::ecs {
              * Transformation component data has the three transformations, their matrix, and tree-related attributes
              */
             struct Data {
-                static constexpr unsigned int count = 8;
+                static constexpr size_t count = 8;
                 struct Ptr {
                     glm::vec3 *position = nullptr;
                     glm::quat *orientation = nullptr;

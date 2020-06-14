@@ -11,9 +11,11 @@
 #include <memory>
 #include <algorithm>
 #include <functional>
+#include <unistd.h>
+#include <stdlib.h>
 
 //TODO use page allocator
-//TODO if performance degrades due to removing, add inverse key-index map to speed up last's key lookup
+//TODO if performance degrades due to removing, can add inverse key-index map to speed up last's key lookup
 
 // Note: These currently don't support non-trivial data (e.g. shared_ptr) in records. This is because the space is
 //  uninitialised after allocation and modifications aren't too careful about objects being moved around. For example,
@@ -226,6 +228,9 @@ namespace open_sea::data {
             //! Get number of allocated records
             virtual size_t allocated() = 0;
 
+            //! Get number of allocated pages
+            virtual size_t pages() = 0;
+
             //! Get name of the table type (ie the storage scheme)
             virtual const char* type_name() = 0;
 
@@ -257,9 +262,8 @@ namespace open_sea::data {
             size_t n = 0;
             //! Allocated space in terms of number of records that fit in it
             size_t capacity = 0;
-
-            //! Allocator
-            std::allocator<record_t> allocator;
+            //! Number of pages allocated
+            size_t pages_alloc = 0;
 
         public:
             //! Construct the table and defer allocation to first insertion
@@ -288,6 +292,7 @@ namespace open_sea::data {
             size_t size() override { return n; }
             std::vector<key_t> keys() override;
             size_t allocated() override { return capacity; }
+            size_t pages() override { return pages_alloc; }
             const char* type_name() override { return "AoS"; }
 
             virtual ~TableAoS();
@@ -335,19 +340,48 @@ namespace open_sea::data {
     };
 
     /**
-     * Allocate space for the data, potentially copying over data from previous space if needed
+     * Allocate page-aligned space that fits at least the given amount of records.
+     * Size of the allocated space is rounded up to the nearest 2^N pages.
+     * If the table wasn't empty, the old data is copied over to the new space.
      *
      * \tparam K Key type
      * \tparam R Record type
      * \param size Number of records to allocate space for
      */
+    // Note: rounding up to 2^N instead of just nearest page to ensure geometric progression and amortised performance
     template<typename K, typename R>
     void TableAoS<K, R>::allocate(size_t size) {
-        // Make sure data will fit into new space
-        assert(size > n);
+        // Make sure old data will fit into new space
+        assert(size >= n);
 
-        // Allocate space
-        record_t *target = allocator.allocate(size);
+        // Skip if already big enough or requested zero size (which any space fits)
+        if (capacity >= size || size == 0) {
+            return;
+        }
+
+        // Calculate target space size
+        // The nearest greater power of 2 has 1 in the position of the last leading 0 and 0s everywhere else
+        // For the rounded-up division see https://stackoverflow.com/q/2745074
+        long pagesize = sysconf(_SC_PAGESIZE);
+        unsigned long space_needed = size * sizeof(record_t);
+        unsigned long pages_needed = space_needed / pagesize + (space_needed % pagesize != 0);
+        size_t pages_target = 0;
+        if ((pages_needed & (pages_needed - 1)) == 0) {
+            // Pages needed is a power of two -> use that
+            // See http://www.graphics.stanford.edu/~seander/bithacks.html#DetermineIfPowerOf2 for power of 2 test
+            pages_target = pages_needed;
+        } else {
+            // Not a power of two -> find the nearest greater one
+            // The nearest greater power of 2 has 1 in the position of the last leading 0 and 0s everywhere else
+            int shift_by = ((sizeof(unsigned long) * 8) - __builtin_clzl(pages_needed));
+            pages_target = 1 << shift_by;
+        }
+        size_t space_target = pages_target * pagesize;
+        assert(space_target >= space_needed);
+
+        // Allocate that much page-aligned space
+        record_t *target = static_cast<record_t *>(aligned_alloc(pagesize, space_target));
+        assert(target != nullptr);
 
         // Copy data into new space
         if (n > 0) {
@@ -356,12 +390,13 @@ namespace open_sea::data {
 
         // Deallocate old data
         if (data && capacity > 0) {
-            allocator.deallocate(data, capacity);
+            free(data);
         }
 
         // Update state
         data = target;
-        capacity = size;
+        capacity = space_target / sizeof(record_t);
+        pages_alloc = pages_target;
     }
 
     template<typename K, typename R>
@@ -374,8 +409,8 @@ namespace open_sea::data {
 
         // Check there is enough space
         if (capacity <= n) {
-            // At capacity -> reallocate double capacity (but at least 1)
-            allocate((capacity == 0) ? 1 : capacity * 2);
+            // At capacity -> allocate enough space to add a record
+            allocate(n + 1);
         }
 
         // Set row to the record
@@ -401,14 +436,8 @@ namespace open_sea::data {
 
         // Check there is enough space
         if (capacity < (n + count)) {
-            // Wouldn't fit -> reallocate enough capacity (maximum of 1, double current capacity, and needed)
-            if (capacity * 2 > n + count) {
-                allocate(capacity * 2);
-            } else if (n + count > 1) {
-                allocate(n + count);
-            } else {
-                allocate(1);
-            }
+            // Wouldn't fit -> allocate enough space to add all the records
+            allocate(n + count);
         }
 
         // Process each record (copying records to modify it)
@@ -619,7 +648,7 @@ namespace open_sea::data {
     TableAoS<K, R>::~TableAoS() {
         // Deallocate data
         if (data && capacity > 0) {
-            allocator.deallocate(data, capacity);
+            free(data);
         }
     }
 
@@ -650,9 +679,8 @@ namespace open_sea::data {
             size_t n = 0;
             //! Allocated space in terms of number of records that fit in it
             size_t capacity = 0;
-
-            //! Allocator
-            std::allocator<unsigned char> allocator;
+            //! Number of pages allocated
+            size_t pages_alloc = 0;
 
         public:
             //! Construct the table and defer allocation to first insertion
@@ -681,6 +709,7 @@ namespace open_sea::data {
             size_t size() override { return n; }
             std::vector<key_t> keys() override;
             size_t allocated() override { return capacity; }
+            size_t pages() override { return pages_alloc; }
             const char* type_name() override { return "SoA"; }
 
             virtual ~TableSoA();
@@ -798,7 +827,9 @@ namespace open_sea::data {
     };
 
     /**
-     * Allocate space for the data, potentially copying over data from previous space if needed
+     * Allocate page-aligned space that fits at least the given amount of records.
+     * Size of the allocated space is rounded up to the nearest 2^N pages.
+     * If the table wasn't empty, the old data is copied over to the new space.
      *
      * \tparam K Key type
      * \tparam R Record type
@@ -809,16 +840,38 @@ namespace open_sea::data {
         // Make sure data will fit into new space
         assert(size > n);
 
-        // Compute size of new space in B
-        unsigned byte_count = size * sizeof(record_t);
+        // Skip if already big enough or requested zero size (which any space fits)
+        if (capacity >= size || size == 0) {
+            return;
+        }
 
-        // Allocate space
-        void *target = allocator.allocate(byte_count);
+        // Calculate target space size
+        // For the rounded-up division see https://stackoverflow.com/q/2745074
+        long pagesize = sysconf(_SC_PAGESIZE);
+        unsigned long space_needed = size * sizeof(record_t);
+        unsigned long pages_needed = space_needed / pagesize + (space_needed % pagesize != 0);
+        size_t pages_target = 0;
+        if ((pages_needed & (pages_needed - 1)) == 0) {
+            // Pages needed is a power of two -> use that
+            // See http://www.graphics.stanford.edu/~seander/bithacks.html#DetermineIfPowerOf2 for power of 2 test
+            pages_target = pages_needed;
+        } else {
+            // Not a power of two -> find the nearest greater one
+            // The nearest greater power of 2 has 1 in the position of the last leading 0 and 0s everywhere else
+            int shift_by = ((sizeof(unsigned long) * 8) - __builtin_clzl(pages_needed));
+            pages_target = 1 << shift_by;
+        }
+        size_t space_target = pages_target * pagesize;
+        assert(space_target >= space_needed);
+
+        // Allocate that much page-aligned space
+        void *target = aligned_alloc(pagesize, space_target);
+        assert(target != nullptr);
 
         // Compute array start pointers
         void *target_arrays[record_t::count];
         target_arrays[0] = target;
-        util::invoke_n<record_t::count, AllocatePtrHelper>(target_arrays, size);
+        util::invoke_n<record_t::count, AllocatePtrHelper>(target_arrays, space_target / sizeof(record_t));
 
         // Copy data into new space
         if (n > 0) {
@@ -827,13 +880,14 @@ namespace open_sea::data {
 
         // Deallocate old data
         if (data && capacity > 0) {
-            allocator.deallocate(static_cast<unsigned char *>(data), capacity * sizeof(record_t));
+            free(data);
         }
 
         // Update state
         data = target;
         std::copy(std::begin(target_arrays), std::end(target_arrays), std::begin(arrays));
-        capacity = size;
+        capacity = space_target / sizeof(record_t);
+        pages_alloc = pages_target;
     }
 
     template<typename K, typename R>
@@ -846,8 +900,8 @@ namespace open_sea::data {
 
         // Check there is enough space
         if (capacity <= n) {
-            // At capacity -> reallocate double capacity (but at least 1)
-            allocate((capacity == 0) ? 1 : capacity * 2);
+            // At capacity -> allocate enough space to add a record
+            allocate(n + 1);
         }
 
         // Set row to the record
@@ -872,14 +926,8 @@ namespace open_sea::data {
 
         // Check there is enough space
         if (capacity < (n + count)) {
-            // Wouldn't fit -> reallocate enough capacity (maximum of 1, double current capacity, and needed)
-            if (capacity * 2 > n + count) {
-                allocate(capacity * 2);
-            } else if (n + count > 1) {
-                allocate(n + count);
-            } else {
-                allocate(1);
-            }
+            // Wouldn't fit -> allocate enough space to add all the records
+            allocate(n + count);
         }
 
         // Copy records data to relevant arrays
@@ -1088,7 +1136,7 @@ namespace open_sea::data {
     TableSoA<K, R>::~TableSoA() {
         // Deallocate data
         if (data && capacity > 0) {
-            allocator.deallocate(static_cast<unsigned char *>(data), capacity * sizeof(record_t));
+            free(data);
         }
     }
 

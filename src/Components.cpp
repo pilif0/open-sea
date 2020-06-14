@@ -123,9 +123,10 @@ namespace open_sea::ecs {
     void ModelTable::show_debug() {
         ImGui::Text("Table type: %s", table->type_name());
         ImGui::Text("Record size: %lu bytes", sizeof(Data));
-        ImGui::Text("Records (allocated): %lu (%zu)", table->size(), table->allocated());
+        ImGui::Text("Records: %lu (%lu bytes)", table->size(), sizeof(Data) * table->size());
+        ImGui::Text("Allocated: %lu (%lu bytes)", table->allocated(), sizeof(Data) * table->allocated());
+        ImGui::Text("Pages allocated: %lu", table->pages());
         ImGui::Text("Stored models: %i", static_cast<int>(models.size()));
-        ImGui::Text("Size data arrays (allocated): %lu (%lu) bytes", sizeof(Data) * table->size(), sizeof(Data) * table->allocated());
         if (ImGui::Button("Query")) {
             ImGui::OpenPopup("Component Manager Query");
         }
@@ -846,8 +847,9 @@ namespace open_sea::ecs {
     void TransformationTable::show_debug() {
         ImGui::Text("Table type: %s", table->type_name());
         ImGui::Text("Record size: %lu bytes", sizeof(Data));
-        ImGui::Text("Records (allocated): %lu (%zu)", table->size(), table->allocated());
-        ImGui::Text("Size data arrays (allocated): %lu (%lu) bytes", sizeof(Data) * table->size(), sizeof(Data) * table->allocated());
+        ImGui::Text("Records: %lu (%lu bytes)", table->size(), sizeof(Data) * table->size());
+        ImGui::Text("Allocated: %lu (%lu bytes)", table->allocated(), sizeof(Data) * table->allocated());
+        ImGui::Text("Pages allocated: %lu", table->pages());
         if (ImGui::Button("Query")) {
             ImGui::OpenPopup("Component Manager Query");
         }

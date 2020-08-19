@@ -14,6 +14,8 @@ set(open_sea_HEADERS
         "${INCL_DIR}/open-sea/GL.h"
         "${INCL_DIR}/open-sea/Model.h"
         "${INCL_DIR}/open-sea/Entity.h"
+        "${INCL_DIR}/open-sea/Util.h"
+        "${INCL_DIR}/open-sea/Table.h"
         "${INCL_DIR}/open-sea/Components.h"
         "${INCL_DIR}/open-sea/Render.h"
         "${INCL_DIR}/open-sea/Systems.h"
@@ -21,7 +23,9 @@ set(open_sea_HEADERS
         "${INCL_DIR}/open-sea/Debug.h"
         "${INCL_DIR}/open-sea/Debuggable.h"
         "${INCL_DIR}/open-sea/Profiler.h"
-        "${INCL_DIR}/open-sea/Track.h")
+        "${INCL_DIR}/open-sea/Track.h"
+        "${INCL_DIR}/open-sea/CameraMove.h"
+        )
 set(open_sea_SOURCES
         "${SRC_DIR}/Log.cpp"
         "${SRC_DIR}/Window.cpp"
@@ -36,7 +40,9 @@ set(open_sea_SOURCES
         "${SRC_DIR}/Systems.cpp"
         "${SRC_DIR}/Controls.cpp"
         "${SRC_DIR}/Debug.cpp"
-        "${SRC_DIR}/Profiler.cpp")
+        "${SRC_DIR}/Profiler.cpp"
+        "${SRC_DIR}/CameraMove.cpp"
+        )
 
 # Copy source and header lists to parent for use in documentation
 set(open_sea_HEADERS ${open_sea_HEADERS} PARENT_SCOPE)
@@ -44,3 +50,6 @@ set(open_sea_SOURCES ${open_sea_SOURCES} PARENT_SCOPE)
 
 # Add the library
 add_library(open_sea ${open_sea_SOURCES} ${open_sea_HEADERS})
+
+# Link required Boost libraries
+target_link_libraries(open_sea ${Boost_LIBRARIES})

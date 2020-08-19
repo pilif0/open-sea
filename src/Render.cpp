@@ -24,8 +24,8 @@ namespace open_sea::render {
      * \param m Model component manager
      * \param t Transformation component manager
      */
-    UntexturedRenderer::UntexturedRenderer(std::shared_ptr<ecs::ModelComponent> m,
-                                           std::shared_ptr<ecs::TransformationComponent> t)
+    UntexturedRenderer::UntexturedRenderer(std::shared_ptr<ecs::ModelTable> m,
+                                           std::shared_ptr<ecs::TransformationTable> t)
             : model_mgr(std::move(m)), transform_mgr(std::move(t)) {
         // Initialise the shader
         shader = std::make_unique<gl::ShaderProgram>();
@@ -59,25 +59,28 @@ namespace open_sea::render {
 
         // Get world matrix pointers
         profiler::push("World Matrices");
-        transform_mgr->lookup(e, indices.data(), count);
-        int *i = indices.data();
+        std::vector<ecs::TransformationTable::Data::Ptr> refs_tr(count);
+        transform_mgr->table->get_reference(e, refs_tr.data(), count);
+        auto i = refs_tr.begin();
         RenderInfo *r = infos.data();
         for (unsigned j = 0; j < count; j++, i++, r++) {
-            if (*i != -1) {
-                r->matrix = &transform_mgr->data.matrix[*i][0][0];
+            if (i->matrix != nullptr) {
+                r->matrix = &(*i->matrix)[0][0];
             }
         }
         profiler::pop();
 
         // Get the model information
         profiler::push("Models");
-        model_mgr->lookup(e, indices.data(), count);
-        i = indices.data();
+
+        std::vector<ecs::ModelTable::Data::Ptr> refs_mo(count);
+        model_mgr->table->get_reference(e, refs_mo.data(), count);
+        auto ref = refs_mo.data();
         r = infos.data();
-        for (unsigned j = 0; j < count; j++, i++, r++) {
+        for (unsigned j = 0; j < count; j++, ref++, r++) {
             // Skip invalid indices
-            if (*i != -1) {
-                std::shared_ptr<model::Model> model = model_mgr->get_model(model_mgr->data.model[*i]);
+            if (ref->model != nullptr) {
+                std::shared_ptr<model::Model> model = model_mgr->get_model(*(ref->model));
                 r->vao = model->get_vertex_array();
                 r->vertex_count = model->get_vertex_count();
             }

@@ -83,7 +83,12 @@ namespace open_sea::controls {
             // Only translate if needed
             float l = glm::length(local);
             if (l != 0) {
-                int index = transform_mgr->lookup(subject);
+                ecs::TransformationTable::Data::Ptr ref{};
+                try {
+                    ref = transform_mgr->table->get_reference(subject);
+                } catch (std::out_of_range &e) {
+                    //TODO what do?
+                }
 
                 // Normalise
                 if (l != 0.0f && l != 1.0f) {
@@ -91,12 +96,12 @@ namespace open_sea::controls {
                 }
 
                 // Transform and apply
-                glm::vec3 global_translate = glm::rotate(transform_mgr->data.orientation[index], local);
+                glm::vec3 global_translate = glm::rotate(*ref.orientation, local);
                 global_translate.x *= config.speed_x;
                 global_translate.y *= config.speed_y;
                 global_translate.z *= config.speed_z;
                 global_translate *= time::get_delta();
-                transform_mgr->translate(&index, &global_translate, 1);
+                transform_mgr->translate(&subject, &global_translate, 1);
                 last_translate = global_translate;
             } else {
                 last_translate = {};
@@ -111,7 +116,12 @@ namespace open_sea::controls {
             }
 
             // Look up subject transformation
-            int index = transform_mgr->lookup(subject);
+            ecs::TransformationTable::Data::Ptr ref{};
+            try {
+                ref = transform_mgr->table->get_reference(subject);
+            } catch (std::out_of_range &e) {
+                //TODO what do?
+            }
 
             // Retrieve delta
             glm::vec2 cursor_delta = input::cursor_delta();
@@ -135,7 +145,7 @@ namespace open_sea::controls {
             // Compute transformation quaternion and transform
             if (pitch != 0 || yaw != 0 || roll != 0) {
                 // Transform axes of rotation
-                glm::quat original = transform_mgr->data.orientation[index];
+                glm::quat original = *ref.orientation;
                 glm::vec3 tr_pitch_ax = glm::rotate(original,  pitch_axis);
                 glm::vec3 tr_yaw_ax = glm::rotate(original, yaw_axis);
                 glm::vec3 tr_roll_ax = glm::rotate(original, roll_axis);
@@ -147,7 +157,7 @@ namespace open_sea::controls {
                 glm::quat rotation = roll_q * yaw_q * pitch_q;
 
                 // Apply
-                transform_mgr->rotate(&index, &rotation, 1);
+                transform_mgr->rotate(&subject, &rotation, 1);
                 last_rotate = rotation;
             } else {
                 last_rotate = glm::quat();
@@ -203,10 +213,15 @@ namespace open_sea::controls {
 
             // Only translate if actually needed
             if (glm::length(local) != 0) {
-                int index = transform_mgr->lookup(subject);
+                ecs::TransformationTable::Data::Ptr ref{};
+                try {
+                    ref = transform_mgr->table->get_reference(subject);
+                } catch (std::out_of_range &e) {
+                    //TODO what do?
+                }
 
                 // Transform
-                glm::vec3 global_translate = glm::rotate(transform_mgr->data.orientation[index], local);
+                glm::vec3 global_translate = glm::rotate(*ref.orientation, local);
 
                 // Lock to XZ plane
                 global_translate.y = 0;
@@ -225,7 +240,7 @@ namespace open_sea::controls {
                     global_translate *= time::get_delta();
 
                     // Apply
-                    transform_mgr->translate(&index, &global_translate, 1);
+                    transform_mgr->translate(&subject, &global_translate, 1);
                     last_translate = global_translate;
                 }
             } else {
@@ -241,7 +256,12 @@ namespace open_sea::controls {
             }
 
             // Look up subject transformation
-            int index = transform_mgr->lookup(subject);
+            ecs::TransformationTable::Data::Ptr ref{};
+            try {
+                ref = transform_mgr->table->get_reference(subject);
+            } catch (std::out_of_range &e) {
+                //TODO what do?
+            }
 
             // Retrieve delta
             glm::vec2 cursor_delta = input::cursor_delta();
@@ -263,7 +283,7 @@ namespace open_sea::controls {
                 }
 
                 // Transform axes of rotation
-                glm::quat original = transform_mgr->data.orientation[index];
+                glm::quat original = *ref.orientation;
                 glm::vec3 tr_pitch_ax = glm::rotate(original,  pitch_axis);
 
                 // Compute transformation
@@ -272,7 +292,7 @@ namespace open_sea::controls {
                 glm::quat rotation = yaw_q * pitch_q;
 
                 // Apply
-                transform_mgr->rotate(&index, &rotation, 1);
+                transform_mgr->rotate(&subject, &rotation, 1);
 
                 // Update stored pitch
                 this->pitch += pitch;
@@ -299,8 +319,13 @@ namespace open_sea::controls {
      */
     void FPS::update_pitch() {
         // Get the subject's forward vector
-        int index = transform_mgr->lookup(subject);
-        glm::quat orientation = transform_mgr->data.orientation[index];
+        ecs::TransformationTable::Data::Ptr ref{};
+        try {
+            ref = transform_mgr->table->get_reference(subject);
+        } catch (std::out_of_range &e) {
+            //TODO what do?
+        }
+        glm::quat orientation = *ref.orientation;
         glm::vec3 forward = glm::rotate(orientation, glm::vec3{0.0f, 0.0f, -1.0f});
 
         // Project forward onto XZ plane
@@ -364,10 +389,15 @@ namespace open_sea::controls {
 
             // Translate only if needed
             if (glm::length(local) != 0) {
-                int index = transform_mgr->lookup(subject);
+                ecs::TransformationTable::Data::Ptr ref{};
+                try {
+                    ref = transform_mgr->table->get_reference(subject);
+                } catch (std::out_of_range &e) {
+                    //TODO what do?
+                }
 
                 // Transform
-                glm::vec3 global_translate = glm::rotate(transform_mgr->data.orientation[index], local);
+                glm::vec3 global_translate = glm::rotate(*ref.orientation, local);
 
                 // Lock to XY plane
                 global_translate.z = 0;
@@ -386,7 +416,7 @@ namespace open_sea::controls {
                     global_translate *= time::get_delta();
 
                     // Apply
-                    transform_mgr->translate(&index, &global_translate, 1);
+                    transform_mgr->translate(&subject, &global_translate, 1);
                     last_translate = global_translate;
                 } else {
                     last_translate = {};
@@ -400,7 +430,12 @@ namespace open_sea::controls {
         glm::quat rotation{};
         {
             // Look up subject transformation
-            int index = transform_mgr->lookup(subject);
+            ecs::TransformationTable::Data::Ptr ref{};
+            try {
+                ref = transform_mgr->table->get_reference(subject);
+            } catch (std::out_of_range &e) {
+                //TODO what do?
+            }
 
             // Positive roll is counter clockwise
             float roll = 0.0f;
@@ -415,14 +450,14 @@ namespace open_sea::controls {
             // Compute transformation quaternion and transform
             if (roll != 0) {
                 // Transform axes of rotation
-                glm::quat original = transform_mgr->data.orientation[index];
+                glm::quat original = *ref.orientation;
                 glm::vec3 tr_roll_ax = glm::rotate(original, roll_axis);
 
                 // Compute transformation
                 glm::quat roll_q = glm::angleAxis(glm::radians(roll), tr_roll_ax);
 
                 // Apply
-                transform_mgr->rotate(&index, &roll_q, 1);
+                transform_mgr->rotate(&subject, &roll_q, 1);
                 last_rotate = rotation;
             } else {
                 last_rotate = glm::quat();

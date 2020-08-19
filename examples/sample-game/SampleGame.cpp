@@ -22,6 +22,8 @@
 #include <open-sea/Controls.h>
 #include <open-sea/Debug.h>
 #include <open-sea/Profiler.h>
+#include <open-sea/Table.h>
+#include <open-sea/CameraMove.h>
 namespace os_log = open_sea::log;
 namespace window = open_sea::window;
 namespace input = open_sea::input;
@@ -34,6 +36,7 @@ namespace render = open_sea::render;
 namespace controls = open_sea::controls;
 namespace debug = open_sea::debug;
 namespace profiler = open_sea::profiler;
+namespace camera = open_sea::camera;
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
@@ -44,6 +47,20 @@ namespace profiler = open_sea::profiler;
 #include <sstream>
 #include <random>
 #include <vector>
+
+//! Test table data struct
+struct TestData {
+    static constexpr unsigned int count = 2;
+    struct Ptr {
+        int *a;
+        float *b;
+    };
+
+    int a;
+    float b;
+};
+SOA_MEMBER(TestData, 0, int, a)
+SOA_MEMBER(TestData, 1, float, b)
 
 int main() {
     // Initialize logging
@@ -138,21 +155,21 @@ int main() {
     debug::add_entity_manager(test_manager, "Test Manager");
 
     // Prepare and assign model
-    std::shared_ptr<ecs::ModelComponent> model_comp_manager = std::make_shared<ecs::ModelComponent>();
+    std::shared_ptr<ecs::ModelTable> model_comp_manager = std::make_shared<ecs::ModelTable>();
     {
         std::shared_ptr<model::Model> model(model::UntexModel::from_file("examples/sample-game/data/models/cube.obj"));
         if (!model) {
             return -1;
         }
         model_comp_manager->model_to_index(model);
-        std::vector<int> models(n);   // modelIdx == 0, because it is the first model
+        std::vector<size_t> models(n);   // modelIdx == 0, because it is the first model
 
-        model_comp_manager->add(entities.data(), models.data(), n);
+        model_comp_manager->table->add(entities.data(), {models.data()}, n);
     }
     debug::add_component_manager(model_comp_manager, "Model");
 
     // Prepare and assign random transformations
-    std::shared_ptr<ecs::TransformationComponent> trans_comp_manager = std::make_shared<ecs::TransformationComponent>();
+    std::shared_ptr<ecs::TransformationTable> trans_comp_manager = std::make_shared<ecs::TransformationTable>();
     {
         // Prepare random distributions
         std::random_device device;
@@ -186,7 +203,7 @@ int main() {
         os_log::log(lg, os_log::info, "Transformations generated");
 
         // Add the components
-        trans_comp_manager->add(entities.data(), positions.data(), orientations.data(), scales.data(), n);
+        trans_comp_manager->add(entities.data(), positions.data(), orientations.data(), scales.data(), open_sea::data::opt_index(), n);
         os_log::log(lg, os_log::info, "Transformations set");
     }
     debug::add_component_manager(trans_comp_manager, "Transformation");
@@ -195,34 +212,15 @@ int main() {
     std::shared_ptr<render::UntexturedRenderer> renderer = std::make_shared<render::UntexturedRenderer>(model_comp_manager, trans_comp_manager);
     debug::add_system(renderer, "Untextured Renderer");
 
-    // Create camera guide entity
+    // Wrap cameras to move with an entity
     ecs::Entity camera_guide = test_manager->create();
     glm::vec3 camera_guide_pos{0.0f, 0.0f, 1000.0f};
     glm::quat camera_guide_ori{0.0f, 0.0f, 0.0f, 1.0f};
     glm::vec3 camera_guide_sca(1.0f, 1.0f, 1.0f);
-    trans_comp_manager->add(&camera_guide, &camera_guide_pos, &camera_guide_ori, &camera_guide_sca, 1);
+    trans_comp_manager->add(camera_guide, camera_guide_pos, camera_guide_ori, camera_guide_sca, open_sea::data::opt_index{});
+    camera::AtEntity cam_move_per = camera::AtEntity(trans_comp_manager, camera_guide, test_camera_per);
+    camera::AtEntity cam_move_ort = camera::AtEntity(trans_comp_manager, camera_guide, test_camera_ort);
 
-    // Prepare camera component
-    std::shared_ptr<ecs::CameraComponent> camera_comp_manager = std::make_shared<ecs::CameraComponent>();
-    {
-        std::shared_ptr<gl::Camera> cameras[]{
-                std::shared_ptr(test_camera_per),
-                std::shared_ptr(test_camera_ort)
-        };
-
-        ecs::Entity es[]{
-                camera_guide,
-                camera_guide
-        };
-
-        camera_comp_manager->add(es, cameras, 2);
-    }
-    debug::add_component_manager(camera_comp_manager, "Camera");
-
-    // Prepare camera follow system
-    std::shared_ptr<ecs::CameraFollow> camera_follow = std::make_shared<ecs::CameraFollow>(trans_comp_manager, camera_comp_manager);
-    debug::add_system(camera_follow, "Camera Follow");
-    
     // Prepare controls for the camera guide
     int controls_no = 0;
     controls::Free::Config controls_free_config {
@@ -354,7 +352,8 @@ int main() {
 
         // Update cameras based on associated guides
         profiler::push("Camera Transform");
-        camera_follow->transform();
+        cam_move_per.transform();
+        cam_move_ort.transform();
         profiler::pop();
 
         profiler::push("Draw");
@@ -369,7 +368,6 @@ int main() {
         profiler::push("Maintain Components");
         model_comp_manager->gc(*test_manager);
         trans_comp_manager->gc(*test_manager);
-        camera_comp_manager->gc(*test_manager);
         profiler::pop();
 
         // ImGui debug GUI

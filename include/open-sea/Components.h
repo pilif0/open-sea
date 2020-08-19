@@ -18,20 +18,14 @@
 #include <unordered_map>
 
 // Forward declarations
-namespace open_sea {
-    namespace model {
-        class Model;
-    }
+namespace open_sea::model {
+    class Model;
 }
 
 namespace open_sea::ecs {
     /**
      * \addtogroup Components
      * \brief Component managers of the ECS
-     *
-     * Component managers of the ECS.
-     * Index can be \c int, because as long as at least one bit of the entity handles is used for generation it will fit.
-     * Index \c -1 means that the record was not found.
      *
      * @{
      */
@@ -40,9 +34,12 @@ namespace open_sea::ecs {
     constexpr unsigned default_size = 1;
 
     /** \class ModelTable
-     * \brief Table-based model component manager
+     * \brief Associates a model with the entity
+     *
+     * Takes shared ownership of the models.
+     * Entities are associated with a private identifier for the model, which can then be used to look up the relevant
+     *  model pointer instance.
      */
-     //TODO docs
     class ModelTable : public debug::Debuggable {
         public:
             /** \struct Data
@@ -70,6 +67,8 @@ namespace open_sea::ecs {
 
             size_t model_to_index(const std::shared_ptr<model::Model>& model);
             std::shared_ptr<model::Model> get_model(size_t i) const;
+            std::shared_ptr<model::Model> get_model(Entity e) const;
+            bool remove_model(size_t i);
 
             void gc(const EntityManager &manager);
 
@@ -83,11 +82,17 @@ namespace open_sea::ecs {
 
 
     /** \class TransformationTable
-     * \brief Table-based transformation component manager
+     * \brief Associates an entity with a transformation relative to some parent
+     *
+     * The transformation is composed of translation, rotation and scaling, taken relative to parent.
+     * The parent is optional, with empty parent referring to the global origin.
+     * Doubly linked between siblings and parent with first child.
+     * Singly linked from non-first child to parent.
+     * Caches the transformation matrix relative to global origin.
+     * Any transformation recomputes the matrix of the transformed entity and recursively all its descendants.
      */
     // Note: only time when indices can change is on removal of a record (last item gets moved), so using opt_index for
     //          the tree structure fields is safe as long as the affected ones get adjusted on removal
-    //TODO docs
     //TODO a lot of the structure-preserving algorithms could probably be done better
     class TransformationTable : public debug::Debuggable {
         public:
@@ -170,11 +175,6 @@ namespace open_sea::ecs {
             void gc(const EntityManager &manager);
             ~TransformationTable() override = default;
     };
-
-    // Note: There are issues with using the tables to store the camera component. These highlighted that camera isn't
-    //  really a component of an entity. I am instead making them a thing that the game state holds and uses to render
-    //  through. The method of following entities will instead wrap around a camera and be directly udated, instead of
-    //  being an ECS system.
 
     /**
      * @}

@@ -14,7 +14,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-//TODO use page allocator
 //TODO if performance degrades due to removing, can add inverse key-index map to speed up last's key lookup
 
 // Note: These currently don't support non-trivial data (e.g. shared_ptr) in records. This is because the space is
@@ -98,8 +97,22 @@ namespace open_sea::data {
              * \brief Add records under the provided keys
              *
              * Copies the values of the provided records and associates them with the keys.
-             * Does nothing when any of the keys already has a record associated with it.
-             * The records have to be provided as a record pointer type (with members in contiguous arrays).
+             * Does nothing (at all) when any of the keys already has a record associated with it.
+             * The records have to be provided as an array of record instances (AoS layout).
+             *
+             * \param keys Keys to associate with the records
+             * \param records Records to add
+             * \param count Number of records to add
+             * \return `true` iff the structure was modified (i.e. the records were added)
+             */
+            virtual bool add(const key_t *keys, const record_t *records, size_t count) = 0;
+
+            /**
+             * \brief Add records under the provided keys
+             *
+             * Copies the values of the provided records and associates them with the keys.
+             * Does nothing (at all) when any of the keys already has a record associated with it.
+             * The records have to be provided as a record pointer type (SoA layout).
              *
              * \param keys Keys to associate with the records
              * \param records Records to add
@@ -206,6 +219,7 @@ namespace open_sea::data {
 
             /**
              * Get read-write reference to the first record
+             * Undefined when empty
              *
              * \return Instance of R::Ptr (struct of pointers to members of R) whose members point to the values
              *  associated with the first record
@@ -277,6 +291,7 @@ namespace open_sea::data {
             explicit TableAoS(size_t count) { allocate(count); }
 
             opt_index add(const key_t &key, const record_t &record) override;
+            bool add(const key_t *keys, const record_t *records, size_t count) override;
             bool add(const key_t *keys, const record_ptr_t &records, size_t count) override;
             opt_index remove(const key_t &key) override;
             opt_index remove(opt_index idx) override;
@@ -308,7 +323,7 @@ namespace open_sea::data {
                     // to Nth member of ith record, copy
                     std::invoke(util::get_pointer_to_member<record_t, N>(), arr[i]) = *src;
                     // and increment the pointer in records
-                    std::invoke(util::get_pointer_to_member<record_ptr_t, N>(), records)++; //TODO test this increments
+                    std::invoke(util::get_pointer_to_member<record_ptr_t, N>(), records)++;
                 }
             };
 
@@ -365,7 +380,7 @@ namespace open_sea::data {
         long pagesize = sysconf(_SC_PAGESIZE);
         unsigned long space_needed = size * sizeof(record_t);
         unsigned long pages_needed = space_needed / pagesize + (space_needed % pagesize != 0);
-        size_t pages_target = 0;
+        size_t pages_target;
         if ((pages_needed & (pages_needed - 1)) == 0) {
             // Pages needed is a power of two -> use that
             // See http://www.graphics.stanford.edu/~seander/bithacks.html#DetermineIfPowerOf2 for power of 2 test
@@ -423,9 +438,46 @@ namespace open_sea::data {
         return opt_index(n++);
     }
 
-    //TODO optimize
+    template<typename K, typename R>
+    bool TableAoS<K, R>::add(const key_t *keys, const record_t *records, size_t count) {
+        // Skip if count is zero
+        if (count == 0) {
+            return false;
+        }
+
+        // Check no key is present yet
+        for (size_t i = 0; i < count; i++) {
+            try {
+                map.at(keys[i]);
+                return false;
+            } catch (std::out_of_range&) {}
+        }
+
+        // Check there is enough space
+        if (capacity < (n + count)) {
+            // Wouldn't fit -> allocate enough space to add all the records
+            allocate(n + count);
+        }
+
+        // Copy all records to the end of the data
+        std::copy_n(records, count, data+n);
+
+        // Update key map
+        for (size_t i = 0; i < count; i++) {
+            map[keys[i]] = n;
+            n++;
+        }
+
+        return true;
+    }
+
     template<typename K, typename R>
     bool TableAoS<K, R>::add(const key_t *keys, const record_ptr_t &records, size_t count) {
+        // Skip if count is zero
+        if (count == 0) {
+            return false;
+        }
+
         // Check no key is present yet
         for (size_t i = 0; i < count; i++) {
             try {
@@ -606,7 +658,6 @@ namespace open_sea::data {
         }
     }
 
-    //TODO what if empty?
     template<typename K, typename R>
     typename TableAoS<K, R>::record_ptr_t TableAoS<K, R>::get_reference() {
         // Prepare result
@@ -629,7 +680,6 @@ namespace open_sea::data {
                 *d = get_reference(*k);
             } catch (std::out_of_range &e) {
                 // Not present -> fill with nullptrs
-                //TODO check this correctly fills the struct with nullptrs
                 *d = {nullptr};
             }
         }
@@ -694,6 +744,7 @@ namespace open_sea::data {
             explicit TableSoA(size_t count) { allocate(count); }
 
             opt_index add(const key_t &key, const record_t &record) override;
+            bool add(const key_t *keys, const record_t *records, size_t count) override;
             bool add(const key_t *keys, const record_ptr_t &records, size_t count) override;
             opt_index remove(const key_t &key) override;
             opt_index remove(opt_index idx) override;
@@ -752,13 +803,13 @@ namespace open_sea::data {
 
             //! Helper functor to append the Nth members of the provided records to the appropriate data array
             template <size_t N>
-            struct AddsHelper {
-                void operator()(void **arr, const size_t n, const record_ptr_t &records, size_t count) {
+            struct AddsPtrHelper {
+                void operator()(void **arr, const size_t offset, const record_ptr_t &records, size_t count) {
                     typedef typename util::GetMemberType<record_t, N>::type member_type;
                     // From the relevant member of records,
                     auto src = std::invoke(util::get_pointer_to_member<record_ptr_t, N>(), records);
                     // to just after the last entry in the relevant array,
-                    auto dest = static_cast<member_type *>(arr[N]) + n;
+                    auto dest = static_cast<member_type *>(arr[N]) + offset;
                     // copy count elements
                     std::copy_n(src, count, dest);
                 }
@@ -850,7 +901,7 @@ namespace open_sea::data {
         long pagesize = sysconf(_SC_PAGESIZE);
         unsigned long space_needed = size * sizeof(record_t);
         unsigned long pages_needed = space_needed / pagesize + (space_needed % pagesize != 0);
-        size_t pages_target = 0;
+        size_t pages_target;
         if ((pages_needed & (pages_needed - 1)) == 0) {
             // Pages needed is a power of two -> use that
             // See http://www.graphics.stanford.edu/~seander/bithacks.html#DetermineIfPowerOf2 for power of 2 test
@@ -915,7 +966,45 @@ namespace open_sea::data {
     }
 
     template<typename K, typename R>
+    bool TableSoA<K, R>::add(const key_t *keys, const record_t *records, size_t count) {
+        // Skip if count is zero
+        if (count == 0) {
+            return false;
+        }
+
+        // Check no key is present yet
+        for (size_t i = 0; i < count; i++) {
+            try {
+                map.at(keys[i]);
+                return false;
+            } catch (std::out_of_range&) {}
+        }
+
+        // Check there is enough space
+        if (capacity < (n + count)) {
+            // Wouldn't fit -> allocate enough space to add all the records
+            allocate(n + count);
+        }
+
+        // Append each record
+        for (size_t i = 0; i < count; i++) {
+            // Set row to the record
+            util::invoke_n<record_t::count, AddHelper>(arrays, n, records[i]);
+
+            // Update map
+            map[keys[i]] = n++;
+        }
+
+        return true;
+    }
+
+    template<typename K, typename R>
     bool TableSoA<K, R>::add(const key_t *keys, const record_ptr_t &records, size_t count) {
+        // Skip if count is zero
+        if (count == 0) {
+            return false;
+        }
+
         // Check no key is present yet
         for (size_t i = 0; i < count; i++) {
             try {
@@ -931,7 +1020,7 @@ namespace open_sea::data {
         }
 
         // Copy records data to relevant arrays
-        util::invoke_n<record_t::count, AddsHelper>(arrays, n, records, count);
+        util::invoke_n<record_t::count, AddsPtrHelper>(arrays, n, records, count);
 
         // Update key map
         for (size_t i = 0; i < count; i++) {
@@ -1147,7 +1236,6 @@ namespace open_sea::data {
 
 // Generate member type struct and member pointer get function for member N of type T and identifier I of struct S,
 //  as well as the pointer variant for sub-struct S:Ptr
-//TODO use sub-struct S::AoS for base data? to keep data at the same level
 #define SOA_MEMBER(S, N, T, I) \
 template<>  \
 struct open_sea::util::GetMemberType<S, N> { typedef T type; }; \

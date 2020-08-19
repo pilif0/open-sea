@@ -49,7 +49,7 @@ namespace open_sea::ecs {
         if (model_pos == models.end()) {
             // Not found -> add the pointer
             model_idx = static_cast<int>(models.size());
-            models.emplace_back(model); //TODO make sure this works
+            models.emplace_back(model);
         } else {
             // Found -> use found index
             model_idx = static_cast<int>(model_pos - models.begin());
@@ -68,6 +68,56 @@ namespace open_sea::ecs {
      */
     std::shared_ptr<model::Model> ModelTable::get_model(size_t i) const {
         return std::shared_ptr<model::Model>(models[i]);
+    }
+
+    /**
+     * \brief Get the model associated with the entity
+     *
+     * \param e Entity
+     * \return Model pointer
+     */
+    std::shared_ptr<model::Model> ModelTable::get_model(Entity e) const {
+        return get_model(table->get_copy(e).model);
+    }
+
+    /**
+     * \brief Remove model from storage
+     *
+     * Remove the model at the provided index from the store.
+     * If the model is used by any entities, the relevant records are removed.
+     *
+     * \param i Index
+     * \return \c true if the any records were removed
+     */
+    bool ModelTable::remove_model(size_t i) {
+        // Remove from store
+        if (i < models.size()) {
+            // In range -> remove
+            models.erase(models.begin()+i);
+        } else {
+            // Otherwise -> not in store, there should be no records so skip the rest
+            return false;
+        }
+
+        // Iterate through the table, removing records with that model
+        Data::Ptr ref = table->get_reference();
+        size_t n = 0;
+        bool result = false;
+        while (n < table->size()) {
+            if (*ref.model == i) {
+                // Matches -> remove
+                table->remove(data::opt_index(n));
+                result = true;
+
+                // No incrementing, because current got swapped with last and size decremented by removal
+            } else {
+                // Otherwise -> go to next
+                table->increment_reference(ref);
+                n++;
+            }
+        }
+
+        return result;
     }
 
     /**
@@ -108,14 +158,7 @@ namespace open_sea::ecs {
     /**
      * \brief Destroy the component manager, freeing up the used memory
      */
-    //TODO this is not necessary, model store destructor takes care of this
-    ModelTable::~ModelTable() {
-        // Reset model pointers
-        for (auto &model : models) {
-            model.reset();
-        }
-        models.clear();
-    }
+    ModelTable::~ModelTable() = default;
 
     /**
      * \brief Show ImGui debug information
@@ -354,8 +397,7 @@ namespace open_sea::ecs {
                     data::opt_index()
             };
 
-            // Add it
-            //TODO What if this fails? e.g. key already present
+            // Add it (skipping if failed)
             data::opt_index just_added = table->add(*k, data);
             result = just_added.is_set() || result;
 
